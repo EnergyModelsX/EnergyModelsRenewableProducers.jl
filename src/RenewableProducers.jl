@@ -10,6 +10,6 @@ include("datastructures.jl")
 include("model.jl")
 include("user_interface.jl")
 
-export NonDispatchableRenewableEnergy
+export NonDispatchableRenewableEnergy, RegulatedHydroStorage
 
 end # module

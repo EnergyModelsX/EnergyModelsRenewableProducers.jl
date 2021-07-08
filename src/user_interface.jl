@@ -10,7 +10,7 @@ function run_model(fn, optimizer=nothing)
     emissions = Dict(CO2=>0.01, NG=>0)
     Power = ResourceCarrier("Power", 1.)
     
-    # Add a renewable energy source to the system
+    # Add a non-dispatchable renewable energy source to the system
     rs = NonDispatchableRenewableEnergy(8, FixedProfile(2.), FixedProfile(1000), 
             FixedProfile(10), Dict(Power=>1.), emissions)
     push!(data[:nodes], rs)
@@ -18,6 +18,15 @@ function run_model(fn, optimizer=nothing)
     # Link it to the Availability node
     d81 = EMB.Direct(81, data[:nodes][8], data[:nodes][1], EMB.Linear())
     push!(data[:links], d81)
+
+    # Add a hydropower source
+    hydro = RegulatedHydroStorage(9, FixedProfile(2.), 10, 90,
+        FixedProfile(1), 0.0, FixedProfile(3), Dict(Power=>1.), emissions)
+    push!(data[:nodes], hydro)
+
+    # Link it to the Availability node
+    d91 = EMB.Direct(91, data[:nodes][9], data[:nodes][1], EMB.Linear())
+    push!(data[:links], d91)
 
     case = EMB.OperationalCase(EMB.StrategicFixedProfile([450, 400, 350, 300]))    # 
     model = EMB.OperationalModel(case)
@@ -28,6 +37,11 @@ function run_model(fn, optimizer=nothing)
         optimize!(m)
         # TODO: print_solution(m) optionally show results summary (perhaps using upcoming JuMP function)
         # TODO: save_solution(m) save results
+        display(m)
+
+        @show value.(m[:stor_level])
+        @show value.(m[:stor_max])
+        @show value.(m[:cap_usage])
     else
         @info "No optimizer given"
     end
