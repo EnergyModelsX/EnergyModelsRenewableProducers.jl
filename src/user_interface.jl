@@ -19,9 +19,10 @@ function run_model(fn, optimizer=nothing)
     d81 = EMB.Direct(81, data[:nodes][8], data[:nodes][1], EMB.Linear())
     push!(data[:links], d81)
 
-    # Add a hydropower source
-    hydro = RegulatedHydroStorage(9, FixedProfile(2.), 10, 90,
-        FixedProfile(1), 0.0, FixedProfile(3), Dict(Power=>1.), emissions)
+    hydro = RegulatedHydroStorage(9, FixedProfile(2.), false, 10, 90,
+        FixedProfile(1), 0.0, 
+        FixedProfile(3), Dict(Power=>0.9), Dict(Power=>1), 
+        Dict(CO2=>0.01, NG=>0))
     push!(data[:nodes], hydro)
 
     # Link it to the Availability node
