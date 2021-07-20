@@ -55,10 +55,10 @@ end
 
 @testset "RenewableProducers" begin
 
-    @testset "NonDispatchableRenewableEnergy" begin
+    @testset "NonDisRES" begin
         data = small_graph()
         
-        wind = NonDispatchableRenewableEnergy("wind", FixedProfile(2), FixedProfile(0.9), 
+        wind = NonDisRES("wind", FixedProfile(2), FixedProfile(0.9), 
             FixedProfile(10), Dict(Power=>1), Dict(CO2=>0.1, NG=>0))
 
         push!(data[:nodes], wind)
@@ -73,17 +73,27 @@ end
         @testset "cap_max" begin
             @test sum(value.(m[:cap_max][wind, t]) == wind.capacity[wind] for t ∈ 𝒯) == length(𝒯)
         end
+        
+        @testset "cap_usage bounds" begin
+            # Test that cap_usage is bounded by cap_max.
+            @test sum(value.(m[:cap_usage][wind, t]) <= value.(m[:cap_max][wind, t]) for t ∈ 𝒯) == length(𝒯)
+                
+            # Test that cap_usage is set correctly with respect to the profile.
+            @test sum(value.(m[:cap_usage][wind, t]) == wind.profile[t] * value.(m[:cap_max][wind, t])
+                    for t ∈ 𝒯) == length(𝒯)
+        end
+
 
     end
 
-    @testset "RegulatedHydroStorage without pump" begin
+    @testset "RegHydroStor without pump" begin
         # Setup a model with a RegulatedHydroStorage without a pump.
         data = small_graph()
         
         max_storage = 100
         min_level = 0.1
         
-        hydro = RegulatedHydroStorage(9, FixedProfile(2.), 
+        hydro = RegHydroStor(9, FixedProfile(2.), 
             false, 20, max_storage, FixedProfile(1), min_level, 
             FixedProfile(10), Dict(Power=>0.9), Dict(Power=>1), 
             Dict(CO2=>0.01, NG=>0))

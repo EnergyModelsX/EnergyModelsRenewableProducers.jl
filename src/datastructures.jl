@@ -1,5 +1,5 @@
 " A non-dispatchable renewable energy source."
-struct NonDispatchableRenewableEnergy <: EMB.Source
+struct NonDisRES <: EMB.Source
     id
     capacity::TimeProfile # Installed capacity, should be a Real.
     profile::TimeProfile # Power production profile as a ratio of the max capacity.
@@ -10,7 +10,7 @@ end
 
 
 " A regulated hydropower storage without pumping capabilities, modelled as a Source."
-struct RegulatedHydroStorage <: EMB.Storage
+struct RegHydroStor <: EMB.Storage
     id
     capacity::TimeProfile # Installed capacity, should be a Real.
     

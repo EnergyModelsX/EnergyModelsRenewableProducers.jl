@@ -1,6 +1,6 @@
 " Constraints for a non-dispatchable renewable energy source.
 "
-function EMB.create_node(m, n::NonDispatchableRenewableEnergy, 𝒯, 𝒫)
+function EMB.create_node(m, n::NonDisRES, 𝒯, 𝒫)
     # Declaration of the required subsets.
     𝒫ᵒᵘᵗ = keys(n.output)
     𝒫ᵉᵐ = EMB.res_sub(𝒫, EMB.ResourceEmit)
@@ -19,6 +19,9 @@ function EMB.create_node(m, n::NonDispatchableRenewableEnergy, 𝒯, 𝒫)
         @constraint(m, [t ∈ 𝒯], 
             m[:flow_out][n, t, p] == m[:cap_usage][n, t] * n.output[p])
     end
+
+    @constraint(m, [t ∈ 𝒯], 
+        m[:cap_usage][n, t] <= m[:cap_max][n, t])
 
     # Constraint for the emissions associated to energy sources from construction.
     @constraint(m, [t ∈ 𝒯, p_em ∈ 𝒫ᵉᵐ],
@@ -108,7 +111,7 @@ function prepare_node(m, n::Storage, 𝒯, 𝒫)
 end
 
 
-function EMB.create_node(m, n::RegulatedHydroStorage, 𝒯, 𝒫)
+function EMB.create_node(m, n::RegHydroStor, 𝒯, 𝒫)
     # Variables and constraints for the StorSource
     prepare_node(m, n, 𝒯, 𝒫)
 
