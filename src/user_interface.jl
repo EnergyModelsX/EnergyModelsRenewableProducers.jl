@@ -28,7 +28,11 @@ function run_model(fn, optimizer=nothing)
     # Link it to the Availability node
     d91 = EMB.Direct(91, data[:nodes][9], data[:nodes][1], EMB.Linear())
     push!(data[:links], d91)
+    
+    return run_model(fn, optimizer, data)
+end
 
+function run_model(fn, optimizer, data)
     case = EMB.OperationalCase(EMB.StrategicFixedProfile([450, 400, 350, 300]))    # 
     model = EMB.OperationalModel(case)
     m = EMB.create_model(data, model)
@@ -38,13 +42,8 @@ function run_model(fn, optimizer=nothing)
         optimize!(m)
         # TODO: print_solution(m) optionally show results summary (perhaps using upcoming JuMP function)
         # TODO: save_solution(m) save results
-        display(m)
-
-        @show value.(m[:stor_level])
-        @show value.(m[:stor_max])
-        @show value.(m[:cap_usage])
     else
         @info "No optimizer given"
     end
-    return 0
+    return m, data
 end
