@@ -10,7 +10,7 @@ end
 
 
 " A regulated hydropower storage without pumping capabilities, modelled as a Source."
-struct RegulatedHydroStorage <: EMB.StorSource
+struct RegulatedHydroStorage <: EMB.Storage
     id
     capacity::TimeProfile # Installed capacity, should be a Real.
     
