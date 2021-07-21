@@ -34,12 +34,42 @@ function EMB.create_node(m, n::NonDisRES, 𝒯, 𝒫)
 end
 
 
-function prepare_node(m, n::Storage, 𝒯, 𝒫)
-    # The resource that is in n.output is stored. The resources in n.input are
+" This method checks that the RegHydroStor node is valid. "
+function assert_valid_hydro_storage(n::RegHydroStor, 𝒯)
+    @assert length(n.output) == 1 "Only one resource can be stored, so only this one can flow out."
+    
+    for v in values(n.output)
+           @assert v == 1 "The value of the stored resource in n.output has to be 1."
+    end
+
+    for v in values(n.input)
+        @assert v <= 1 "The values of the input variables has to be less than or equal to 1."
+    end
+
+    for t_inv in strategic_periods(𝒯)
+        t = first_operational(t_inv)
+        # TODO må man sjekke at reservoaret ikke er over- eller underfyllt fra starten?
+    end
+end
+
+
+# function prepare_node(m, n::RegHydroStor, 𝒯, 𝒫)
+function EMB.create_node(m, n::RegHydroStor, 𝒯, 𝒫)
+    # Check that the node is valid.
+    assert_valid_hydro_storage(n, 𝒯)
+
+    # The resource (there should be only one) in n.output is stored. The resources in n.input are
     # either stored, or used by the storage.
     p_stor = [k for (k, v) ∈ n.output if v == 1][1]
     𝒫ᵉᵐ   = EMB.res_sub(𝒫, ResourceEmit)
     𝒯ᴵⁿᵛ  = strategic_periods(𝒯)
+
+
+    # If the reservoir has no pump, the stored resource cannot flow in.
+    # TODO what if resources are needed to run the production of the reservoir? Maybe not supperted..
+    if ! n.has_pump
+        @constraint(m, [t ∈ 𝒯], m[:flow_in][n, t, p_stor] == 0)
+    end
 
     # Flow of resources
     for p ∈ keys(n.input)
@@ -49,6 +79,9 @@ function prepare_node(m, n::Storage, 𝒯, 𝒫)
                 m[:flow_in][n, t, p] == n.input[p] * m[:flow_in][n, t, p_stor])
         end
     end
+
+    # This constraint will not be used when the node fulfills the assertion that 
+    # n.output only contains one resource (the one that is stored and produced).
     for p ∈ keys(n.output)
         if p != p_stor
             # The resources that is used, but not stored, can not flow out.
@@ -56,50 +89,32 @@ function prepare_node(m, n::Storage, 𝒯, 𝒫)
         end
     end
 
-    # TODO where should we multiply with n.input[p] for the loss of the stored resource?
-    # - loss of a ResourceEmit would mean an emission.
-    for t_inv ∈ 𝒯ᴵⁿᵛ
-        for t ∈ t_inv
-            if t == first_operational(t_inv)
-                if p_stor ∈ 𝒫ᵉᵐ
-                    @constraint(m, 
-                        m[:stor_level][n, t] >= m[:flow_in][n, t, p_stor]
-                                                - m[:emissions_node][n, t, p_stor])
-                    @constraint(m, m[:emissions_node][n, t, p_stor] >= 0)
-                else
-                    # TODO not last_operational(previous(t_inv))?
-                    @constraint(m, 
-                        m[:stor_level][n, t] >=  m[:stor_level][n, last_operational(t_inv)] + 
-                                    n.input[p_stor] * m[:flow_in][n, t , p_stor] -
-                                    m[:flow_out][n, t , p_stor])
-                end
-            else
-                if p_stor ∈ 𝒫ᵉᵐ
-                    @constraint(m, 
-                        m[:stor_level][n, t] >= m[:stor_level][n, previous(t)]
-                                                + m[:flow_in][n, t, p_stor]
-                                                - m[:emissions_node][n, t, p_stor])
-                    @constraint(m, m[:emissions_node][n, t, p_stor] >= 0)
-                else
-                    @constraint(m, 
-                        m[:stor_level][n, t] >=  m[:stor_level][n, previous(t)]
-                                    + n.input[p_stor] * m[:flow_in][n, t , p_stor]
-                                    - m[:flow_out][n, t , p_stor])
-                end
-            end
+    # The storage level in the reservoir at operational time t, is the stor_level
+    # of the previous operation period plus the inflow of period t minus the production
+    # (cap_usage) of period t. For the first operational period in an investment period, 
+    # stor_level is the initial reservoir level, plus inflow, minus the production in that period.
+    for t_inv ∈ 𝒯ᴵⁿᵛ, t ∈ t_inv
+        if t == first_operational(t_inv)
+            # TODO not last_operational(previous(t_inv))?
+            @constraint(m, 
+                m[:stor_level][n, t] ==  n.init_reservoir
+                            + n.inflow[t] + n.input[p_stor] * m[:flow_in][n, t , p_stor] 
+                            - m[:flow_out][n, t , p_stor])
+        else
+            @constraint(m, 
+                m[:stor_level][n, t] ==  m[:stor_level][n, previous(t)]
+                            + n.inflow[t] + n.input[p_stor] * m[:flow_in][n, t, p_stor]
+                            - m[:flow_out][n, t , p_stor])
         end
     end
+
+    # The flow_out is equal to the production cap_usage.
+    @constraint(m, [t ∈ 𝒯], m[:flow_out][n, t, p_stor] == m[:cap_usage][n, t])
 
     # Constraints identical to other Source nodes.
     𝒫ᵒᵘᵗ = keys(n.output)
     𝒫ᵉᵐ = EMB.res_sub(𝒫, ResourceEmit)
     𝒯ᴵⁿᵛ = strategic_periods(𝒯)
-
-    # Constraint for the individual stream connections.
-    for p ∈ 𝒫ᵒᵘᵗ
-        @constraint(m, [t ∈ 𝒯], 
-            m[:flow_out][n, t, p] == m[:cap_usage][n, t] * n.output[p])
-    end
 
     # Constraint for the emissions associated to energy sources from construction.
     @constraint(m, [t ∈ 𝒯, p_em ∈ 𝒫ᵉᵐ],
@@ -108,29 +123,6 @@ function prepare_node(m, n::Storage, 𝒯, 𝒫)
     # Constraint for the Opex contributions
     @constraint(m, [t_inv ∈ 𝒯ᴵⁿᵛ],
         m[:opex_var][n, t_inv] == sum(m[:cap_usage][n, t]*n.var_opex[t] for t ∈ t_inv))
-end
-
-
-function EMB.create_node(m, n::RegHydroStor, 𝒯, 𝒫)
-    # Variables and constraints for the StorSource
-    prepare_node(m, n, 𝒯, 𝒫)
-
-    if ! n.has_pump
-        @constraint(m, [t ∈ 𝒯, p ∈ keys(n.input)], m[:flow_in][n, t, p] == 0)
-    end
-
-    # The storage level in the reservoir at operational time t, is the stor_level
-    # of the previous operation period plus the inflow of period t minus the production
-    # (cap_usage) of period t. For the first operational period in an investment period, 
-    # stor_level is the initial reservoir level minus the production in that period.
-    for t_inv ∈ strategic_periods(𝒯), t ∈ t_inv
-        if t == first_operational(t_inv)
-            @constraint(m, m[:stor_level][n, t] == n.init_reservoir - m[:cap_usage][n, t])
-        else
-            @constraint(m, m[:stor_level][n, t] == m[:stor_level][n, previous(t)] 
-                + n.inflow[t] - m[:cap_usage][n, t])
-        end
-    end
 
     # The storage level at every time must be less than the installed storage capacity.
     # TODO it should be pssible to invest in stor_max, this might have to be moved.

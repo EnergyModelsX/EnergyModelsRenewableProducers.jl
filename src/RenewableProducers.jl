@@ -10,6 +10,4 @@ include("datastructures.jl")
 include("model.jl")
 include("user_interface.jl")
 
-export NonDisRES, RegHydroStor
-
 end # module
