@@ -16,7 +16,7 @@ struct RegHydroStor <: EMB.Storage
     
     has_pump::Bool
     init_reservoir::Real # Initial energy stored in the dam, in units of power.
-    cap_reservoir::Real # Initial installed storage capacity in the dam.
+    cap_storage::Real # Initial installed storage capacity in the dam.
     inflow::TimeProfile # Inflow of power per operational period.
     min_level::Real # Minimum fraction of the reservoir capacity that can be left.
     

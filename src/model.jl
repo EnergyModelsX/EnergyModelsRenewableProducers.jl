@@ -1,5 +1,4 @@
-" Constraints for a non-dispatchable renewable energy source.
-"
+" Constraints for a non-dispatchable renewable energy source."
 function EMB.create_node(m, n::NonDisRES, 𝒯, 𝒫)
     # Declaration of the required subsets.
     𝒫ᵒᵘᵗ = keys(n.output)
@@ -46,9 +45,19 @@ function assert_valid_hydro_storage(n::RegHydroStor, 𝒯)
         @assert v <= 1 "The values of the input variables has to be less than or equal to 1."
     end
 
+    @assert n.init_reservoir <= n.cap_storage "The initial reservoir has to be less or equal to the max storage capacity."
+
     for t_inv in strategic_periods(𝒯)
         t = first_operational(t_inv)
-        # TODO må man sjekke at reservoaret ikke er over- eller underfyllt fra starten?
+        # Check that the reservoir doesn't overfill in the first operational period of an investment period.
+        @assert n.init_reservoir + n.inflow[t] - n.capacity[t] <= n.cap_storage "The dam must have the installed production capacity to handle the inflow."
+
+        # Check that the reservoir isn't underfilled from the start.
+        @assert n.init_reservoir + n.inflow[t] >= n.min_level * n.cap_storage "The reservoir can't be underfilled from the start."
+    end
+
+    for t ∈ 𝒯
+        @assert n.capacity[t] >= 0 "The production capacity n.capacity has to be non-negative."
     end
 end
 
@@ -141,9 +150,5 @@ function EMB.create_node(m, n::RegHydroStor, 𝒯, 𝒫)
     # energymodelsbase/model.jl, to make sure it is compatible with the 
     # investment package. This need to be done for other nodes too.
     @constraint(m, [t ∈ 𝒯], m[:cap_usage][n, t] <= m[:cap_max][n, t])
-
-    # TODO it should be possible to invest in stor_max, so this might have to be moved, 
-    # so it can depend on modeltype (InvestmentModel <: EnergyModel).
-    @constraint(m, [t ∈ 𝒯], m[:stor_max][n, t] == n.cap_reservoir)
 
 end

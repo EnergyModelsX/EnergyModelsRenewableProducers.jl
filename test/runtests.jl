@@ -1,4 +1,3 @@
-using Base: source_dir
 using EnergyModelsBase
 using Test
 using TimeStructures
@@ -14,6 +13,8 @@ NG = ResourceEmit("NG", 0.2)
 CO2 = ResourceEmit("CO2", 1.)
 Power = ResourceCarrier("Power", 0.)
 # Coal     = ResourceCarrier("Coal", 0.35)
+
+ROUND_DIGITS = 8
 
 
 function small_graph(source=nothing, sink=nothing)
@@ -41,7 +42,7 @@ function small_graph(source=nothing, sink=nothing)
             ]
 
     T = UniformTwoLevel(1, 4, 1, UniformTimes(1, 24, 1))
-    # WIP data structure
+
     data = Dict(
                 :nodes => nodes,
                 :links => links,
@@ -64,13 +65,14 @@ function general_tests(m)
 end
 
 
-function general_hydro_tests(m, data, hydro)
+function general_hydro_tests(m, data, hydro::RP.RegHydroStor)
     𝒯 = data[:T]
     p_stor = [k for (k, v) ∈ hydro.output if v == 1][1]
 
     @testset "stor_level bounds" begin
         # The storage level has to be greater than the required minimum.
-        @test sum(hydro.min_level * hydro.cap_reservoir <= value.(m[:stor_level][hydro, t]) for t in 𝒯) == length(data[:T])
+        @test sum(hydro.min_level * value.(m[:stor_max][hydro, t]) 
+                <= round(value.(m[:stor_level][hydro, t]), digits=ROUND_DIGITS) for t in 𝒯) == length(data[:T])
         
         # The stor_level has to be less than stor_max in all operational periods.
         @test sum(value.(m[:stor_level][hydro, t]) <= value.(m[:stor_max][hydro, t]) for t in 𝒯) == length(data[:T])
@@ -97,6 +99,9 @@ function general_hydro_tests(m, data, hydro)
     @testset "stor_max bounds" begin
         # Assure that the stor_max variable is non-negative.
         @test sum(value.(m[:stor_max][hydro, t]) >= 0 for t ∈ 𝒯) == length(𝒯)
+       
+        # Check that stor_max is set to n.cap_storage.
+        @test sum(value.(m[:stor_max][hydro, t]) == hydro.cap_storage for t ∈ 𝒯) == length(𝒯)
     end
 
     @testset "cap_usage bounds" begin
@@ -104,7 +109,8 @@ function general_hydro_tests(m, data, hydro)
         @test sum(value.(m[:cap_usage][hydro, t]) <= value.(m[:stor_level][hydro, t]) 
                 for t ∈ 𝒯) == length(𝒯)
 
-        @test sum(round(value.(m[:cap_usage][hydro, t]), digits=10) <= value.(m[:cap_max][hydro, t])
+        # Check that cap_usage is bounded above by cap_max.
+        @test sum(round(value.(m[:cap_usage][hydro, t]), digits=ROUND_DIGITS) <= value.(m[:cap_max][hydro, t])
                 for t ∈ 𝒯) == length(𝒯)
     end
 
@@ -159,15 +165,17 @@ end
         max_storage = 100
         min_level = 0.1
         
-        hydro = RP.RegHydroStor(9, FixedProfile(2.), 
+        hydro = RP.RegHydroStor("-hydro", FixedProfile(2.), 
             false, 20, max_storage, FixedProfile(1), min_level, 
             FixedProfile(10), Dict(Power=>0.9), Dict(Power=>1), 
             Dict(CO2=>0.01, NG=>0))
         
         push!(data[:nodes], hydro)
-        link = EMB.Direct(41, data[:nodes][4], data[:nodes][1], EMB.Linear())
-        push!(data[:links], link)
-        
+        link_from = EMB.Direct(41, data[:nodes][4], data[:nodes][1], EMB.Linear())
+        push!(data[:links], link_from)
+        link_to = EMB.Direct(14, data[:nodes][1], data[:nodes][4], EMB.Linear())
+        push!(data[:links], link_to)
+
         m, data = RP.run_model("", GLPK.Optimizer, data)
 
         𝒯 = data[:T]
@@ -180,37 +188,68 @@ end
             # No pump means no inflow.
             @test sum(value.(m[:flow_in][hydro, t, p]) == 0 for t ∈ 𝒯 for p ∈ keys(hydro.input)) == length(𝒯)
         end
+        
+        @testset "flow_in" begin
+            # Check that the zero equality constraint is set on the flow_in variable 
+            # when the pump is not allowed. If this fais, there might be errors in 
+            # the links to the node. The hydro node need one in and one out.
+            @test sum(occursin("flow_in[n-hydro,t1_1,Power] == 0.0", string(constraint))
+                for constraint ∈ all_constraints(m, AffExpr, MOI.EqualTo{Float64})) == 1
+        end
+            
     end
+
 
     @testset "RegHydroStor with pump" begin
         # Setup a model with a RegulatedHydroStorage without a pump.
         
         products = [NG, Power, CO2]
         𝒫ᵉᵐ₀ = Dict(k  => 0. for k ∈ products if typeof(k) == ResourceEmit{Float64})
-        source = EMB.RefSource("-source", FixedProfile(10), FixedProfile(10), Dict(Power => 1), 𝒫ᵉᵐ₀)
-        sink = EMB.RefSink("-sink", FixedProfile(5), Dict(:surplus => 0, :deficit => 1e6), Dict(Power => 1), 𝒫ᵉᵐ₀)
+        source = EMB.RefSource("-source", DynamicProfile([10 10 10 10 10 0 0 0 0 0;
+                                                          10 10 10 10 10 0 0 0 0 0;]),
+                                FixedProfile(10), Dict(Power => 1), 𝒫ᵉᵐ₀)
+        sink = EMB.RefSink("-sink", FixedProfile(7), Dict(:surplus => 0, :deficit => 1e6), Dict(Power => 1), 𝒫ᵉᵐ₀)
         
         data = small_graph(source, sink)
         
         max_storage = 100
-        min_level = 0.1
+        min_level = 0.15
         
-        hydro = RP.RegHydroStor("-hydro", FixedProfile(1.), 
+        hydro = RP.RegHydroStor("-hydro", FixedProfile(10.), 
             true, 20, max_storage, FixedProfile(1), min_level, 
             FixedProfile(30), Dict(Power=>1), Dict(Power=>1), 
             Dict(CO2=>0.01, NG=>0))
         
         push!(data[:nodes], hydro)
-        link = EMB.Direct(41, data[:nodes][4], data[:nodes][1], EMB.Linear())
-        push!(data[:links], link)
+        link_from = EMB.Direct(41, data[:nodes][4], data[:nodes][1], EMB.Linear())
+        push!(data[:links], link_from)
+        link_to = EMB.Direct(14, data[:nodes][1], data[:nodes][4], EMB.Linear())
+        push!(data[:links], link_to)
 
+        data[:T] = UniformTwoLevel(1, 2, 1, UniformTimes(1, 10, 1))
         m, data = RP.run_model("", GLPK.Optimizer, data)
-        # print(m)
         𝒯 = data[:T]
 
         general_tests(m)
 
         general_hydro_tests(m, data, hydro)
 
-    end
+        @testset "flow_in" begin
+            # Check that the zero equality constraint is not set on the flow_in variable 
+            # when the pump is allowed. If this fails, there might be errors in the links
+            # to the node. The hydro node need one in and one out.
+            @test sum(occursin("flow_in[n-hydro,t1_1,Power] == 0.0", string(constraint))
+                for constraint ∈ all_constraints(m, AffExpr, MOI.EqualTo{Float64})) == 0
+        end
+
+        @testset "deficit" begin
+            if sum(value.(m[:deficit][sink, t]) for t ∈ 𝒯) > 0
+                # Check that the other source operates on its maximum if there is a deficit at the sink node,
+                # since this should be used to fill the reservoir (if the reservoir is not full enough at the
+                # beginning, and the inflow is too low).
+                @assert sum(value.(m[:cap_usage][source, t]) == value.(m[:cap_max][source, t]) for t ∈ 𝒯) == length(𝒯)
+            end
+        end
+
+    end # RegHydroStor with pump
 end
