@@ -15,10 +15,10 @@ struct RegHydroStor <: EMB.Storage
     capacity::TimeProfile # Installed capacity, should be a Real.
     
     has_pump::Bool
-    init_reservoir::Real # Initial energy stored in the dam, in units of power.
+    init_reservoir::TimeProfile # Initial energy stored in the dam, in units of power.
     cap_storage::Real # Initial installed storage capacity in the dam.
     inflow::TimeProfile # Inflow of power per operational period.
-    min_level::Real # Minimum fraction of the reservoir capacity that can be left.
+    min_level::TimeProfile # Minimum fraction of the reservoir capacity that can be left.
     
     var_opex::TimeProfile # Operational cost per GWh produced.
     input::Dict{EMB.Resource, Real} # Power used when pumping water into the reservoir.

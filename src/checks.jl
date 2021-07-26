@@ -21,16 +21,23 @@ function EMB.check_node(n::RP.RegHydroStor, 𝒯)
         @assert_or_log v <= 1 "The values of the input variables has to be less than or equal to 1."
     end
 
-    @assert_or_log n.init_reservoir <= n.cap_storage "The initial reservoir has to be less or equal to the max storage capacity."
+    @assert_or_log sum(n.init_reservoir[t] <= n.cap_storage for t ∈ 𝒯) == length(𝒯) "The initial reservoir has to be less or equal to the max storage capacity."
 
     for t_inv in strategic_periods(𝒯)
         t = first_operational(t_inv)
         # Check that the reservoir doesn't overfill in the first operational period of an investment period.
-        @assert_or_log n.init_reservoir + n.inflow[t] - n.capacity[t] <= n.cap_storage "The dam must have the installed production capacity to handle the inflow (" * string(t) * ")."
+        @assert_or_log n.init_reservoir[t_inv] + n.inflow[t] - n.capacity[t] <= n.cap_storage "The dam must have the installed production capacity to handle the inflow (" * string(t) * ")."
 
         # Check that the reservoir isn't underfilled from the start.
-        @assert_or_log n.init_reservoir + n.inflow[t] >= n.min_level * n.cap_storage "The reservoir can't be underfilled from the start."
+        @assert_or_log n.init_reservoir[t_inv] + n.inflow[t] >= n.min_level[t_inv] * n.cap_storage "The reservoir can't be underfilled from the start."
     end
 
+    @assert_or_log sum(n.init_reservoir[t] < 0 for t ∈ 𝒯) == 0 "The init_reservoir can not be negative."
+
     @assert_or_log sum(n.capacity[t] < 0 for t ∈ 𝒯) == 0 "The production capacity n.capacity has to be non-negative."
+
+    # min_level
+    @assert_or_log sum(n.min_level[t] < 0 for t ∈ 𝒯) == 0 "The min_level can not be negative."
+    @assert_or_log sum(n.min_level[t] > 1 for t ∈ 𝒯) == 0 "The min_level can not be larger than 1."
+
 end

@@ -65,62 +65,62 @@ function general_tests(m)
 end
 
 
-function general_hydro_tests(m, data, hydro::RP.RegHydroStor)
+function general_node_tests(m, data, n::RP.RegHydroStor)
     𝒯 = data[:T]
-    p_stor = [k for (k, v) ∈ hydro.output if v == 1][1]
+    p_stor = [k for (k, v) ∈ n.output if v == 1][1]
 
     @testset "stor_level bounds" begin
         # The storage level has to be greater than the required minimum.
-        @test sum(hydro.min_level * value.(m[:stor_max][hydro, t]) 
-                <= round(value.(m[:stor_level][hydro, t]), digits=ROUND_DIGITS) for t in 𝒯) == length(data[:T])
+        @test sum(n.min_level[t] * value.(m[:stor_max][n, t]) 
+                <= round(value.(m[:stor_level][n, t]), digits=ROUND_DIGITS) for t in 𝒯) == length(data[:T])
         
         # The stor_level has to be less than stor_max in all operational periods.
-        @test sum(value.(m[:stor_level][hydro, t]) <= value.(m[:stor_max][hydro, t]) for t in 𝒯) == length(data[:T])
+        @test sum(value.(m[:stor_level][n, t]) <= value.(m[:stor_max][n, t]) for t in 𝒯) == length(data[:T])
         # TODO valing Storage node har negativ stor_max et par steder.
         # TODO this is ok when inflow=1. When inflow=10 the stor_level gets too large. Why?
         #  - Do we need some other sink in the system? Not logical to be left with too much power.
 
         # At the first operation period of each investment period, the stor_level is set as 
         # the initial reservoir level minus the production in that period.
-        @test sum(value.(m[:stor_level][hydro, first_operational(t_inv)]) 
-                    ≈ hydro.init_reservoir + hydro.inflow[first_operational(t_inv)]
-                     + value.(m[:flow_in][hydro, first_operational(t_inv), p_stor])
-                     - value.(m[:cap_usage][hydro, first_operational(t_inv)])
+        @test sum(value.(m[:stor_level][n, first_operational(t_inv)]) 
+                    ≈ n.init_reservoir[t_inv] + n.inflow[first_operational(t_inv)]
+                     + value.(m[:flow_in][n, first_operational(t_inv), p_stor])
+                     - value.(m[:cap_usage][n, first_operational(t_inv)])
                 for t_inv ∈ strategic_periods(𝒯)) == length(strategic_periods(𝒯))
         
         # Check that stor_level is correct wrt. previous stor_level, inflow and cap_usage.
-        @test sum(value.(m[:stor_level][hydro, t]) ≈ value.(m[:stor_level][hydro, previous(t)]) 
-                    + hydro.inflow[t] + hydro.input[p_stor] * value.(m[:flow_in][hydro, t, p_stor])
-                    - value.(m[:cap_usage][hydro, t]) 
+        @test sum(value.(m[:stor_level][n, t]) ≈ value.(m[:stor_level][n, previous(t)]) 
+                    + n.inflow[t] + n.input[p_stor] * value.(m[:flow_in][n, t, p_stor])
+                    - value.(m[:cap_usage][n, t]) 
                 for t ∈ 𝒯 if t.op > 1) == length(𝒯) - 𝒯.len
         # TODO plus flow_in
     end
 
     @testset "stor_max bounds" begin
         # Assure that the stor_max variable is non-negative.
-        @test sum(value.(m[:stor_max][hydro, t]) >= 0 for t ∈ 𝒯) == length(𝒯)
+        @test sum(value.(m[:stor_max][n, t]) >= 0 for t ∈ 𝒯) == length(𝒯)
        
         # Check that stor_max is set to n.cap_storage.
-        @test sum(value.(m[:stor_max][hydro, t]) == hydro.cap_storage for t ∈ 𝒯) == length(𝒯)
+        @test sum(value.(m[:stor_max][n, t]) == n.cap_storage for t ∈ 𝒯) == length(𝒯)
     end
 
     @testset "cap_usage bounds" begin
         # Cannot produce more than what is stored in the reservoir.
-        @test sum(value.(m[:cap_usage][hydro, t]) <= value.(m[:stor_level][hydro, t]) 
+        @test sum(value.(m[:cap_usage][n, t]) <= value.(m[:stor_level][n, t]) 
                 for t ∈ 𝒯) == length(𝒯)
 
         # Check that cap_usage is bounded above by cap_max.
-        @test sum(round(value.(m[:cap_usage][hydro, t]), digits=ROUND_DIGITS) <= value.(m[:cap_max][hydro, t])
+        @test sum(round(value.(m[:cap_usage][n, t]), digits=ROUND_DIGITS) <= value.(m[:cap_max][n, t])
                 for t ∈ 𝒯) == length(𝒯)
     end
 
     @testset "cap_max" begin
-        @test sum(value.(m[:cap_max][hydro, t]) == hydro.capacity[t] for t ∈ 𝒯) == length(𝒯)
+        @test sum(value.(m[:cap_max][n, t]) == n.capacity[t] for t ∈ 𝒯) == length(𝒯)
     end
     
     @testset "flow variables" begin
         # The flow_out corresponds to the production cap_usage.
-        @test sum(value.(m[:flow_out][hydro, t, p_stor]) == value.(m[:cap_usage][hydro, t]) * hydro.output[Power] 
+        @test sum(value.(m[:flow_out][n, t, p_stor]) == value.(m[:cap_usage][n, t]) * n.output[Power] 
                 for t ∈ data[:T]) == length(𝒯)
 
     end
@@ -163,10 +163,11 @@ end
         data = small_graph()
         
         max_storage = 100
-        min_level = 0.1
+        initial_reservoir = StrategicFixedProfile([20, 25, 30, 20])
+        min_level = StrategicFixedProfile([0.1, 0.2, 0.05, 0.1])
         
         hydro = RP.RegHydroStor("-hydro", FixedProfile(2.), 
-            false, 20, max_storage, FixedProfile(1), min_level, 
+            false, initial_reservoir, max_storage, FixedProfile(1), min_level, 
             FixedProfile(10), Dict(Power=>0.9), Dict(Power=>1), 
             Dict(CO2=>0.01, NG=>0))
         
@@ -182,7 +183,7 @@ end
 
         general_tests(m)
 
-        general_hydro_tests(m, data, hydro)
+        general_node_tests(m, data, hydro)
 
         @testset "no pump" begin
             # No pump means no inflow.
@@ -197,7 +198,7 @@ end
                 for constraint ∈ all_constraints(m, AffExpr, MOI.EqualTo{Float64})) == 1
         end
             
-    end
+    end # testset RegHydroStor without pump
 
 
     @testset "RegHydroStor with pump" begin
@@ -213,10 +214,11 @@ end
         data = small_graph(source, sink)
         
         max_storage = 100
-        min_level = 0.15
+        initial_reservoir = StrategicFixedProfile([20, 25, 30, 20])
+        min_level = StrategicFixedProfile([0.1, 0.2, 0.05, 0.1])
         
         hydro = RP.RegHydroStor("-hydro", FixedProfile(10.), 
-            true, 20, max_storage, FixedProfile(1), min_level, 
+            true, initial_reservoir, max_storage, FixedProfile(1), min_level, 
             FixedProfile(30), Dict(Power=>1), Dict(Power=>1), 
             Dict(CO2=>0.01, NG=>0))
         
@@ -232,7 +234,7 @@ end
 
         general_tests(m)
 
-        general_hydro_tests(m, data, hydro)
+        general_node_tests(m, data, hydro)
 
         @testset "flow_in" begin
             # Check that the zero equality constraint is not set on the flow_in variable 
@@ -251,5 +253,5 @@ end
             end
         end
 
-    end # RegHydroStor with pump
+    end # testset RegHydroStor with pump
 end

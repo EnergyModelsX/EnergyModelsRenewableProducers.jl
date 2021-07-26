@@ -53,7 +53,7 @@ function EMB.create_node(m, n::RegHydroStor, 𝒯, 𝒫)
     for t_inv ∈ 𝒯ᴵⁿᵛ, t ∈ t_inv
         if t == first_operational(t_inv)
             @constraint(m, 
-                m[:stor_level][n, t] ==  n.init_reservoir
+                m[:stor_level][n, t] ==  n.init_reservoir[t]
                             + n.inflow[t] + n.input[p_stor] * m[:flow_in][n, t , p_stor] 
                             - m[:flow_out][n, t , p_stor])
         else
@@ -89,7 +89,7 @@ function EMB.create_node(m, n::RegHydroStor, 𝒯, 𝒫)
     
     # The minimum contents of the reservoir is bounded below. Not allowed 
     # to drain it completely.
-    @constraint(m, [t ∈ 𝒯], m[:stor_level][n, t] >= n.min_level * m[:stor_max][n, t])
+    @constraint(m, [t ∈ 𝒯], m[:stor_level][n, t] >= n.min_level[t] * m[:stor_max][n, t])
 
     # Assuming no investments, the production at every operational
     # period is bounded by the installed capacity.
