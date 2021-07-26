@@ -41,29 +41,9 @@ function EMB.create_node(m, n::RegHydroStor, 𝒯, 𝒫)
     𝒫ᵉᵐ   = EMB.res_sub(𝒫, ResourceEmit)
     𝒯ᴵⁿᵛ  = strategic_periods(𝒯)
 
-
     # If the reservoir has no pump, the stored resource cannot flow in.
-    # TODO what if resources are needed to run the production of the reservoir? Maybe not supperted..
     if ! n.has_pump
         @constraint(m, [t ∈ 𝒯], m[:flow_in][n, t, p_stor] == 0)
-    end
-
-    # Flow of resources
-    for p ∈ keys(n.input)
-        if p != p_stor
-            # The inflow of other resources that are required for operating the storage.
-            @constraint(m, [t ∈ 𝒯],
-                m[:flow_in][n, t, p] == n.input[p] * m[:flow_in][n, t, p_stor])
-        end
-    end
-
-    # This constraint will not be used when the node fulfills the assertion that 
-    # n.output only contains one resource (the one that is stored and produced).
-    for p ∈ keys(n.output)
-        if p != p_stor
-            # The resources that is used, but not stored, can not flow out.
-            @constraint(m, [t ∈ 𝒯], m[:flow_out][n, t, p] == 0)
-        end
     end
 
     # The storage level in the reservoir at operational time t, is the stor_level
@@ -72,7 +52,6 @@ function EMB.create_node(m, n::RegHydroStor, 𝒯, 𝒫)
     # stor_level is the initial reservoir level, plus inflow, minus the production in that period.
     for t_inv ∈ 𝒯ᴵⁿᵛ, t ∈ t_inv
         if t == first_operational(t_inv)
-            # TODO not last_operational(previous(t_inv))?
             @constraint(m, 
                 m[:stor_level][n, t] ==  n.init_reservoir
                             + n.inflow[t] + n.input[p_stor] * m[:flow_in][n, t , p_stor] 
