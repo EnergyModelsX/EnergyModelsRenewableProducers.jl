@@ -214,8 +214,8 @@ end
         data = small_graph(source, sink)
         
         max_storage = 100
-        initial_reservoir = StrategicFixedProfile([20, 25, 30, 20])
-        min_level = StrategicFixedProfile([0.1, 0.2, 0.05, 0.1])
+        initial_reservoir = StrategicFixedProfile([20, 25])
+        min_level = StrategicFixedProfile([0.1, 0.2])
         
         hydro = RP.RegHydroStor("-hydro", FixedProfile(10.), 
             true, initial_reservoir, max_storage, FixedProfile(1), min_level, 

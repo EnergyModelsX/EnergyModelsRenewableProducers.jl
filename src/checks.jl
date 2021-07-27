@@ -5,7 +5,6 @@ using JuMP
 using GLPK
 using RenewableProducers
 
-const EMB = EnergyModelsBase
 const RP = RenewableProducers
 
 
@@ -19,6 +18,7 @@ function EMB.check_node(n::RP.RegHydroStor, 𝒯)
 
     for v in values(n.input)
         @assert_or_log v <= 1 "The values of the input variables has to be less than or equal to 1."
+        @assert_or_log v >= 0 "The values of the input variables has to be non-negative."
     end
 
     @assert_or_log sum(n.init_reservoir[t] <= n.cap_storage for t ∈ 𝒯) == length(𝒯) "The initial reservoir has to be less or equal to the max storage capacity."
@@ -29,7 +29,7 @@ function EMB.check_node(n::RP.RegHydroStor, 𝒯)
         @assert_or_log n.init_reservoir[t_inv] + n.inflow[t] - n.capacity[t] <= n.cap_storage "The dam must have the installed production capacity to handle the inflow (" * string(t) * ")."
 
         # Check that the reservoir isn't underfilled from the start.
-        @assert_or_log n.init_reservoir[t_inv] + n.inflow[t] >= n.min_level[t_inv] * n.cap_storage "The reservoir can't be underfilled from the start."
+        @assert_or_log n.init_reservoir[t_inv] + n.inflow[t] >= n.min_level[t_inv] * n.cap_storage "The reservoir can't be underfilled from the start (" * string(t) * ")."
     end
 
     @assert_or_log sum(n.init_reservoir[t] < 0 for t ∈ 𝒯) == 0 "The init_reservoir can not be negative."
