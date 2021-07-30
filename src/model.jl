@@ -1,14 +1,24 @@
+
+" Create a curtailment variable for every NonDisRES node. This method is called
+from EnergyModelsBase utilizing multiple dispatch."
+function EMB.variables_node(m, 𝒩, 𝒯, node::NonDisRES, modeltype)
+    𝒩ⁿᵈʳ = EMB.node_sub(𝒩, NonDisRES)
+
+    @variable(m, curtailment[𝒩ⁿᵈʳ, 𝒯] >= 0)
+end
+
+
 " Constraints for a non-dispatchable renewable energy source."
 function EMB.create_node(m, n::NonDisRES, 𝒯, 𝒫)
     # Declaration of the required subsets.
     𝒫ᵒᵘᵗ = keys(n.output)
     𝒫ᵉᵐ = EMB.res_sub(𝒫, EMB.ResourceEmit)
     𝒯ᴵⁿᵛ = EMB.strategic_periods(𝒯)
- 
+
     # Non dispatchable renewable energy sources operate at their max
     # capacity with repsect to the current profile (e.g. wind) at every time.
     @constraint(m, [t ∈ 𝒯],
-        m[:cap_usage][n, t] == n.profile[t] * m[:cap_max][n, t])
+        m[:cap_usage][n, t] + m[:curtailment][n, t] == n.profile[t] * m[:cap_max][n, t])
 
 
     # Constraints identical to other Source nodes.
