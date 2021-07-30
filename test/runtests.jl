@@ -67,7 +67,7 @@ end
 
 function general_node_tests(m, data, n::RP.RegHydroStor)
     𝒯 = data[:T]
-    p_stor = [k for (k, v) ∈ n.output if v == 1][1]
+    p_stor = [k for (k, v) ∈ n.output][1]
 
     @testset "stor_level bounds" begin
         # The storage level has to be greater than the required minimum.
@@ -219,7 +219,7 @@ end
         
         hydro = RP.RegHydroStor("-hydro", FixedProfile(10.), 
             true, initial_reservoir, max_storage, FixedProfile(1), min_level, 
-            FixedProfile(30), Dict(Power=>1), Dict(Power=>1), 
+            FixedProfile(30), Dict(Power=>1), Dict(Power=>0.9), 
             Dict(CO2=>0.01, NG=>0))
         
         push!(data[:nodes], hydro)

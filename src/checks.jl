@@ -13,7 +13,7 @@ function EMB.check_node(n::RP.RegHydroStor, 𝒯)
     @assert_or_log length(n.output) == 1 "Only one resource can be stored, so only this one can flow out."
     
     for v in values(n.output)
-        @assert_or_log v == 1 "The value of the stored resource in n.output has to be 1."
+        @assert_or_log v <= 1 "The value of the stored resource in n.output has to be less than or equal to 1."
     end
 
     for v in values(n.input)

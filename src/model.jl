@@ -37,7 +37,7 @@ end
 function EMB.create_node(m, n::RegHydroStor, 𝒯, 𝒫)
     # The resource (there should be only one) in n.output is stored. The resources in n.input are
     # either stored, or used by the storage.
-    p_stor = [k for (k, v) ∈ n.output if v == 1][1]
+    p_stor = [k for (k, v) ∈ n.output][1]
     𝒫ᵉᵐ   = EMB.res_sub(𝒫, ResourceEmit)
     𝒯ᴵⁿᵛ  = strategic_periods(𝒯)
 
@@ -55,17 +55,17 @@ function EMB.create_node(m, n::RegHydroStor, 𝒯, 𝒫)
             @constraint(m, 
                 m[:stor_level][n, t] ==  n.init_reservoir[t]
                             + n.inflow[t] + n.input[p_stor] * m[:flow_in][n, t , p_stor] 
-                            - m[:flow_out][n, t , p_stor])
+                            - m[:cap_usage][n, t])
         else
             @constraint(m, 
                 m[:stor_level][n, t] ==  m[:stor_level][n, previous(t)]
                             + n.inflow[t] + n.input[p_stor] * m[:flow_in][n, t, p_stor]
-                            - m[:flow_out][n, t , p_stor])
+                            - m[:cap_usage][n, t])
         end
     end
 
     # The flow_out is equal to the production cap_usage.
-    @constraint(m, [t ∈ 𝒯], m[:flow_out][n, t, p_stor] == m[:cap_usage][n, t])
+    @constraint(m, [t ∈ 𝒯], m[:flow_out][n, t, p_stor] == m[:cap_usage][n, t] * n.output[p_stor])
 
     # The storage level at every time must be less than the installed storage capacity.
     # TODO it should be pssible to invest in stor_max, this might have to be moved.
