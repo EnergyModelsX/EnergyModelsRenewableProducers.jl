@@ -4,6 +4,7 @@ struct NonDisRES <: EMB.Source
     capacity::TimeProfile # Installed capacity, should be a Real.
     profile::TimeProfile # Power production profile as a ratio of the max capacity.
     var_opex::TimeProfile # Operational costs per GWh produced.
+    fixed_opex::TimeProfile
     output::Dict{EMB.Resource, Real}
     emissions::Dict{EMB.ResourceEmit, Real} # Emissions per GWh produced.
 end
@@ -21,6 +22,7 @@ struct RegHydroStor <: EMB.Storage
     min_level::TimeProfile # Minimum fraction of the reservoir capacity that can be left.
     
     var_opex::TimeProfile # Operational cost per GWh produced.
+    fixed_opex::TimeProfile
     input::Dict{EMB.Resource, Real} # Power used when pumping water into the reservoir.
     output::Dict{EMB.Resource, Real} # Power produced per operational period.
     emissions::Dict{ResourceEmit, Real} # Emissions per GWh produced.

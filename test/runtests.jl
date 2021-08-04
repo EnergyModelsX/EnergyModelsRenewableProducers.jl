@@ -34,7 +34,7 @@ function small_graph(source=nothing, sink=nothing)
     end
 
     nodes = [
-            EMB.Availability(1, 𝒫₀, 𝒫₀), source, sink
+            EMB.GenAvailability(1, 𝒫₀, 𝒫₀), source, sink
             ]
     links = [
             EMB.Direct(21, nodes[2], nodes[1], EMB.Linear())
