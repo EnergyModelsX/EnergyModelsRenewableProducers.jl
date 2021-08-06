@@ -7,6 +7,7 @@ struct NonDisRES <: EMB.Source
     fixed_opex::TimeProfile
     output::Dict{EMB.Resource, Real}
     emissions::Dict{EMB.ResourceEmit, Real} # Emissions per GWh produced.
+    data::Dict{String, EMB.Data} # Additional data (e.g. for investments)
 end
 
 
@@ -26,4 +27,5 @@ struct RegHydroStor <: EMB.Storage
     input::Dict{EMB.Resource, Real} # Power used when pumping water into the reservoir.
     output::Dict{EMB.Resource, Real} # Power produced per operational period.
     emissions::Dict{ResourceEmit, Real} # Emissions per GWh produced.
+    data::Dict{String, EMB.Data} # Additional data (e.g. for investments)
 end
