@@ -1,11 +1,12 @@
 const EMB = EnergyModelsBase
-const RP = RenewableProducers
+const GEO = Geography
 const IM = InvestmentModels
+const RP = RenewableProducers
 
 NG = ResourceEmit("NG", 0.2)
 CO2 = ResourceEmit("CO2", 1.)
 Power = ResourceCarrier("Power", 0.)
-# Coal     = ResourceCarrier("Coal", 0.35)
+Coal     = ResourceCarrier("Coal", 0.35)
 
 
 
@@ -57,12 +58,12 @@ function nord_nodes()
         IM.ContinuousInvestment() # investment mode
     )
     wind = RP.NonDisRES("-nwind", FixedProfile(2), profile,
-        FixedProfile(1000 * 12 * 1e-6 / 356), # var_opex [€/kW(12h)]
+        FixedProfile(1000 * 12 * 1e-6), # var_opex [€/kW(12h)]
         FixedProfile(100 / 365), # fixed_opex [€/kW]
         Dict(Power=>1), Dict(CO2=>0.1, NG=>0), Dict("InvestmentModels"=>investment_data))
 
-    nords_av = Geography.GeoAvailability("-a-nord", Dict(Power=>1), Dict(Power=>1))
-    nords_area = Geography.Area("nordsjøen", "Nordsjøen", 56.023, 3.164, nords_av)
+    nords_av = GEO.GeoAvailability("-a-nord", Dict(Power=>1), Dict(Power=>1))
+    nords_area = GEO.Area("nordsjøen", "Nordsjøen", 56.023, 3.164, nords_av)
 
     nodes = [nords_av, wind]
     links = [EMB.Direct("n:w-av", nodes[2], nodes[1], EMB.Linear())]
@@ -75,6 +76,28 @@ function denmark_nodes()
 
     # TODO add Source? FixedStrategic for source. Sink: mindre om natten enn dagen, mer om vinter enn om dagen
     # source, sink
+
+    investment_data_source = IM.extra_inv_data(
+        FixedProfile(1200), # capex [€/kW]
+        FixedProfile(1000), # FIX! # max installed capacity [kW]
+        2e6, # FIX! existing capacity [kW]
+        FixedProfile(0), # max_add [kW]
+        FixedProfile(0), # min_add [kW]
+        IM.ContinuousInvestment() # investment mode
+    )
+    source = EMB.RefSource("-dsource", FixedProfile(2e6), # id, capacity
+        FixedProfile(500e-3), # var_opex
+        FixedProfile(100 / 365), # fixed_opex
+        Dict(Power=>1), # output
+        Dict(CO2=>1, NG => 0.1), # emissions
+        Dict("InvestmentModels"=>investment_data_source)
+    )
+
+    sink = EMB.RefSink("-dsink", FixedProfile(300), # id, capacity
+        Dict(:surplus=>0, :deficit=>1e6), # penalty 
+        Dict(Power => 1), # input
+        Dict(CO2 => 1, NG => 0.2), # emissions 
+    )
 
     # Mean=0.25, std=0.1
     wind_profile = DynamicProfile([
@@ -91,16 +114,20 @@ function denmark_nodes()
         FixedProfile(0), # min_add [kW]
         IM.ContinuousInvestment() # investment mode
     )
-    wind = RP.NonDisRES("-dwind", FixedProfile(2), FixedProfile(0.9), 
-        FixedProfile(500 * 1e-6 / 365), # var_opex [€/kW(12h)]
+    wind = RP.NonDisRES("-dwind", FixedProfile(2), wind_profile, 
+        FixedProfile(500 * 1e-6), # var_opex [€/kW(12h)]
         FixedProfile(50 / 365), # fixed_opex [€/kW]
         Dict(Power=>1), Dict(CO2=>0.1, NG=>0), Dict("InvestmentModels"=>investment_data))
 
-    den_av = Geography.GeoAvailability("-a-den", Dict(Power=>1), Dict(Power=>1))
-    den_area = Geography.Area("den", "Danmark", 56.0966, 8.2178, den_av)
+    den_av = GEO.GeoAvailability("-a-den", Dict(Power=>1), Dict(Power=>1))
+    den_area = GEO.Area("den", "Danmark", 56.0966, 8.2178, den_av)
 
-    nodes = [den_av, wind]
-    links = [EMB.Direct("n:w-av", nodes[2], nodes[1], EMB.Linear())]
+    nodes = [den_av, wind, source, sink]
+    links = [
+        EMB.Direct("d:w-av", nodes[2], nodes[1], EMB.Linear()),
+        EMB.Direct("d:src-av", nodes[3], nodes[1], EMB.Linear()),
+        EMB.Direct("d:snk-av", nodes[1], nodes[4], EMB.Linear())
+    ]
     
     return den_area, den_av, nodes, links
 end
@@ -116,11 +143,11 @@ function get_data()
     links = [agd_links..., nor_links..., den_links...]
 
     # Transmissions
-    trm_agder_nord = Geography.RefStatic("a-n", Power, 10, 1)
-    tr_agder_nord = Geography.Transmission(agd_area, nor_area, [trm_agder_nord])
+    trm_agder_nord = GEO.RefStatic("a-n", Power, 10, 1)
+    tr_agder_nord = GEO.Transmission(agd_area, nor_area, [trm_agder_nord])
 
-    trm_den_nord = Geography.RefStatic("d-n", Power, 12, 1.2)
-    tr_den_nord = Geography.Transmission(den_area, nor_area, [trm_den_nord])
+    trm_den_nord = GEO.RefStatic("d-n", Power, 12, 1.2)
+    tr_den_nord = GEO.Transmission(den_area, nor_area, [trm_den_nord])
 
     T = UniformTwoLevel(1, 4, 1, UniformTimes(1, 40, 1))
 
