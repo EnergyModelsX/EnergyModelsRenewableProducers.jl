@@ -4,10 +4,15 @@ const IM = InvestmentModels
 const RP = RenewableProducers
 
 NG = ResourceEmit("NG", 0.2)
-CO2 = ResourceEmit("CO2", 1.)
-Power = ResourceCarrier("Power", 0.)
 Coal     = ResourceCarrier("Coal", 0.35)
+Power = ResourceCarrier("Power", 0.)
+CO2 = ResourceEmit("CO2", 1.)
+products = [NG, Coal, Power, CO2]
+𝒫₀ = Dict(k=>0 for k ∈ products)
+𝒫ᵉᵐ₀ = Dict(k=>0 for k ∈ products if isa(k, ResourceEmit))
 
+println("pem0 ", 𝒫ᵉᵐ₀)
+println("p_0 ", 𝒫₀)
 
 
 function agder_nodes()
@@ -16,19 +21,20 @@ function agder_nodes()
     min_level = StrategicFixedProfile([0.1, 0.2, 0.1, 0.1])
 
     investment_data = IM.extra_inv_data(
-        FixedProfile(2700), # EUR/kW
-        FixedProfile(10), # FIX
-        10,
-        FixedProfile(10),
-        FixedProfile(10),
-        IM.ContinuousInvestment()
+        FixedProfile(2700), # capex [€/kW]
+        FixedProfile(1e6), # FIX # max_inst_cap [kW]
+        1e6, # ExistingCapacity [kW]
+        FixedProfile(0), # max_add [kW]
+        FixedProfile(0), # min_add [kW]
+        IM.ContinuousInvestment() # investment mode
     )
     hydro = RP.RegHydroStor("-hydro", FixedProfile(10.), 
         true, initial_reservoir, max_storage, FixedProfile(1), min_level, 
-        FixedProfile(30), FixedProfile(30), Dict(Power=>1), Dict(Power=>0.9), 
+        FixedProfile(30), FixedProfile(30), Dict(Power=>1), Dict(Power=>0.9), # TODO check input/output
         Dict(CO2=>0.01, NG=>0), Dict("InvestmentModels"=>investment_data))
 
-    agder_av = Geography.GeoAvailability("-a-agder", Dict(Power=>1), Dict(Power=>1))
+    agder_av = Geography.GeoAvailability("-a-agder", 𝒫₀, 𝒫₀)
+
     agder_area = Geography.Area("agder", "Agder", 58.02722, 7.44889, agder_av)
         
     nodes = [agder_av, hydro] 
@@ -43,10 +49,10 @@ function nord_nodes()
 
     # Mean=0.45, std=0.1. TODO create a NormalDistProfile(mean, std, 𝒯, seed)?
     profile = DynamicProfile([
-        0.27 0.54 0.57 0.42;# 0.46 0.35 0.43 0.33 0.4 0.49 0.39 0.42 0.43 0.44 0.48 0.4 0.57 0.33 0.49 0.44 0.41 0.45 0.49 0.69 0.51 0.37 0.34 0.42 0.47 0.43 0.42 0.37 0.4 0.35 0.48 0.67 0.5 0.33 0.46 0.37;
-        0.3 0.56 0.24 0.49;# 0.35 0.32 0.22 0.35 0.45 0.48 0.33 0.62 0.53 0.38 0.46 0.4 0.38 0.39 0.3 0.49 0.54 0.23 0.42 0.5 0.31 0.54 0.43 0.51 0.43 0.35 0.63 0.35 0.38 0.31 0.25 0.33 0.47 0.28 0.42 0.38;
-        0.35 0.59 0.5 0.69;# 0.23 0.39 0.41 0.48 0.31 0.45 0.34 0.43 0.26 0.59 0.38 0.44 0.52 0.39 0.41 0.48 0.49 0.33 0.29 0.44 0.63 0.51 0.6 0.45 0.58 0.42 0.48 0.55 0.39 0.38 0.5 0.32 0.42 0.47 0.42 0.56;
-        0.51 0.49 0.45 0.45;# 0.48 0.38 0.38 0.46 0.45 0.5 0.29 0.45 0.32 0.56 0.43 0.59 0.52 0.47 0.3 0.47 0.39 0.35 0.26 0.31 0.49 0.45 0.36 0.46 0.49 0.31 0.34 0.38 0.51 0.52 0.54 0.4 0.43 0.55 0.54 0.37;
+        1 1 1 1; # 0.27 0.54 0.57 0.42 0.46 0.35 0.43 0.33 0.4 0.49 0.39 0.42 0.43 0.44 0.48 0.4 0.57 0.33 0.49 0.44 0.41 0.45 0.49 0.69 0.51 0.37 0.34 0.42 0.47 0.43 0.42 0.37 0.4 0.35 0.48 0.67 0.5 0.33 0.46 0.37;
+        1 1 1 1; # 0.3 0.56 0.24 0.49 0.35 0.32 0.22 0.35 0.45 0.48 0.33 0.62 0.53 0.38 0.46 0.4 0.38 0.39 0.3 0.49 0.54 0.23 0.42 0.5 0.31 0.54 0.43 0.51 0.43 0.35 0.63 0.35 0.38 0.31 0.25 0.33 0.47 0.28 0.42 0.38;
+        1 1 1 1; # .35 0.59 0.5 0.69 0.23 0.39 0.41 0.48 0.31 0.45 0.34 0.43 0.26 0.59 0.38 0.44 0.52 0.39 0.41 0.48 0.49 0.33 0.29 0.44 0.63 0.51 0.6 0.45 0.58 0.42 0.48 0.55 0.39 0.38 0.5 0.32 0.42 0.47 0.42 0.56;
+        1 1 1 1; # 0.51 0.49 0.45 0.45 0.48 0.38 0.38 0.46 0.45 0.5 0.29 0.45 0.32 0.56 0.43 0.59 0.52 0.47 0.3 0.47 0.39 0.35 0.26 0.31 0.49 0.45 0.36 0.46 0.49 0.31 0.34 0.38 0.51 0.52 0.54 0.4 0.43 0.55 0.54 0.37;
     ])
 
     investment_data = IM.extra_inv_data(
@@ -60,9 +66,9 @@ function nord_nodes()
     wind = RP.NonDisRES("-nwind", FixedProfile(2), profile,
         FixedProfile(1000 * 12 * 1e-6), # var_opex [€/kW(12h)]
         FixedProfile(100), # fixed_opex [€/kW]
-        Dict(Power=>1), Dict(CO2=>0.1, NG=>0), Dict("InvestmentModels"=>investment_data))
+        Dict(Power=>1), 𝒫ᵉᵐ₀, Dict("InvestmentModels"=>investment_data))
 
-    nords_av = GEO.GeoAvailability("-a-nord", Dict(Power=>1), Dict(Power=>1))
+    nords_av = GEO.GeoAvailability("-a-nord", 𝒫₀, 𝒫₀)
     nords_area = GEO.Area("nordsjøen", "Nordsjøen", 56.023, 3.164, nords_av)
 
     nodes = [nords_av, wind]
@@ -79,12 +85,14 @@ function denmark_nodes()
 
     investment_data_source = IM.extra_inv_data(
         FixedProfile(1200), # capex [€/kW]
-        FixedProfile(1e10), # FIX! # max installed capacity [kW]
+        FixedProfile(1e5), # FIX! # max installed capacity [kW]
         1e6, # FIX! existing capacity [kW]
         FixedProfile(0), # max_add [kW]
         FixedProfile(0), # min_add [kW]
         IM.ContinuousInvestment() # investment mode
     )
+
+    #=
     source = EMB.RefSource("-dsource", FixedProfile(2e6), # id, capacity
         FixedProfile(500), # var_opex
         FixedProfile(100), # fixed_opex
@@ -92,41 +100,42 @@ function denmark_nodes()
         Dict(CO2=>1, NG => 0.1), # emissions
         Dict("InvestmentModels"=>investment_data_source)
     )
+    =#
 
-    sink = EMB.RefSink("-dsink", FixedProfile(30), # id, capacity
+    sink = EMB.RefSink("-dsink", FixedProfile(10e6), # id, capacity
         Dict(:surplus=>0, :deficit=>1e6), # penalty 
         Dict(Power => 1), # input
-        Dict(CO2 => 1, NG => 0.2), # emissions 
+        𝒫ᵉᵐ₀ # emissions
     )
 
     # Mean=0.25, std=0.1
     wind_profile = DynamicProfile([
-        0.05 0.2 0.24 0.31; # 0.24 0.23 0.26 0.14 0.41 0.22 0.05 0.25 0.23 0.2 0.14 0.23 0.33 0.3 0.31 0.33 0.26 0.23 0.17 0.31 0.35 0.18 0.34 0.16 0.14 0.32 0.42 0.16 0.07 0.14 0.39 0.52 0.34 0.22 0.35 0.07;
-        0.05 0.21 0.04 0.2; # 0.34 0.34 0.31 0.24 0.19 0.39 0.33 0.23 0.28 0.27 0.35 0.37 0.23 0.15 0.23 0.34 0.15 0.39 0.39 0.09 0.32 0.29 0.24 0.38 0.13 0.13 0.42 0.08 0.18 0.28 0.47 0.33 0.41 0.19 0.29 0.24;
-        0.1 0.12 0.33 0.05;# 0.22 0.14 0.14 0.2 0.49 0.17 0.06 0.23 0.16 0.37 0.22 0.24 0.27 0.19 0.07 0.42 0.34 0.39 0.34 0.23 0.25 0.38 0.48 0.15 0.31 0 0.31 0.19 0.24 0.26 0.1 0.17 0.16 0.11 0.25 0.32;
-        0.17 0.34 0.32 0.24;# 0.24 0.29 0.28 0.22 0.18 0.06 0.18 0.32 0.27 0.29 0.3 0.24 0.22 0.25 0.35 0.43 0.44 0.12 0.33 0.16 0.24 0.17 0.13 0.31 0.0 0.39 0.31 0.28 0.26 0.21 0.22 0.14 0.2 0.32 0.29 0.29;
+        1 1 1 1; # 0.05 0.2 0.24 0.31; # 0.24 0.23 0.26 0.14 0.41 0.22 0.05 0.25 0.23 0.2 0.14 0.23 0.33 0.3 0.31 0.33 0.26 0.23 0.17 0.31 0.35 0.18 0.34 0.16 0.14 0.32 0.42 0.16 0.07 0.14 0.39 0.52 0.34 0.22 0.35 0.07;
+        1 1 1 1; #.05 0.21 0.04 0.2; # 0.34 0.34 0.31 0.24 0.19 0.39 0.33 0.23 0.28 0.27 0.35 0.37 0.23 0.15 0.23 0.34 0.15 0.39 0.39 0.09 0.32 0.29 0.24 0.38 0.13 0.13 0.42 0.08 0.18 0.28 0.47 0.33 0.41 0.19 0.29 0.24;
+        1 1 1 1; #0.1 0.12 0.33 0.05;# 0.22 0.14 0.14 0.2 0.49 0.17 0.06 0.23 0.16 0.37 0.22 0.24 0.27 0.19 0.07 0.42 0.34 0.39 0.34 0.23 0.25 0.38 0.48 0.15 0.31 0 0.31 0.19 0.24 0.26 0.1 0.17 0.16 0.11 0.25 0.32;
+        1 1 1 1; #0.17 0.34 0.32 0.24;# 0.24 0.29 0.28 0.22 0.18 0.06 0.18 0.32 0.27 0.29 0.3 0.24 0.22 0.25 0.35 0.43 0.44 0.12 0.33 0.16 0.24 0.17 0.13 0.31 0.0 0.39 0.31 0.28 0.26 0.21 0.22 0.14 0.2 0.32 0.29 0.29;
     ])
     investment_data = IM.extra_inv_data(
         FixedProfile(1200), # capex [€/kW]
-        FixedProfile(1e10), # FIX! # max installed capacity [kW]
-        2e6, # FIX! existing capacity [kW]
-        FixedProfile(5e6), # max_add [kW]
+        FixedProfile(5e6), # FIX! # max installed capacity [kW]
+        1e6, # 2e6, # FIX! existing capacity [kW]
+        FixedProfile(2e6), # max_add [kW]
         FixedProfile(0), # min_add [kW]
         IM.ContinuousInvestment() # investment mode
     )
     wind = RP.NonDisRES("-dwind", FixedProfile(2), wind_profile, 
         FixedProfile(500 * 1e-6), # var_opex [€/kW(12h)]
         FixedProfile(50), # fixed_opex [€/kW]
-        Dict(Power=>1), Dict(CO2=>0, NG=>0), Dict("InvestmentModels"=>investment_data))
+        Dict(Power=>1), 𝒫ᵉᵐ₀, Dict("InvestmentModels"=>investment_data))
 
-    den_av = GEO.GeoAvailability("-a-den", Dict(Power=>1), Dict(Power=>1))
+    den_av = GEO.GeoAvailability("-a-den",  𝒫₀, 𝒫₀)
     den_area = GEO.Area("den", "Danmark", 56.0966, 8.2178, den_av)
 
-    nodes = [den_av, wind, source, sink]
+    nodes = [den_av, wind, sink] #, source]
     links = [
         EMB.Direct("d:w-av", nodes[2], nodes[1], EMB.Linear()),
-        EMB.Direct("d:src-av", nodes[3], nodes[1], EMB.Linear()),
-        EMB.Direct("d:snk-av", nodes[1], nodes[4], EMB.Linear())
+        EMB.Direct("d:src-av", nodes[1], nodes[3], EMB.Linear()),
+        # EMB.Direct("d:snk-av", nodes[4], nodes[1], EMB.Linear())
     ]
     
     return den_area, den_av, nodes, links
@@ -134,21 +143,35 @@ end
 
 
 function get_data()
-    agd_area, agd_av, agd_nodes, agd_links = agder_nodes()
+    # agd_area, agd_av, agd_nodes, agd_links = agder_nodes()
     nor_area, nor_av, nor_nodes, nor_links = nord_nodes()
     den_area, den_av, den_nodes, den_links = denmark_nodes()
 
-    nodes = [den_nodes..., nor_nodes...] #agd_nodes...]
-    links = [den_links..., nor_links...] # agd_links...]
+    nodes = [den_nodes..., nor_nodes...] # , agd_nodes...]
+    links = [den_links..., nor_links...]#  agd_links...]
 
     # Transmissions
-    trm_agder_nord = GEO.RefStatic("a-n", Power, 100, 0)
-    tr_agder_nord = GEO.Transmission(agd_area, nor_area, [trm_agder_nord])
+    # trm_agder_nord = GEO.RefStatic("a-n", Power, 1e6, 0)
+    # tr_agder_nord = GEO.Transmission(agd_area, nor_area, [trm_agder_nord])
 
-    trm_den_nord = GEO.RefStatic("d-n", Power, 100, 0)
-    tr_den_nord = GEO.Transmission(den_area, nor_area, [trm_den_nord])
+    # trm_den_nord = GEO.RefStatic("d-n", Power, 1e6, 0)
+    # tr_den_nord = GEO.Transmission(den_area, nor_area, [trm_den_nord])
+    # tr_nord_den = GEO.Transmission(nor_area, den_area, [trm_den_nord])
 
-    T = UniformTwoLevel(1, 4, 1, UniformTimes(1, 4, 1))
+    trm_line = GEO.RefStatic("cable", Power, 1e6, 0)
+
+    # tr_den_nord = GEO.Transmission(den_area, nor_area, [trm_den_nord])
+    # tr_nord_den = GEO.Transmission(nor_area, den_area, [trm_den_nord])
+
+    transmissions = []
+    areas = [den_area, nor_area] #, agd_area]
+    
+    for a1 in areas, a2 in areas
+        a1 != a2 && push!(transmissions, GEO.Transmission(a1, a2, [trm_line]))
+    end
+
+
+    T = UniformTwoLevel(1, 4, 5, UniformTimes(1, 4, 8760/4)) #0, 219))
 
     println(nodes)
     println(links)
@@ -157,8 +180,8 @@ function get_data()
         :nodes=>nodes, 
         :links=>links, 
         :products=>[Power], 
-        :areas=>[nor_area, den_area], # agd_area]
-        :transmission=>[tr_den_nord], # tr_agder_nord]
+        :areas=>areas, #[nor_area, den_area], # agd_area]
+        :transmission=>transmissions, # [tr_nord_den, tr_den_nord], # tr_agder_nord]
         :T=>T)
 end
 
@@ -192,4 +215,18 @@ data = get_data()
 m = run_case_model(GLPK.Optimizer, data)
 println(solution_summary(m))
 
-# println(value.(m[:trans_out]))
+@show value.(m[:cap_max])
+println()
+@show value.(m[:cap_usage])
+println()
+@show value.(m[:add_cap])
+println()
+# @show value.(m[:area_import])
+# println()
+# @show value.(m[:area_export])
+# println()
+# @show value.(m[:flow_in])
+# println()
+# @show value.(m[:flow_out])
+
+println(solution_summary(m))
