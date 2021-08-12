@@ -68,7 +68,7 @@ function EMB.create_node(m, n::RegHydroStor, 𝒯, 𝒫)
                             - m[:cap_usage][n, t])
         else
             @constraint(m, 
-                m[:stor_level][n, t] ==  m[:stor_level][n, previous(t)]
+                m[:stor_level][n, t] ==  m[:stor_level][n, previous(t, 𝒯)]
                             + n.inflow[t] + n.input[p_stor] * m[:flow_in][n, t, p_stor]
                             - m[:cap_usage][n, t])
         end

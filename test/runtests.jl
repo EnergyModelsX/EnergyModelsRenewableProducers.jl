@@ -27,7 +27,7 @@ function small_graph(source=nothing, sink=nothing)
     𝒫ᵉᵐ₀[CO2] = 0.0
 
     if isnothing(source)
-        source = EMB.RefSource(2, FixedProfile(1), FixedProfile(30), Dict(NG => 1), 𝒫ᵉᵐ₀)
+        source = EMB.RefSource(2, FixedProfile(1), FixedProfile(30), FixedProfile(10), Dict(NG => 1), 𝒫ᵉᵐ₀, Dict(""=>EMB.EmptyData()))
     end
     if isnothing(sink)
         sink = EMB.RefSink(3, FixedProfile(20), Dict(:surplus => 0, :deficit => 1e6), Dict(Power => 1), 𝒫ᵉᵐ₀)
@@ -133,7 +133,7 @@ end
         data = small_graph()
         
         wind = RP.NonDisRES("wind", FixedProfile(2), FixedProfile(0.9), 
-            FixedProfile(10), Dict(Power=>1), Dict(CO2=>0.1, NG=>0))
+            FixedProfile(10), FixedProfile(10), Dict(Power=>1), Dict(CO2=>0.1, NG=>0), Dict(""=>EMB.EmptyData()))
 
         push!(data[:nodes], wind)
         link = EMB.Direct(41, data[:nodes][4], data[:nodes][1], EMB.Linear())
@@ -159,7 +159,7 @@ end
     end
 
     @testset "RegHydroStor without pump" begin
-        # Setup a model with a RegulatedHydroStorage without a pump.
+        # Setup a model with a RegHydroStor without a pump.
         data = small_graph()
         
         max_storage = 100
@@ -168,8 +168,8 @@ end
         
         hydro = RP.RegHydroStor("-hydro", FixedProfile(2.), 
             false, initial_reservoir, max_storage, FixedProfile(1), min_level, 
-            FixedProfile(10), Dict(Power=>0.9), Dict(Power=>1), 
-            Dict(CO2=>0.01, NG=>0))
+            FixedProfile(10), FixedProfile(10), Dict(Power=>0.9), Dict(Power=>1), 
+            Dict(CO2=>0.01, NG=>0), Dict(""=>EMB.EmptyData()))
         
         push!(data[:nodes], hydro)
         link_from = EMB.Direct(41, data[:nodes][4], data[:nodes][1], EMB.Linear())
@@ -202,13 +202,13 @@ end
 
 
     @testset "RegHydroStor with pump" begin
-        # Setup a model with a RegulatedHydroStorage without a pump.
+        # Setup a model with a RegHydroStor without a pump.
         
         products = [NG, Power, CO2]
         𝒫ᵉᵐ₀ = Dict(k  => 0. for k ∈ products if typeof(k) == ResourceEmit{Float64})
         source = EMB.RefSource("-source", DynamicProfile([10 10 10 10 10 0 0 0 0 0;
                                                           10 10 10 10 10 0 0 0 0 0;]),
-                                FixedProfile(10), Dict(Power => 1), 𝒫ᵉᵐ₀)
+                                FixedProfile(10), FixedProfile(10), Dict(Power => 1), 𝒫ᵉᵐ₀, Dict(""=>EMB.EmptyData()))
         sink = EMB.RefSink("-sink", FixedProfile(7), Dict(:surplus => 0, :deficit => 1e6), Dict(Power => 1), 𝒫ᵉᵐ₀)
         
         data = small_graph(source, sink)
@@ -219,8 +219,8 @@ end
         
         hydro = RP.RegHydroStor("-hydro", FixedProfile(10.), 
             true, initial_reservoir, max_storage, FixedProfile(1), min_level, 
-            FixedProfile(30), Dict(Power=>1), Dict(Power=>0.9), 
-            Dict(CO2=>0.01, NG=>0))
+            FixedProfile(30), FixedProfile(10), Dict(Power=>1), Dict(Power=>0.9), 
+            Dict(CO2=>0.01, NG=>0), Dict(""=>EMB.EmptyData()))
         
         push!(data[:nodes], hydro)
         link_from = EMB.Direct(41, data[:nodes][4], data[:nodes][1], EMB.Linear())
