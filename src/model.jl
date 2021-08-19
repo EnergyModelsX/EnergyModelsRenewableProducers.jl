@@ -90,9 +90,6 @@ function EMB.create_node(m, n::RegHydroStor, 𝒯, 𝒫)
 
     # Assuming no investments, the production at every operational
     # period is bounded by the installed capacity.
-    # TODO this inequality should probably be moved to the first method in
-    # energymodelsbase/model.jl, to make sure it is compatible with the 
-    # investment package. This need to be done for other nodes too.
     @constraint(m, [t ∈ 𝒯], m[:cap_usage][n, t] <= m[:cap_max][n, t])
 
     # Constraints identical to other Source nodes.
