@@ -7,7 +7,7 @@ NG = ResourceEmit("NG", 0.2)
 Coal     = ResourceCarrier("Coal", 0.35)
 Power = ResourceCarrier("Power", 0.)
 CO2 = ResourceEmit("CO2", 1.)
-products = [NG, Coal, Power, CO2]
+products = [Power, CO2]
 𝒫₀ = Dict(k=>0 for k ∈ products)
 𝒫ᵉᵐ₀ = Dict(k=>0 for k ∈ products if isa(k, ResourceEmit))
 
@@ -30,7 +30,7 @@ function agder_nodes(𝒯)
     hydro = RP.RegHydroStor("-agd:hydro", FixedProfile(0), 
         true, initial_reservoir, max_storage, FixedProfile(5e4), min_level, 
         FixedProfile(30), FixedProfile(10), Dict(Power=>0.95), Dict(Power=>0.95), 
-        Dict(NG=>0, CO2=>27), Dict("InvestmentModels"=>investment_data))
+        Dict(CO2=>27), Dict("InvestmentModels"=>investment_data))
 
     agder_av = Geography.GeoAvailability("-agd:av", 𝒫₀, 𝒫₀)
 
@@ -44,9 +44,7 @@ function agder_nodes(𝒯)
 end
 
 function nord_nodes(𝒯)
-    # windprofile, snitt på 45%
-
-    # Mean=0.45, std=0.1. TODO create a NormalDistProfile(mean, std, 𝒯, seed)?
+    # Mean ≈ 0.45
     profile = DynamicProfile([
         0.4 0.33 0.04 0.38 0.17 0.51 0.0 0.73 0.31 0.27 0.48 0.37 0.55 0.85 0.43 0.96 0.75 1.0 0.23 0.17 0.19 0.37 0.64 0.46 1.0 0.64 0.55 0.51 0.39 0.56 0.38 0.76 1.0 0.95 0.19 0.06 0.08 0.23 0.91 1.0;
         1.0 0.83 0.49 0.0 0.1 0.06 0.53 0.65 1.0 0.26 0.03 0.22 0.0 0.47 0.66 0.82 0.01 0.39 0.38 0.19 0.3 0.0 0.64 0.23 0.73 0.86 0.32 0.38 0.26 0.37 0.05 0.33 0.82 0.65 0.98 0.26 0.18 0.48 0.69 0.76;
@@ -65,7 +63,7 @@ function nord_nodes(𝒯)
     wind = RP.NonDisRES("-nrd:wind", FixedProfile(2), profile,
         FixedProfile(1000 * 1e-6 * 𝒯.operational.duration), # var_opex [€/kW(op.duration h)]
         FixedProfile(100 * 𝒯.duration), # fixed_opex [€/kW/(duration years)]
-        Dict(Power=>1), Dict(NG=>0, CO2=>11), Dict("InvestmentModels"=>investment_data))
+        Dict(Power=>1), Dict(CO2=>11), Dict("InvestmentModels"=>investment_data))
 
     nords_av = GEO.GeoAvailability("-nrd:av", 𝒫₀, 𝒫₀)
     nords_area = GEO.Area("nordsjøen", "Nordsjøen", 56.023, 3.164, nords_av)
@@ -87,7 +85,7 @@ function denmark_nodes(𝒯, var_opex_src)
 
     investment_data_source = IM.extra_inv_data(
         FixedProfile(1200), # capex [€/kW]
-        FixedProfile(3.5e6), # FIX! # max installed capacity [kW]
+        FixedProfile(1e6), # FIX! # max installed capacity [kW]
         1e6, # FIX! existing capacity [kW]
         FixedProfile(0), # max_add [kW]
         FixedProfile(0), # min_add [kW]
@@ -97,46 +95,23 @@ function denmark_nodes(𝒯, var_opex_src)
         FixedProfile(var_opex_src * 𝒯.operational.duration * 1e-6), # var_opex [€/kW(op.duration h)]
         FixedProfile(1000 * 𝒯.duration), # fixed_opex TODO ok?
         Dict(Power=>1), # output
-        Dict(CO2=>150, NG => 0), # emissions 150g/kWh for Denmark  
+        Dict(CO2=>150), # emissions 150g/kWh for Denmark  
         Dict("InvestmentModels"=>investment_data_source)
     )
 
     sink = EMB.RefSink("-den:sink", FixedProfile(1e6), # id, capacity
         Dict(:surplus=>0, :deficit=>1e6), # penalty 
         Dict(Power => 1), # input
-        Dict(NG=>0, CO2=>0) # emissions
+        Dict(CO2=>0) # emissions
     )
-
-    #=  TODO not use wind node in Denmark?
-    # Mean=0.25, std=0.1
-    wind_profile = DynamicProfile([
-        0.05 0.2 0.24 0.31 0.24 0.23 0.26 0.14 0.41 0.22 0.05 0.25 0.23 0.2 0.14 0.23 0.33 0.3 0.31 0.33 0.26 0.23 0.17 0.31 0.35 0.18 0.34 0.16 0.14 0.32 0.42 0.16 0.07 0.14 0.39 0.52 0.34 0.22 0.35 0.07;
-        .05 0.21 0.04 0.2 0.34 0.34 0.31 0.24 0.19 0.39 0.33 0.23 0.28 0.27 0.35 0.37 0.23 0.15 0.23 0.34 0.15 0.39 0.39 0.09 0.32 0.29 0.24 0.38 0.13 0.13 0.42 0.08 0.18 0.28 0.47 0.33 0.41 0.19 0.29 0.24;
-        0.1 0.12 0.33 0.05 0.22 0.14 0.14 0.2 0.49 0.17 0.06 0.23 0.16 0.37 0.22 0.24 0.27 0.19 0.07 0.42 0.34 0.39 0.34 0.23 0.25 0.38 0.48 0.15 0.31 0 0.31 0.19 0.24 0.26 0.1 0.17 0.16 0.11 0.25 0.32;
-        0.17 0.34 0.32 0.24 0.24 0.29 0.28 0.22 0.18 0.06 0.18 0.32 0.27 0.29 0.3 0.24 0.22 0.25 0.35 0.43 0.44 0.12 0.33 0.16 0.24 0.17 0.13 0.31 0.0 0.39 0.31 0.28 0.26 0.21 0.22 0.14 0.2 0.32 0.29 0.29;
-    ])
-    investment_data = IM.extra_inv_data(
-        FixedProfile(1200), # capex [€/kW]
-        FixedProfile(5e6), # FIX! # max installed capacity [kW]
-        1e6, # 2e6, # FIX! existing capacity [kW]
-        FixedProfile(2e6), # max_add [kW]
-        FixedProfile(0), # min_add [kW]
-        IM.ContinuousInvestment() # investment mode
-    )
-    wind = RP.NonDisRES("-den:wind", FixedProfile(2), wind_profile, 
-        FixedProfile(500 * 1e-6), # var_opex [€/kW(12h)]
-        FixedProfile(50), # fixed_opex [€/kW]
-        Dict(Power=>1), 𝒫ᵉᵐ₀, Dict("InvestmentModels"=>investment_data))
-    =#
 
     den_av = GEO.GeoAvailability("-den:av",  𝒫₀, 𝒫₀)
     den_area = GEO.Area("den", "Danmark", 56.0966, 8.2178, den_av)
 
-    nodes = [den_av, sink, source] # wind]
+    nodes = [den_av, sink, source]
     links = [
         EMB.Direct("den:src-av", nodes[3], nodes[1], EMB.Linear()),
         EMB.Direct("den:av-sink", nodes[1], nodes[2], EMB.Linear()),
-        # EMB.Direct("d:snk-av", nodes[4], nodes[1], EMB.Linear())
     ]
     
     return den_area, den_av, nodes, links
@@ -155,21 +130,20 @@ function get_data(var_opex_src)
 
     trm_line = GEO.RefStatic("cable", Power, 1e7, 0.05)
     transmissions = []
+
+    # Comment out agd_area from this array to run the case without the hydrostorage.
     areas = [den_area, nor_area, agd_area]
     
     for a1 in areas, a2 in areas
         a1 != a2 && push!(transmissions, GEO.Transmission(a1, a2, [trm_line]))
     end
 
-    println(nodes)
-    println(links)
-
     return Dict(
         :nodes=>nodes, 
         :links=>links, 
-        :products=>[Power, NG, CO2], 
+        :products=>[Power, CO2], 
         :areas=>areas,
-        :transmission=>transmissions, # [tr_nord_den, tr_den_nord], # tr_agder_nord]
+        :transmission=>transmissions,
         :T=>T)
 end
 
@@ -192,15 +166,18 @@ end
 
 prices = [0, 1000, 10000, 50000, 75000, 100000, 150000, 200000, 250000, 300000, 350000, 400000, 450000, 500000] #, 600000, 700000, 800000, 900000, 1000000]
 investments = []
+used_capacity = []
+curtailment = []
 
 for var_opex_src in prices
     # var_opex_src is the price of production by the source in €/GWh
     data = get_data(var_opex_src)
 
+    # CO2 price
     price = StrategicFixedProfile([50e-6, 60e-6, 70e-6, 80e-6])
     # price = FixedProfile(50e-6)
     case = IM.StrategicCase(StrategicFixedProfile([1e11, 1e11, 1e11, 1e11]),
-        Dict(NG=>FixedProfile(0), CO2=>price))
+        Dict(CO2=>price))
     discount_rate = 0.07
     m = run_case_model(GLPK.Optimizer, data, case, discount_rate)
 
@@ -217,11 +194,26 @@ for var_opex_src in prices
     println("wind ", sum(value.(m[:cap_usage][wind, t]) for t in T))
     println()
     @show value.(m[:add_cap])
-    # @show value.(m[:flow_in])
     
+    # Calculate the total investments in offshore wind.
     push!(investments, sum(value.(m[:add_cap][wind, t]) for t ∈ strategic_periods(T)))
+
+    # Compute average used capacity for the hy
+    used_capacities = []
+    for t in T
+        used_op = value.(m[:cap_usage][wind, t]) / (value.(m[:cap_max][wind, t]) * wind.profile[t])
+        # curtailment_op = value.(m[:curtailment][wind, t]) / value.(m[:cap_max])
+        if value.(m[:cap_max][wind, t]) * wind.profile[t] != 0
+            push!(used_capacities, used_op)
+        else
+            push!(used_capacities, 0)
+        end
+    end
+    push!(used_capacity, sum(used_capacities) / length(used_capacities))
+
 end
 
 println()
-println(prices)
-println(investments)
+@show prices
+@show investments
+@show used_capacity
