@@ -17,7 +17,6 @@ function agder_nodes(𝒯)
     investment_data = IM.extra_inv_data(
         FixedProfile(2700), # capex [€/kW]
         FixedProfile(4e6), # FIX # max_inst_cap [kW]
-        1e6, # ExistingCapacity [kW]
         FixedProfile(0), # max_add [kW]
         FixedProfile(0), # min_add [kW]
         IM.ContinuousInvestment() # investment mode
@@ -27,7 +26,7 @@ function agder_nodes(𝒯)
     initial_reservoir = FixedProfile(1e7)
     min_level = FixedProfile(0.1)
     
-    hydro = RP.RegHydroStor("-agd:hydro", FixedProfile(0), 
+    hydro = RP.RegHydroStor("-agd:hydro", FixedProfile(1e6), 
         true, initial_reservoir, max_storage, FixedProfile(5e4), min_level, 
         FixedProfile(30), FixedProfile(10), Dict(Power=>0.95), Dict(Power=>0.95), 
         Dict(CO2=>27), Dict("InvestmentModels"=>investment_data))
@@ -55,12 +54,11 @@ function nord_nodes(𝒯)
     investment_data = IM.extra_inv_data(
         FixedProfile(2700), # capex [€/kW] # TODO sjekk enheter
         FixedProfile(1e10), # FIX # max installed capacity [kW]
-        0, # existing capacity [kW]
         FixedProfile(5e6), # max_add [kW]
         FixedProfile(0), # min_add [kW]
         IM.ContinuousInvestment() # investment mode
     )
-    wind = RP.NonDisRES("-nrd:wind", FixedProfile(2), profile,
+    wind = RP.NonDisRES("-nrd:wind", FixedProfile(0), profile,
         FixedProfile(1000 * 1e-6 * 𝒯.operational.duration), # var_opex [€/kW(op.duration h)]
         FixedProfile(100 * 𝒯.duration), # fixed_opex [€/kW/(duration years)]
         Dict(Power=>1), Dict(CO2=>11), Dict("InvestmentModels"=>investment_data))
@@ -86,12 +84,11 @@ function denmark_nodes(𝒯, var_opex_src)
     investment_data_source = IM.extra_inv_data(
         FixedProfile(1200), # capex [€/kW]
         FixedProfile(1e6), # FIX! # max installed capacity [kW]
-        1e6, # FIX! existing capacity [kW]
         FixedProfile(0), # max_add [kW]
         FixedProfile(0), # min_add [kW]
         IM.ContinuousInvestment() # investment mode
     )
-    source = EMB.RefSource("-den:src", FixedProfile(3.5e6), # id, capacity [kW]
+    source = EMB.RefSource("-den:src", FixedProfile(1e6), # id, capacity [kW]
         FixedProfile(var_opex_src * 𝒯.operational.duration * 1e-6), # var_opex [€/kW(op.duration h)]
         FixedProfile(1000 * 𝒯.duration), # fixed_opex TODO ok?
         Dict(Power=>1), # output
