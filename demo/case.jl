@@ -22,7 +22,7 @@ function agder_nodes(𝒯)
         IM.ContinuousInvestment() # investment mode
     )
 
-    max_storage = 1e8
+    max_storage = FixedProfile(1e8)
     initial_reservoir = FixedProfile(1e7)
     min_level = FixedProfile(0.1)
     

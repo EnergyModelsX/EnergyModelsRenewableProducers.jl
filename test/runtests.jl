@@ -101,7 +101,7 @@ function general_node_tests(m, data, n::RP.RegHydroStor)
         @test sum(value.(m[:stor_max][n, t]) >= 0 for t ∈ 𝒯) == length(𝒯)
        
         # Check that stor_max is set to n.cap_storage.
-        @test sum(value.(m[:stor_max][n, t]) == n.cap_storage for t ∈ 𝒯) == length(𝒯)
+        @test sum(value.(m[:stor_max][n, t]) == n.cap_storage[t] for t ∈ 𝒯) == length(𝒯)
     end
 
     @testset "cap_usage bounds" begin
@@ -162,7 +162,7 @@ end
         # Setup a model with a RegHydroStor without a pump.
         data = small_graph()
         
-        max_storage = 100
+        max_storage = FixedProfile(100)
         initial_reservoir = StrategicFixedProfile([20, 25, 30, 20])
         min_level = StrategicFixedProfile([0.1, 0.2, 0.05, 0.1])
         
@@ -213,7 +213,7 @@ end
         
         data = small_graph(source, sink)
         
-        max_storage = 100
+        max_storage = FixedProfile(100)
         initial_reservoir = StrategicFixedProfile([20, 25])
         min_level = StrategicFixedProfile([0.1, 0.2])
         
