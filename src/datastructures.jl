@@ -29,3 +29,5 @@ struct RegHydroStor <: EMB.Storage
     emissions::Dict{ResourceEmit, Real} # Emissions per GWh produced.
     data::Dict{String, EMB.Data} # Additional data (e.g. for investments)
 end
+
+Base.getindex(number::Number, i::TS.TimePeriod{UniformTwoLevel}) = number
