@@ -100,8 +100,8 @@ function general_node_tests(m, data, n::RP.RegHydroStor)
         # Assure that the stor_max variable is non-negative.
         @test sum(value.(m[:stor_max][n, t]) >= 0 for t ∈ 𝒯) == length(𝒯)
        
-        # Check that stor_max is set to n.cap_storage.
-        @test sum(value.(m[:stor_max][n, t]) == n.cap_storage[t] for t ∈ 𝒯) == length(𝒯)
+        # Check that stor_max is set to n.cap_stor.
+        @test sum(value.(m[:stor_max][n, t]) == n.cap_stor[t] for t ∈ 𝒯) == length(𝒯)
     end
 
     @testset "cap_usage bounds" begin
