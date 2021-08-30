@@ -71,12 +71,12 @@ function general_node_tests(m, data, n::RP.RegHydroStor)
 
     @testset "stor_level bounds" begin
         # The storage level has to be greater than the required minimum.
-        @test sum(n.min_level[t] * value.(m[:stor_max][n, t]) 
+        @test sum(n.min_level[t] * value.(m[:inst_stor][n, t]) 
                 <= round(value.(m[:stor_level][n, t]), digits=ROUND_DIGITS) for t in 𝒯) == length(data[:T])
         
-        # The stor_level has to be less than stor_max in all operational periods.
-        @test sum(value.(m[:stor_level][n, t]) <= value.(m[:stor_max][n, t]) for t in 𝒯) == length(data[:T])
-        # TODO valing Storage node har negativ stor_max et par steder.
+        # The stor_level has to be less than inst_stor in all operational periods.
+        @test sum(value.(m[:stor_level][n, t]) <= value.(m[:inst_stor][n, t]) for t in 𝒯) == length(data[:T])
+        # TODO valing Storage node har negativ inst_stor et par steder.
         # TODO this is ok when inflow=1. When inflow=10 the stor_level gets too large. Why?
         #  - Do we need some other sink in the system? Not logical to be left with too much power.
 
@@ -96,12 +96,12 @@ function general_node_tests(m, data, n::RP.RegHydroStor)
         # TODO plus flow_in
     end
 
-    @testset "stor_max bounds" begin
-        # Assure that the stor_max variable is non-negative.
-        @test sum(value.(m[:stor_max][n, t]) >= 0 for t ∈ 𝒯) == length(𝒯)
+    @testset "inst_stor bounds" begin
+        # Assure that the inst_stor variable is non-negative.
+        @test sum(value.(m[:inst_stor][n, t]) >= 0 for t ∈ 𝒯) == length(𝒯)
        
-        # Check that stor_max is set to n.cap_stor.
-        @test sum(value.(m[:stor_max][n, t]) == n.cap_stor[t] for t ∈ 𝒯) == length(𝒯)
+        # Check that inst_stor is set to n.cap_stor.
+        @test sum(value.(m[:inst_stor][n, t]) == n.cap_stor[t] for t ∈ 𝒯) == length(𝒯)
     end
 
     @testset "cap_usage bounds" begin
