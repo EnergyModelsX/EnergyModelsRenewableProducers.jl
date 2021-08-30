@@ -18,7 +18,7 @@ function EMB.create_node(m, n::NonDisRES, 𝒯, 𝒫)
     # Non dispatchable renewable energy sources operate at their max
     # capacity with repsect to the current profile (e.g. wind) at every time.
     @constraint(m, [t ∈ 𝒯],
-        m[:cap_usage][n, t] + m[:curtailment][n, t] == n.profile[t] * m[:cap_max][n, t])
+        m[:cap_usage][n, t] + m[:curtailment][n, t] == n.profile[t] * m[:inst_cap][n, t])
 
 
     # Constraints identical to other Source nodes.
@@ -30,7 +30,7 @@ function EMB.create_node(m, n::NonDisRES, 𝒯, 𝒫)
     end
 
     @constraint(m, [t ∈ 𝒯], 
-        m[:cap_usage][n, t] <= m[:cap_max][n, t])
+        m[:cap_usage][n, t] <= m[:inst_cap][n, t])
 
     # Constraint for the emissions associated to energy sources from construction.
     @constraint(m, [t ∈ 𝒯, p_em ∈ 𝒫ᵉᵐ],
@@ -38,7 +38,7 @@ function EMB.create_node(m, n::NonDisRES, 𝒯, 𝒫)
 
     # Constraint for the Opex contributions
     @constraint(m, [t_inv ∈ 𝒯ᴵⁿᵛ],
-        m[:opex_var][n, t_inv] == sum(m[:cap_usage][n, t]*n.var_opex[t] for t ∈ t_inv))
+        m[:opex_var][n, t_inv] == sum(m[:cap_usage][n, t] * n.var_opex[t] * t.duration for t ∈ t_inv))
 
 end
 
@@ -90,7 +90,7 @@ function EMB.create_node(m, n::RegHydroStor, 𝒯, 𝒫)
 
     # Assuming no investments, the production at every operational
     # period is bounded by the installed capacity.
-    @constraint(m, [t ∈ 𝒯], m[:cap_usage][n, t] <= m[:cap_max][n, t])
+    @constraint(m, [t ∈ 𝒯], m[:cap_usage][n, t] <= m[:inst_cap][n, t])
 
     # Constraints identical to other Source nodes.
     𝒫ᵒᵘᵗ = keys(n.output)
@@ -103,6 +103,6 @@ function EMB.create_node(m, n::RegHydroStor, 𝒯, 𝒫)
 
     # Constraint for the Opex contributions
     @constraint(m, [t_inv ∈ 𝒯ᴵⁿᵛ],
-        m[:opex_var][n, t_inv] == sum(m[:cap_usage][n, t]*n.var_opex[t] for t ∈ t_inv))
+        m[:opex_var][n, t_inv] == sum(m[:cap_usage][n, t] * n.var_opex[t] * t.duration for t ∈ t_inv))
 
 end

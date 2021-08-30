@@ -109,13 +109,13 @@ function general_node_tests(m, data, n::RP.RegHydroStor)
         @test sum(value.(m[:cap_usage][n, t]) <= value.(m[:stor_level][n, t]) 
                 for t ∈ 𝒯) == length(𝒯)
 
-        # Check that cap_usage is bounded above by cap_max.
-        @test sum(round(value.(m[:cap_usage][n, t]), digits=ROUND_DIGITS) <= value.(m[:cap_max][n, t])
+        # Check that cap_usage is bounded above by inst_cap.
+        @test sum(round(value.(m[:cap_usage][n, t]), digits=ROUND_DIGITS) <= value.(m[:inst_cap][n, t])
                 for t ∈ 𝒯) == length(𝒯)
     end
 
-    @testset "cap_max" begin
-        @test sum(value.(m[:cap_max][n, t]) == n.capacity[t] for t ∈ 𝒯) == length(𝒯)
+    @testset "inst_cap" begin
+        @test sum(value.(m[:inst_cap][n, t]) == n.capacity[t] for t ∈ 𝒯) == length(𝒯)
     end
     
     @testset "flow variables" begin
@@ -144,16 +144,16 @@ end
 
         general_tests(m)
 
-        @testset "cap_max" begin
-            @test sum(value.(m[:cap_max][wind, t]) == wind.capacity[wind] for t ∈ 𝒯) == length(𝒯)
+        @testset "inst_cap" begin
+            @test sum(value.(m[:inst_cap][wind, t]) == wind.capacity[wind] for t ∈ 𝒯) == length(𝒯)
         end
         
         @testset "cap_usage bounds" begin
-            # Test that cap_usage is bounded by cap_max.
-            @test sum(value.(m[:cap_usage][wind, t]) <= value.(m[:cap_max][wind, t]) for t ∈ 𝒯) == length(𝒯)
+            # Test that cap_usage is bounded by inst_cap.
+            @test sum(value.(m[:cap_usage][wind, t]) <= value.(m[:inst_cap][wind, t]) for t ∈ 𝒯) == length(𝒯)
                 
             # Test that cap_usage is set correctly with respect to the profile.
-            @test sum(value.(m[:cap_usage][wind, t]) == wind.profile[t] * value.(m[:cap_max][wind, t])
+            @test sum(value.(m[:cap_usage][wind, t]) == wind.profile[t] * value.(m[:inst_cap][wind, t])
                     for t ∈ 𝒯) == length(𝒯)
         end
     end
@@ -249,7 +249,7 @@ end
                 # Check that the other source operates on its maximum if there is a deficit at the sink node,
                 # since this should be used to fill the reservoir (if the reservoir is not full enough at the
                 # beginning, and the inflow is too low).
-                @assert sum(value.(m[:cap_usage][source, t]) == value.(m[:cap_max][source, t]) for t ∈ 𝒯) == length(𝒯)
+                @assert sum(value.(m[:cap_usage][source, t]) == value.(m[:inst_cap][source, t]) for t ∈ 𝒯) == length(𝒯)
             end
         end
 
