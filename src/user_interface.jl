@@ -19,8 +19,9 @@ function run_model(fn, optimizer=nothing)
     d81 = EMB.Direct(81, data[:nodes][8], data[:nodes][1], EMB.Linear())
     push!(data[:links], d81)
 
-    hydro = RegHydroStor(9, FixedProfile(2.), false, 10, 90,
-        FixedProfile(1), 0.0, 
+    hydro = RegHydroStor(9, FixedProfile(2.),  FixedProfile(90), 
+        false, FixedProfile(10),
+        FixedProfile(1), FixedProfile(0.0), 
         FixedProfile(3), Dict(Power=>0.9), Dict(Power=>1), 
         Dict(CO2=>0.01, NG=>0))
     push!(data[:nodes], hydro)

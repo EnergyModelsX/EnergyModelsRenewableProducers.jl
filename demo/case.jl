@@ -26,8 +26,8 @@ function agder_nodes(𝒯)
     initial_reservoir = FixedProfile(1e7)
     min_level = FixedProfile(0.1)
     
-    hydro = RP.RegHydroStor("-agd:hydro", FixedProfile(1e6), 
-        true, initial_reservoir, max_storage, FixedProfile(5e4), min_level, 
+    hydro = RP.RegHydroStor("-agd:hydro", FixedProfile(1e6), max_storage, 
+        true, initial_reservoir, FixedProfile(5e4), min_level, 
         FixedProfile(30/1e3), FixedProfile(10),
         Dict(Power=>0.95), Dict(Power=>0.95), 
         Dict(CO2=>27), Dict("InvestmentModels"=>investment_data))
@@ -98,7 +98,7 @@ function denmark_nodes(𝒯, var_opex_src)
     )
 
     sink = EMB.RefSink("-den:sink", FixedProfile(1e6), # id, capacity
-        Dict(:surplus=>0, :deficit=>1e3), # penalty 
+        Dict(:Surplus=>0, :Deficit=>1e3), # penalty 
         Dict(Power => 1), # input
         Dict(CO2=>0) # emissions
     )
@@ -187,22 +187,22 @@ for var_opex_src in prices
     T = data[:T]
     println("pris ", var_opex_src * 1e-6, " €/kWh")
     println()
-    println("source ", sum(value.(m[:cap_usage][source, t]) for t in T))
-    println("sink ", sum(value.(m[:cap_usage][sink, t]) for t in T))
-    println("wind ", sum(value.(m[:cap_usage][wind, t]) for t in T))
-    println("hydro ", sum(value.(m[:cap_usage][hydro, t]) for t in T))
+    println("source ", sum(value.(m[:cap_use][source, t]) for t in T))
+    println("sink ", sum(value.(m[:cap_use][sink, t]) for t in T))
+    println("wind ", sum(value.(m[:cap_use][wind, t]) for t in T))
+    println("hydro ", sum(value.(m[:cap_use][hydro, t]) for t in T))
     println()
-    @show value.(m[:add_cap])
+    @show value.(m[:cap_add])
     
     # Calculate the total investments in offshore wind.
-    push!(investments, sum(value.(m[:add_cap][wind, t]) for t ∈ strategic_periods(T)))
+    push!(investments, sum(value.(m[:cap_add][wind, t]) for t ∈ strategic_periods(T)))
 
     # Compute average used capacity for the hy
     used_capacities = []
     for t in T
-        used_op = value.(m[:cap_usage][wind, t]) / (value.(m[:inst_cap][wind, t]) * wind.profile[t])
-        # curtailment_op = value.(m[:curtailment][wind, t]) / value.(m[:inst_cap])
-        if value.(m[:inst_cap][wind, t]) * wind.profile[t] != 0
+        used_op = value.(m[:cap_use][wind, t]) / (value.(m[:cap_inst][wind, t]) * wind.Profile[t])
+        # curtailment_op = value.(m[:curtailment][wind, t]) / value.(m[:cap_inst])
+        if value.(m[:cap_inst][wind, t]) * wind.Profile[t] != 0
             push!(used_capacities, used_op)
         else
             push!(used_capacities, 0)
