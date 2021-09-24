@@ -27,7 +27,7 @@ function EMB.check_node(n::RP.RegHydroStor, 𝒯, modeltype::EMB.OperationalMode
     for t_inv in strategic_periods(𝒯)
         t = first_operational(t_inv)
         # Check that the reservoir doesn't overfill in the first operational period of an investment period.
-        @assert_or_log n.Level_init[t_inv] + n.Level_inflow[t] - n.Cap[t] <= n.Stor_cap[t] "The dam must have the installed production capacity to handle the inflow (" * string(t) * ")."
+        @assert_or_log n.Level_init[t_inv] + n.Level_inflow[t] - n.Rate_cap[t] <= n.Stor_cap[t] "The dam must have the installed production capacity to handle the inflow (" * string(t) * ")."
 
         # Check that the reservoir isn't underfilled from the start.
         @assert_or_log n.Level_init[t_inv] + n.Level_inflow[t] >= n.Level_min[t_inv] * n.Stor_cap[t] "The reservoir can't be underfilled from the start (" * string(t) * ")."
@@ -35,7 +35,7 @@ function EMB.check_node(n::RP.RegHydroStor, 𝒯, modeltype::EMB.OperationalMode
 
     @assert_or_log sum(n.Level_init[t] < 0 for t ∈ 𝒯) == 0 "The Level_init can not be negative."
 
-    @assert_or_log sum(n.Cap[t] < 0 for t ∈ 𝒯) == 0 "The production capacity n.Cap has to be non-negative."
+    @assert_or_log sum(n.Rate_cap[t] < 0 for t ∈ 𝒯) == 0 "The production capacity n.Rate_cap has to be non-negative."
 
     # Level_min
     @assert_or_log sum(n.Level_min[t] < 0 for t ∈ 𝒯) == 0 "The Level_min can not be negative."

@@ -126,7 +126,7 @@ function get_data(var_opex_src)
     nodes = [den_nodes..., nor_nodes..., agd_nodes...]
     links = [den_links..., nor_links..., agd_links...]
 
-    trm_line = GEO.RefStatic("cable", Power, 1e7, 0.05)
+    trm_line = GEO.RefStatic("cable", Power, 1e7, 0.05, 1)
     transmissions = []
 
     # Comment out agd_area from this array to run the case without the hydrostorage.
@@ -190,7 +190,7 @@ for var_opex_src in prices
     println("source ", sum(value.(m[:cap_use][source, t]) for t in T))
     println("sink ", sum(value.(m[:cap_use][sink, t]) for t in T))
     println("wind ", sum(value.(m[:cap_use][wind, t]) for t in T))
-    println("hydro ", sum(value.(m[:cap_use][hydro, t]) for t in T))
+    println("hydro ", sum(value.(m[:stor_rate_use][hydro, t]) for t in T))
     println()
     @show value.(m[:cap_add])
     

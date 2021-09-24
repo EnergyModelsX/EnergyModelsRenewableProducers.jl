@@ -85,13 +85,13 @@ function general_node_tests(m, data, n::RP.RegHydroStor)
         @test sum(value.(m[:stor_level][n, first_operational(t_inv)]) 
                     ≈ n.Level_init[t_inv] + n.Level_inflow[first_operational(t_inv)]
                      + value.(m[:flow_in][n, first_operational(t_inv), p_stor])
-                     - value.(m[:cap_use][n, first_operational(t_inv)])
+                     - value.(m[:stor_rate_use][n, first_operational(t_inv)])
                 for t_inv ∈ strategic_periods(𝒯)) == length(strategic_periods(𝒯))
         
-        # Check that stor_level is correct wrt. previous stor_level, inflow and cap_use.
+        # Check that stor_level is correct wrt. previous stor_level, inflow and stor_rate_use.
         @test sum(value.(m[:stor_level][n, t]) ≈ value.(m[:stor_level][n, previous(t)]) 
                     + n.Level_inflow[t] +n.Input[p_stor] * value.(m[:flow_in][n, t, p_stor])
-                    - value.(m[:cap_use][n, t]) 
+                    - value.(m[:stor_rate_use][n, t]) 
                 for t ∈ 𝒯 if t.op > 1) == length(𝒯) - 𝒯.len
         # TODO plus flow_in
     end
@@ -104,23 +104,23 @@ function general_node_tests(m, data, n::RP.RegHydroStor)
         @test sum(value.(m[:stor_cap_inst][n, t]) == n.Stor_cap[t] for t ∈ 𝒯) == length(𝒯)
     end
 
-    @testset "cap_use bounds" begin
+    @testset "stor_rate_use bounds" begin
         # Cannot produce more than what is stored in the reservoir.
-        @test sum(value.(m[:cap_use][n, t]) <= value.(m[:stor_level][n, t]) 
+        @test sum(value.(m[:stor_rate_use][n, t]) <= value.(m[:stor_level][n, t]) 
                 for t ∈ 𝒯) == length(𝒯)
 
-        # Check that cap_use is bounded above by cap_inst.
-        @test sum(round(value.(m[:cap_use][n, t]), digits=ROUND_DIGITS) <= value.(m[:cap_inst][n, t])
+        # Check that stor_rate_use is bounded above by stor_rate_inst.
+        @test sum(round(value.(m[:stor_rate_use][n, t]), digits=ROUND_DIGITS) <= value.(m[:stor_rate_inst][n, t])
                 for t ∈ 𝒯) == length(𝒯)
     end
 
-    @testset "cap_inst" begin
-        @test sum(value.(m[:cap_inst][n, t]) == n.Cap[t] for t ∈ 𝒯) == length(𝒯)
+    @testset "stor_rate_inst" begin
+        @test sum(value.(m[:stor_rate_inst][n, t]) == n.Rate_cap[t] for t ∈ 𝒯) == length(𝒯)
     end
     
     @testset "flow variables" begin
-        # The flow_out corresponds to the production cap_use.
-        @test sum(value.(m[:flow_out][n, t, p_stor]) == value.(m[:cap_use][n, t]) * n.Output[Power] 
+        # The flow_out corresponds to the production stor_rate_use.
+        @test sum(value.(m[:flow_out][n, t, p_stor]) == value.(m[:stor_rate_use][n, t]) * n.Output[Power] 
                 for t ∈ data[:T]) == length(𝒯)
 
     end

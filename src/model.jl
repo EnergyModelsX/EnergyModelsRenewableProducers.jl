@@ -58,31 +58,31 @@ function EMB.create_node(m, n::RegHydroStor, 𝒯, 𝒫)
 
     # The storage level in the reservoir at operational time t, is the stor_level
     # of the previous operation period plus the inflow of period t minus the production
-    # (cap_use) of period t. For the first operational period in an investment period, 
+    # (stor_rate_use) of period t. For the first operational period in an investment period, 
     # stor_level is the initial reservoir level, plus inflow, minus the production in that period.
     for t_inv ∈ 𝒯ᴵⁿᵛ, t ∈ t_inv
         if t == first_operational(t_inv)
             @constraint(m, 
                 m[:stor_level][n, t] ==  n.Level_init[t]
                             + n.Level_inflow[t] + n.Input[p_stor] * m[:flow_in][n, t , p_stor] 
-                            - m[:cap_use][n, t])
+                            - m[:stor_rate_use][n, t])
         else
             @constraint(m, 
                 m[:stor_level][n, t] ==  m[:stor_level][n, previous(t, 𝒯)]
                             + n.Level_inflow[t] + n.Input[p_stor] * m[:flow_in][n, t, p_stor]
-                            - m[:cap_use][n, t])
+                            - m[:stor_rate_use][n, t])
         end
     end
 
-    # The flow_out is equal to the production cap_use.
-    @constraint(m, [t ∈ 𝒯], m[:flow_out][n, t, p_stor] == m[:cap_use][n, t] * n.Output[p_stor])
+    # The flow_out is equal to the production stor_rate_use.
+    @constraint(m, [t ∈ 𝒯], m[:flow_out][n, t, p_stor] == m[:stor_rate_use][n, t] * n.Output[p_stor])
 
     # The storage level at every time must be less than the installed storage capacity.
     # TODO it should be pssible to invest in stor_cap_inst, this might have to be moved.
     @constraint(m, [t ∈ 𝒯], m[:stor_level][n, t] <= m[:stor_cap_inst][n, t])
     
     # Can not produce more energy than what is availbable in the reservoir.
-    @constraint(m, [t ∈ 𝒯], m[:cap_use][n, t] <= m[:stor_level][n, t])
+    @constraint(m, [t ∈ 𝒯], m[:stor_rate_use][n, t] <= m[:stor_level][n, t])
     
     # The minimum contents of the reservoir is bounded below. Not allowed 
     # to drain it completely.
@@ -90,7 +90,7 @@ function EMB.create_node(m, n::RegHydroStor, 𝒯, 𝒫)
 
     # Assuming no investments, the production at every operational
     # period is bounded by the installed capacity.
-    @constraint(m, [t ∈ 𝒯], m[:cap_use][n, t] <= m[:cap_inst][n, t])
+    @constraint(m, [t ∈ 𝒯], m[:stor_rate_use][n, t] <= m[:stor_rate_inst][n, t])
 
     # Constraints identical to other Source nodes.
     𝒫ᵒᵘᵗ = keys(n.Output)
@@ -99,10 +99,10 @@ function EMB.create_node(m, n::RegHydroStor, 𝒯, 𝒫)
 
     # Constraint for the emissions associated to energy sources from construction.
     @constraint(m, [t ∈ 𝒯, p_em ∈ 𝒫ᵉᵐ],
-        m[:emissions_node][n, t, p_em] == m[:cap_use][n, t]*n.Emissions[p_em])
+        m[:emissions_node][n, t, p_em] == m[:stor_rate_use][n, t]*n.Emissions[p_em])
 
     # Constraint for the Opex contributions
     @constraint(m, [t_inv ∈ 𝒯ᴵⁿᵛ],
-        m[:opex_var][n, t_inv] == sum(m[:cap_use][n, t] * n.Opex_var[t] * t.duration for t ∈ t_inv))
+        m[:opex_var][n, t_inv] == sum(m[:stor_rate_use][n, t] * n.Opex_var[t] * t.duration for t ∈ t_inv))
 
 end

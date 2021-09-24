@@ -14,7 +14,7 @@ end
 " A regulated hydropower storage without pumping capabilities, modelled as a Source."
 struct RegHydroStor <: EMB.Storage
     id
-    Cap::TimeProfile                    # Installed capacity.
+    Rate_cap::TimeProfile                    # Installed capacity.
     Stor_cap::TimeProfile               # Initial installed storage capacity in the dam.
     
     Has_pump::Bool
