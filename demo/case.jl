@@ -14,13 +14,13 @@ products = [Power, CO2]
 
 function agder_nodes(𝒯)
 
-    investment_data = IM.extra_inv_data(
-        FixedProfile(2700), # capex [€/kW]
-        FixedProfile(4e6), # FIX # max_inst_cap [kW]
-        FixedProfile(0), # max_add [kW]
-        FixedProfile(0), # min_add [kW]
-        IM.ContinuousInvestment() # investment mode
-    )
+    # investment_data = IM.extra_inv_data_storage(
+    #     FixedProfile(2700), # capex [€/kW]
+    #     FixedProfile(4e6), # FIX # max_inst_cap [kW]
+    #     FixedProfile(0), # max_add [kW]
+    #     FixedProfile(0), # min_add [kW]
+    #     IM.ContinuousInvestment() # investment mode
+    # )
 
     max_storage = FixedProfile(1e8)
     initial_reservoir = FixedProfile(1e7)
@@ -30,7 +30,7 @@ function agder_nodes(𝒯)
         true, initial_reservoir, FixedProfile(5e4), min_level, 
         FixedProfile(30/1e3), FixedProfile(10),
         Dict(Power=>0.95), Dict(Power=>0.95), 
-        Dict(CO2=>27), Dict("InvestmentModels"=>investment_data))
+        Dict(CO2=>27), Dict(""=> EMB.EmptyData()))
 
     agder_av = Geography.GeoAvailability("-agd:av", 𝒫₀, 𝒫₀)
 
@@ -53,11 +53,11 @@ function nord_nodes(𝒯)
     ])
 
     investment_data = IM.extra_inv_data(
-        FixedProfile(2700), # capex [€/kW] # TODO sjekk enheter
-        FixedProfile(1e10), # FIX # max installed capacity [kW]
-        FixedProfile(5e6), # max_add [kW]
-        FixedProfile(0), # min_add [kW]
-        IM.ContinuousInvestment() # investment mode
+        Capex_Cap= FixedProfile(2700), # capex [€/kW] # TODO sjekk enheter
+        Cap_max_inst = FixedProfile(1e10), # FIX # max installed capacity [kW]
+        Cap_max_add = FixedProfile(5e6), # max_add [kW]
+        Cap_min_add = FixedProfile(0), # min_add [kW]
+        Inv_mode = IM.ContinuousInvestment() # investment mode
     )
     wind = RP.NonDisRES("-nrd:wind", FixedProfile(0), profile,
         FixedProfile(1000 * 1e-6), # var_opex [€/kW(op.duration h)]
@@ -82,19 +82,20 @@ function denmark_nodes(𝒯, var_opex_src)
     # TODO add Source? FixedStrategic for source. Sink: mindre om natten enn dagen, mer om vinter enn om dagen
     # source, sink
 
-    investment_data_source = IM.extra_inv_data(
-        FixedProfile(1200), # capex [€/kW]
-        FixedProfile(1e6), # FIX! # max installed capacity [kW]
-        FixedProfile(0), # max_add [kW]
-        FixedProfile(0), # min_add [kW]
-        IM.ContinuousInvestment() # investment mode
-    )
+    # investment_data_source = IM.extra_inv_data(
+    #     FixedProfile(1200), # capex [€/kW]
+    #     FixedProfile(1e6), # FIX! # max installed capacity [kW]
+    #     FixedProfile(0), # max_add [kW]
+    #     FixedProfile(0), # min_add [kW]
+    #     IM.ContinuousInvestment() # investment mode
+    # )
     source = EMB.RefSource("-den:src", FixedProfile(1e6), # id, capacity [kW]
         FixedProfile(var_opex_src * 1e-6), # var_opex [€/kW(op.duration h)]
         FixedProfile(1000), # fixed_opex TODO ok?
         Dict(Power=>1), # output
         Dict(CO2=>150), # emissions 150g/kWh for Denmark  
-        Dict("InvestmentModels"=>investment_data_source)
+        Dict(""=> EMB.EmptyData())
+        # Dict("InvestmentModels"=>investment_data_source)
     )
 
     sink = EMB.RefSink("-den:sink", FixedProfile(1e6), # id, capacity
@@ -133,7 +134,7 @@ function get_data(var_opex_src)
     areas = [den_area, nor_area, agd_area]
     
     for a1 in areas, a2 in areas
-        a1 != a2 && push!(transmissions, GEO.Transmission(a1, a2, [trm_line]))
+        a1 != a2 && push!(transmissions, GEO.Transmission(a1, a2, [trm_line],  [Dict(""=> EMB.EmptyData())]))
     end
 
     return Dict(
