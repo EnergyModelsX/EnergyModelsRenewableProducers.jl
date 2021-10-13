@@ -1,3 +1,19 @@
+if abspath(PROGRAM_FILE) == @__FILE__
+    import Pkg
+    Pkg.activate(@__DIR__)
+    Pkg.instantiate()
+
+    const IS_SCRIPT = true
+end
+
+using EnergyModelsBase
+using Geography
+using GLPK
+using InvestmentModels
+using JuMP
+using RenewableProducers
+using TimeStructures
+
 const EMB = EnergyModelsBase
 const GEO = Geography
 const IM = InvestmentModels
@@ -162,58 +178,67 @@ function run_case_model(optimizer, data, case, discount_rate=0.05)
     return m
 end
 
-prices = [0, 1000, 10000, 50000, 75000, 100000, 150000, 200000, 250000, 300000, 350000, 400000, 450000, 500000] #, 600000, 700000, 800000, 900000, 1000000]
-investments = []
-used_capacity = []
-curtailment = []
 
-for var_opex_src in prices
-    # var_opex_src is the price of production by the source in €/GWh
-    data = get_data(var_opex_src)
 
-    # CO2 price
-    price = StrategicFixedProfile([50e-6, 60e-6, 70e-6, 80e-6])
-    # price = FixedProfile(50e-6)
-    case = IM.StrategicCase(StrategicFixedProfile([1e11, 1e11, 1e11, 1e11]),
-        Dict(CO2=>price))
-    discount_rate = 0.07
-    m = run_case_model(GLPK.Optimizer, data, case, discount_rate)
 
-    println("=======================")
-    println()
-    source = data[:nodes][3]
-    sink = data[:nodes][2]
-    wind = data[:nodes][5]
-    hydro = data[:nodes][7]
-    T = data[:T]
-    println("pris ", var_opex_src * 1e-6, " €/kWh")
-    println()
-    println("source ", sum(value.(m[:cap_use][source, t]) for t in T))
-    println("sink ", sum(value.(m[:cap_use][sink, t]) for t in T))
-    println("wind ", sum(value.(m[:cap_use][wind, t]) for t in T))
-    println("hydro ", sum(value.(m[:stor_rate_use][hydro, t]) for t in T))
-    println()
-    @show value.(m[:cap_add])
-    
-    # Calculate the total investments in offshore wind.
-    push!(investments, sum(value.(m[:cap_add][wind, t]) for t ∈ strategic_periods(T)))
 
-    # Compute average used capacity for the hy
-    used_capacities = []
-    for t in T
-        used_op = value.(m[:cap_use][wind, t]) / (value.(m[:cap_inst][wind, t]) * wind.Profile[t])
-        # curtailment_op = value.(m[:curtailment][wind, t]) / value.(m[:cap_inst])
-        if value.(m[:cap_inst][wind, t]) * wind.Profile[t] != 0
-            push!(used_capacities, used_op)
-        else
-            push!(used_capacities, 0)
+function run_demo(prices = [0, 1000, 10000, 50000, 75000, 100000, 150000, 200000, 250000, 300000, 350000, 400000, 450000, 500000])
+    investments = []
+    used_capacity = []
+    curtailment = []
+
+    for var_opex_src in prices
+        # var_opex_src is the price of production by the source in €/GWh
+        data = get_data(var_opex_src)
+
+        # CO2 price
+        price = StrategicFixedProfile([50e-6, 60e-6, 70e-6, 80e-6])
+        # price = FixedProfile(50e-6)
+        case = IM.StrategicCase(StrategicFixedProfile([1e11, 1e11, 1e11, 1e11]),
+            Dict(CO2=>price))
+        discount_rate = 0.07
+        m = run_case_model(GLPK.Optimizer, data, case, discount_rate)
+
+        println("=======================")
+        println()
+        source = data[:nodes][3]
+        sink = data[:nodes][2]
+        wind = data[:nodes][5]
+        hydro = data[:nodes][7]
+        T = data[:T]
+        println("pris ", var_opex_src * 1e-6, " €/kWh")
+        println()
+        println("source ", sum(value.(m[:cap_use][source, t]) for t in T))
+        println("sink ", sum(value.(m[:cap_use][sink, t]) for t in T))
+        println("wind ", sum(value.(m[:cap_use][wind, t]) for t in T))
+        println("hydro ", sum(value.(m[:stor_rate_use][hydro, t]) for t in T))
+        println()
+        @show value.(m[:cap_add])
+        
+        # Calculate the total investments in offshore wind.
+        push!(investments, sum(value.(m[:cap_add][wind, t]) for t ∈ strategic_periods(T)))
+
+        # Compute average used capacity for the hy
+        used_capacities = []
+        for t in T
+            used_op = value.(m[:cap_use][wind, t]) / (value.(m[:cap_inst][wind, t]) * wind.Profile[t])
+            # curtailment_op = value.(m[:curtailment][wind, t]) / value.(m[:cap_inst])
+            if value.(m[:cap_inst][wind, t]) * wind.Profile[t] != 0
+                push!(used_capacities, used_op)
+            else
+                push!(used_capacities, 0)
+            end
         end
-    end
-    push!(used_capacity, sum(used_capacities) / length(used_capacities))
+        push!(used_capacity, sum(used_capacities) / length(used_capacities))
 
+    end
+
+    println()
+    @show prices
+    @show investments
+    @show used_capacity
 end
 
-println()
-@show prices
-@show investments
-@show used_capacity
+if IS_SCRIPT
+    run_demo()
+end
