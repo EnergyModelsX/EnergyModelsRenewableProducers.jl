@@ -4,11 +4,11 @@ if abspath(PROGRAM_FILE) == @__FILE__
     Pkg.instantiate()
 
     const IS_SCRIPT = true
+    using GLPK
 end
 
 using EnergyModelsBase
 using Geography
-using GLPK
 using InvestmentModels
 using JuMP
 using RenewableProducers
@@ -182,7 +182,7 @@ end
 
 
 
-function run_demo(prices = [0, 1000, 10000, 50000, 75000, 100000, 150000, 200000, 250000, 300000, 350000, 400000, 450000, 500000])
+function run_demo(prices = [0, 1000, 10000, 50000, 75000, 100000, 150000, 200000, 250000, 300000, 350000, 400000, 450000, 500000];optimizer)
     investments = []
     used_capacity = []
     curtailment = []
@@ -197,7 +197,7 @@ function run_demo(prices = [0, 1000, 10000, 50000, 75000, 100000, 150000, 200000
         case = IM.StrategicCase(StrategicFixedProfile([1e11, 1e11, 1e11, 1e11]),
             Dict(CO2=>price))
         discount_rate = 0.07
-        m = run_case_model(GLPK.Optimizer, data, case, discount_rate)
+        m = run_case_model(optimizer, data, case, discount_rate)
 
         println("=======================")
         println()
@@ -239,6 +239,6 @@ function run_demo(prices = [0, 1000, 10000, 50000, 75000, 100000, 150000, 200000
     @show used_capacity
 end
 
-if IS_SCRIPT
-    run_demo()
+if isdefined(Main, :IS_SCRIPT)
+    run_demo(;optimizer=GLPK.Optimizer)
 end
