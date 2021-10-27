@@ -1,3 +1,19 @@
+if abspath(PROGRAM_FILE) == @__FILE__
+    import Pkg
+    Pkg.activate(@__DIR__)
+    Pkg.instantiate()
+
+    const IS_SCRIPT = true
+    using GLPK
+end
+
+using EnergyModelsBase
+using Geography
+using InvestmentModels
+using JuMP
+using RenewableProducers
+using TimeStructures
+
 const EMB = EnergyModelsBase
 const GEO = Geography
 const IM = InvestmentModels
@@ -14,22 +30,23 @@ products = [Power, CO2]
 
 function agder_nodes(𝒯)
 
-    investment_data = IM.extra_inv_data(
-        FixedProfile(2700), # capex [€/kW]
-        FixedProfile(4e6), # FIX # max_inst_cap [kW]
-        FixedProfile(0), # max_add [kW]
-        FixedProfile(0), # min_add [kW]
-        IM.ContinuousInvestment() # investment mode
-    )
+    # investment_data = IM.extra_inv_data_storage(
+    #     FixedProfile(2700), # capex [€/kW]
+    #     FixedProfile(4e6), # FIX # max_inst_cap [kW]
+    #     FixedProfile(0), # max_add [kW]
+    #     FixedProfile(0), # min_add [kW]
+    #     IM.ContinuousInvestment() # investment mode
+    # )
 
-    max_storage = 1e8
+    max_storage = FixedProfile(1e8)
     initial_reservoir = FixedProfile(1e7)
     min_level = FixedProfile(0.1)
     
-    hydro = RP.RegHydroStor("-agd:hydro", FixedProfile(1e6), 
-        true, initial_reservoir, max_storage, FixedProfile(5e4), min_level, 
-        FixedProfile(30), FixedProfile(10), Dict(Power=>0.95), Dict(Power=>0.95), 
-        Dict(CO2=>27), Dict("InvestmentModels"=>investment_data))
+    hydro = RP.RegHydroStor("-agd:hydro", FixedProfile(1e6), max_storage, 
+        true, initial_reservoir, FixedProfile(5e4), min_level, 
+        FixedProfile(30/1e3), FixedProfile(10),
+        Dict(Power=>0.95), Dict(Power=>0.95), 
+        Dict(CO2=>27), Dict(""=> EMB.EmptyData()))
 
     agder_av = Geography.GeoAvailability("-agd:av", 𝒫₀, 𝒫₀)
 
@@ -52,15 +69,15 @@ function nord_nodes(𝒯)
     ])
 
     investment_data = IM.extra_inv_data(
-        FixedProfile(2700), # capex [€/kW] # TODO sjekk enheter
-        FixedProfile(1e10), # FIX # max installed capacity [kW]
-        FixedProfile(5e6), # max_add [kW]
-        FixedProfile(0), # min_add [kW]
-        IM.ContinuousInvestment() # investment mode
+        Capex_Cap= FixedProfile(2700), # capex [€/kW] # TODO sjekk enheter
+        Cap_max_inst = FixedProfile(1e10), # FIX # max installed capacity [kW]
+        Cap_max_add = FixedProfile(5e6), # max_add [kW]
+        Cap_min_add = FixedProfile(0), # min_add [kW]
+        Inv_mode = IM.ContinuousInvestment() # investment mode
     )
     wind = RP.NonDisRES("-nrd:wind", FixedProfile(0), profile,
-        FixedProfile(1000 * 1e-6 * 𝒯.operational.duration), # var_opex [€/kW(op.duration h)]
-        FixedProfile(100 * 𝒯.duration), # fixed_opex [€/kW/(duration years)]
+        FixedProfile(1000 * 1e-6), # var_opex [€/kW(op.duration h)]
+        FixedProfile(100), # fixed_opex [€/kW/(duration years)]
         Dict(Power=>1), Dict(CO2=>11), Dict("InvestmentModels"=>investment_data))
 
     nords_av = GEO.GeoAvailability("-nrd:av", 𝒫₀, 𝒫₀)
@@ -81,23 +98,24 @@ function denmark_nodes(𝒯, var_opex_src)
     # TODO add Source? FixedStrategic for source. Sink: mindre om natten enn dagen, mer om vinter enn om dagen
     # source, sink
 
-    investment_data_source = IM.extra_inv_data(
-        FixedProfile(1200), # capex [€/kW]
-        FixedProfile(1e6), # FIX! # max installed capacity [kW]
-        FixedProfile(0), # max_add [kW]
-        FixedProfile(0), # min_add [kW]
-        IM.ContinuousInvestment() # investment mode
-    )
+    # investment_data_source = IM.extra_inv_data(
+    #     FixedProfile(1200), # capex [€/kW]
+    #     FixedProfile(1e6), # FIX! # max installed capacity [kW]
+    #     FixedProfile(0), # max_add [kW]
+    #     FixedProfile(0), # min_add [kW]
+    #     IM.ContinuousInvestment() # investment mode
+    # )
     source = EMB.RefSource("-den:src", FixedProfile(1e6), # id, capacity [kW]
-        FixedProfile(var_opex_src * 𝒯.operational.duration * 1e-6), # var_opex [€/kW(op.duration h)]
-        FixedProfile(1000 * 𝒯.duration), # fixed_opex TODO ok?
+        FixedProfile(var_opex_src * 1e-6), # var_opex [€/kW(op.duration h)]
+        FixedProfile(1000), # fixed_opex TODO ok?
         Dict(Power=>1), # output
         Dict(CO2=>150), # emissions 150g/kWh for Denmark  
-        Dict("InvestmentModels"=>investment_data_source)
+        Dict(""=> EMB.EmptyData())
+        # Dict("InvestmentModels"=>investment_data_source)
     )
 
     sink = EMB.RefSink("-den:sink", FixedProfile(1e6), # id, capacity
-        Dict(:surplus=>0, :deficit=>1e6), # penalty 
+        Dict(:Surplus=>0, :Deficit=>1e3), # penalty 
         Dict(Power => 1), # input
         Dict(CO2=>0) # emissions
     )
@@ -125,14 +143,14 @@ function get_data(var_opex_src)
     nodes = [den_nodes..., nor_nodes..., agd_nodes...]
     links = [den_links..., nor_links..., agd_links...]
 
-    trm_line = GEO.RefStatic("cable", Power, 1e7, 0.05)
+    trm_line = GEO.RefStatic("cable", Power, 1e7, 0.05, 1)
     transmissions = []
 
     # Comment out agd_area from this array to run the case without the hydrostorage.
     areas = [den_area, nor_area, agd_area]
     
     for a1 in areas, a2 in areas
-        a1 != a2 && push!(transmissions, GEO.Transmission(a1, a2, [trm_line]))
+        a1 != a2 && push!(transmissions, GEO.Transmission(a1, a2, [trm_line],  [Dict(""=> EMB.EmptyData())]))
     end
 
     return Dict(
@@ -161,56 +179,66 @@ function run_case_model(optimizer, data, case, discount_rate=0.05)
 end
 
 
-prices = [0, 1000, 10000, 50000, 75000, 100000, 150000, 200000, 250000, 300000, 350000, 400000, 450000, 500000] #, 600000, 700000, 800000, 900000, 1000000]
-investments = []
-used_capacity = []
-curtailment = []
 
-for var_opex_src in prices
-    # var_opex_src is the price of production by the source in €/GWh
-    data = get_data(var_opex_src)
 
-    # CO2 price
-    price = StrategicFixedProfile([50e-6, 60e-6, 70e-6, 80e-6])
-    # price = FixedProfile(50e-6)
-    case = IM.StrategicCase(StrategicFixedProfile([1e11, 1e11, 1e11, 1e11]),
-        Dict(CO2=>price))
-    discount_rate = 0.07
-    m = run_case_model(GLPK.Optimizer, data, case, discount_rate)
 
-    println("=======================")
-    println()
-    source = data[:nodes][3]
-    sink = data[:nodes][2]
-    wind = data[:nodes][5]
-    T = data[:T]
-    println("pris ", var_opex_src * 1e-6, " €/kWh")
-    println()
-    println("source ", sum(value.(m[:cap_usage][source, t]) for t in T))
-    println("sink ", sum(value.(m[:cap_usage][sink, t]) for t in T))
-    println("wind ", sum(value.(m[:cap_usage][wind, t]) for t in T))
-    println()
-    @show value.(m[:add_cap])
-    
-    # Calculate the total investments in offshore wind.
-    push!(investments, sum(value.(m[:add_cap][wind, t]) for t ∈ strategic_periods(T)))
+function run_demo(prices = [0, 1000, 10000, 50000, 75000, 100000, 150000, 200000, 250000, 300000, 350000, 400000, 450000, 500000];optimizer)
+    investments = []
+    used_capacity = []
+    curtailment = []
 
-    # Compute average used capacity for the hy
-    used_capacities = []
-    for t in T
-        used_op = value.(m[:cap_usage][wind, t]) / (value.(m[:cap_max][wind, t]) * wind.profile[t])
-        # curtailment_op = value.(m[:curtailment][wind, t]) / value.(m[:cap_max])
-        if value.(m[:cap_max][wind, t]) * wind.profile[t] != 0
-            push!(used_capacities, used_op)
-        else
-            push!(used_capacities, 0)
+    for var_opex_src in prices
+        # var_opex_src is the price of production by the source in €/GWh
+        data = get_data(var_opex_src)
+
+        # CO2 price
+        price = StrategicFixedProfile([50e-6, 60e-6, 70e-6, 80e-6])
+        # price = FixedProfile(50e-6)
+        case = IM.StrategicCase(StrategicFixedProfile([1e11, 1e11, 1e11, 1e11]),
+            Dict(CO2=>price))
+        discount_rate = 0.07
+        m = run_case_model(optimizer, data, case, discount_rate)
+
+        println("=======================")
+        println()
+        source = data[:nodes][3]
+        sink = data[:nodes][2]
+        wind = data[:nodes][5]
+        hydro = data[:nodes][7]
+        T = data[:T]
+        println("pris ", var_opex_src * 1e-6, " €/kWh")
+        println()
+        println("source ", sum(value.(m[:cap_use][source, t]) for t in T))
+        println("sink ", sum(value.(m[:cap_use][sink, t]) for t in T))
+        println("wind ", sum(value.(m[:cap_use][wind, t]) for t in T))
+        println("hydro ", sum(value.(m[:stor_rate_use][hydro, t]) for t in T))
+        println()
+        @show value.(m[:cap_add])
+        
+        # Calculate the total investments in offshore wind.
+        push!(investments, sum(value.(m[:cap_add][wind, t]) for t ∈ strategic_periods(T)))
+
+        # Compute average used capacity for the hy
+        used_capacities = []
+        for t in T
+            used_op = value.(m[:cap_use][wind, t]) / (value.(m[:cap_inst][wind, t]) * wind.Profile[t])
+            # curtailment_op = value.(m[:curtailment][wind, t]) / value.(m[:cap_inst])
+            if value.(m[:cap_inst][wind, t]) * wind.Profile[t] != 0
+                push!(used_capacities, used_op)
+            else
+                push!(used_capacities, 0)
+            end
         end
-    end
-    push!(used_capacity, sum(used_capacities) / length(used_capacities))
+        push!(used_capacity, sum(used_capacities) / length(used_capacities))
 
+    end
+
+    println()
+    @show prices
+    @show investments
+    @show used_capacity
 end
 
-println()
-@show prices
-@show investments
-@show used_capacity
+if isdefined(Main, :IS_SCRIPT)
+    run_demo(;optimizer=GLPK.Optimizer)
+end
