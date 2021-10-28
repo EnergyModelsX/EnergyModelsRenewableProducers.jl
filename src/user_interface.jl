@@ -3,40 +3,39 @@ function run_model(fn, optimizer=nothing)
     @debug "Run model" fn optimizer
 
     # Build on the example used in energymodelsbase.jl
-    data = EMB.read_data(fn)
+    case = EMB.read_data(fn)
 
-    CO2 = ResourceEmit("CO2", 1.)
-    NG = ResourceEmit("NG", 0.2)
-    emissions = Dict(CO2=>0.01, NG=>0)
-    Power = ResourceCarrier("Power", 1.)
+    CO2         = ResourceEmit("CO2", 1.)
+    NG          = ResourceEmit("NG", 0.2)
+    emissions   = Dict(CO2=>0.01, NG=>0)
+    Power       = ResourceCarrier("Power", 1.)
     
     # Add a non-dispatchable renewable energy source to the system
     rs = NonDisRES(8, FixedProfile(2.), FixedProfile(1000), 
-            FixedProfile(10), Dict(Power=>1.), emissions)
-    push!(data[:nodes], rs)
+                   FixedProfile(10), Dict(Power=>1.), emissions)
+    push!(case[:nodes], rs)
 
     # Link it to the Availability node
-    d81 = EMB.Direct(81, data[:nodes][8], data[:nodes][1], EMB.Linear())
-    push!(data[:links], d81)
+    d81 = EMB.Direct(81, case[:nodes][8], case[:nodes][1], EMB.Linear())
+    push!(case[:links], d81)
 
     hydro = RegHydroStor(9, FixedProfile(2.),  FixedProfile(90), 
-        false, FixedProfile(10),
-        FixedProfile(1), FixedProfile(0.0), 
-        FixedProfile(3), Dict(Power=>0.9), Dict(Power=>1), 
-        Dict(CO2=>0.01, NG=>0))
-    push!(data[:nodes], hydro)
+                         false, FixedProfile(10),
+                         FixedProfile(1), FixedProfile(0.0), 
+                         FixedProfile(3), Dict(Power=>0.9), Dict(Power=>1), 
+                         Dict(CO2=>0.01, NG=>0))
+    push!(case[:nodes], hydro)
 
     # Link it to the Availability node
-    d91 = EMB.Direct(91, data[:nodes][9], data[:nodes][1], EMB.Linear())
-    push!(data[:links], d91)
+    d91 = EMB.Direct(91, case[:nodes][9], case[:nodes][1], EMB.Linear())
+    push!(case[:links], d91)
     
-    return run_model(fn, optimizer, data)
+    return run_model(fn, optimizer, case)
 end
 
-function run_model(fn, optimizer, data)
-    case = EMB.OperationalCase(EMB.StrategicFixedProfile([450, 400, 350, 300]))    # 
-    model = EMB.OperationalModel(case)
-    m = EMB.create_model(data, model)
+function run_model(fn, optimizer, case)
+    model = EMB.OperationalModel()
+    m = EMB.create_model(case, model)
 
     if !isnothing(optimizer)
         set_optimizer(m, optimizer)
@@ -46,5 +45,5 @@ function run_model(fn, optimizer, data)
     else
         @info "No optimizer given"
     end
-    return m, data
+    return m, case
 end
