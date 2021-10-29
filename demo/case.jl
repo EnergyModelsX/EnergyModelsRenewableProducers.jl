@@ -177,7 +177,7 @@ function get_data(var_opex_src, discount_rate=0.05)
     # Creation of the global data
     em_limits   = Dict(NG => FixedProfile(1e6), CO2 => StrategicFixedProfile([1e11, 1e11, 1e11, 1e11]))
     em_cost     = Dict(NG => FixedProfile(0),   CO2 => StrategicFixedProfile([50e-6, 60e-6, 70e-6, 80e-6]))
-    global_data = IM.IM_global_data(em_limits, em_cost, discount_rate)
+    global_data = IM.GlobalData(em_limits, em_cost, discount_rate)
 
 
     return Dict(
