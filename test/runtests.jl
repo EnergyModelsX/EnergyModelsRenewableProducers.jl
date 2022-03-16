@@ -12,25 +12,29 @@ const RP = RenewableProducers
 NG = ResourceEmit("NG", 0.2)
 CO2 = ResourceEmit("CO2", 1.)
 Power = ResourceCarrier("Power", 0.)
-# Coal     = ResourceCarrier("Coal", 0.35)
 
 ROUND_DIGITS = 8
 
 
-function small_graph(source=nothing, sink=nothing)
-    # products = [NG, Coal, Power, CO2]
+function small_graph(source = nothing, sink = nothing)
+    # products = [NG, Power, CO2]
     products = [NG, Power, CO2]
+
     # Creation of a dictionary with entries of 0. for all resources
     𝒫₀ = Dict(k  => 0 for k ∈ products)
+
     # Creation of a dictionary with entries of 0. for all emission resources
     𝒫ᵉᵐ₀ = Dict(k  => 0. for k ∈ products if typeof(k) == ResourceEmit{Float64})
     𝒫ᵉᵐ₀[CO2] = 0.0
 
+    # Creation of the source and sink module as well as the arrays used for nodes and links
     if isnothing(source)
-        source = EMB.RefSource(2, FixedProfile(1), FixedProfile(30), FixedProfile(10), Dict(NG => 1), 𝒫ᵉᵐ₀, Dict(""=>EMB.EmptyData()))
+        source = EMB.RefSource(2, FixedProfile(1), FixedProfile(30), FixedProfile(10),
+                               Dict(NG => 1), 𝒫ᵉᵐ₀, Dict(""=>EMB.EmptyData()))
     end
     if isnothing(sink)
-        sink = EMB.RefSink(3, FixedProfile(20), Dict(:Surplus => 0, :Deficit => 1e6), Dict(Power => 1), 𝒫ᵉᵐ₀)
+        sink = EMB.RefSink(3, FixedProfile(20), Dict(:Surplus => 0, :Deficit => 1e6),
+                               Dict(Power => 1), 𝒫ᵉᵐ₀)
     end
 
     nodes = [
@@ -41,15 +45,22 @@ function small_graph(source=nothing, sink=nothing)
             EMB.Direct(13, nodes[1], nodes[3], EMB.Linear())
             ]
 
+    # Creation of the time structure and the used global data
     T = UniformTwoLevel(1, 4, 1, UniformTimes(1, 24, 1))
+    global_data = EMB.GlobalData(Dict(CO2 => StrategicFixedProfile([450, 400, 350, 300]),
+                                      NG  => FixedProfile(1e6)
+                                      ))
 
-    data = Dict(
-                :nodes => nodes,
-                :links => links,
-                :products => products,
-                :T => T,
+    # Creation of the case dictionary
+    case = Dict(
+                :nodes          => nodes,
+                :links          => links,
+                :products       => products,
+                :T              => T,
+                :global_data    => global_data,
                 )
-    return data
+    return case
+    return case
 end
 
 
@@ -65,17 +76,19 @@ function general_tests(m)
 end
 
 
-function general_node_tests(m, data, n::RP.RegHydroStor)
-    𝒯 = data[:T]
+function general_node_tests(m, case, n::RP.RegHydroStor)
+
+    # Extract time structure and storage node
+    𝒯 = case[:T]
     p_stor = [k for (k, v) ∈ n.Output][1]
 
     @testset "stor_level bounds" begin
         # The storage level has to be greater than the required minimum.
         @test sum(n.Level_min[t] * value.(m[:stor_cap_inst][n, t]) 
-                <= round(value.(m[:stor_level][n, t]), digits=ROUND_DIGITS) for t in 𝒯) == length(data[:T])
+                <= round(value.(m[:stor_level][n, t]), digits=ROUND_DIGITS) for t in 𝒯) == length(case[:T])
         
         # The stor_level has to be less than stor_cap_inst in all operational periods.
-        @test sum(value.(m[:stor_level][n, t]) <= value.(m[:stor_cap_inst][n, t]) for t in 𝒯) == length(data[:T])
+        @test sum(value.(m[:stor_level][n, t]) <= value.(m[:stor_cap_inst][n, t]) for t in 𝒯) == length(case[:T])
         # TODO valing Storage node har negativ stor_cap_inst et par steder.
         # TODO this is ok when inflow=1. When inflow=10 the stor_level gets too large. Why?
         #  - Do we need some other sink in the system? Not logical to be left with too much power.
@@ -93,7 +106,6 @@ function general_node_tests(m, data, n::RP.RegHydroStor)
                     + n.Level_inflow[t] +n.Input[p_stor] * value.(m[:flow_in][n, t, p_stor])
                     - value.(m[:stor_rate_use][n, t]) 
                 for t ∈ 𝒯 if t.op > 1) == length(𝒯) - 𝒯.len
-        # TODO plus flow_in
     end
 
     @testset "stor_cap_inst bounds" begin
@@ -121,7 +133,7 @@ function general_node_tests(m, data, n::RP.RegHydroStor)
     @testset "flow variables" begin
         # The flow_out corresponds to the production stor_rate_use.
         @test sum(value.(m[:flow_out][n, t, p_stor]) == value.(m[:stor_rate_use][n, t]) * n.Output[Power] 
-                for t ∈ data[:T]) == length(𝒯)
+                for t ∈ case[:T]) == length(𝒯)
 
     end
 end
@@ -129,21 +141,29 @@ end
 
 @testset "RenewableProducers" begin
 
+    # Test set for the non dispatchable renewable energy source type
     @testset "NonDisRES" begin
-        data = small_graph()
-        
+
+        # Creation of the initial problem and the NonDisRES node
+        case = small_graph()
         wind = RP.NonDisRES("wind", FixedProfile(2), FixedProfile(0.9), 
             FixedProfile(10), FixedProfile(10), Dict(Power=>1), Dict(CO2=>0.1, NG=>0), Dict(""=>EMB.EmptyData()))
 
-        push!(data[:nodes], wind)
-        link = EMB.Direct(41, data[:nodes][4], data[:nodes][1], EMB.Linear())
-        push!(data[:links], link)
-        m, data = RP.run_model("", GLPK.Optimizer, data)
+        # Updating the nodes and the links
+        push!(case[:nodes], wind)
+        link = EMB.Direct(41, case[:nodes][4], case[:nodes][1], EMB.Linear())
+        push!(case[:links], link)
 
-        𝒯 = data[:T]
+        # Run the model
+        m, case = RP.run_model("", GLPK.Optimizer, case)
 
+        # Extraction of the time structure
+        𝒯 = case[:T]
+
+        # Run of the general tests
         general_tests(m)
 
+        # Check that the installed capacity variable corresponds to the provided values
         @testset "cap_inst" begin
             @test sum(value.(m[:cap_inst][wind, t]) == wind.Cap[wind] for t ∈ 𝒯) == length(𝒯)
         end
@@ -153,37 +173,40 @@ end
             @test sum(value.(m[:cap_use][wind, t]) <= value.(m[:cap_inst][wind, t]) for t ∈ 𝒯) == length(𝒯)
                 
             # Test that cap_use is set correctly with respect to the profile.
-            @test sum(value.(m[:cap_use][wind, t]) == wind.Profile[t] * value.(m[:cap_inst][wind, t])
+            @test sum(value.(m[:cap_use][wind, t]) <= wind.Profile[t] * value.(m[:cap_inst][wind, t])
                     for t ∈ 𝒯) == length(𝒯)
         end
     end
 
     @testset "RegHydroStor without pump" begin
-        # Setup a model with a RegHydroStor without a pump.
-        data = small_graph()
-        
-        max_storage = FixedProfile(100)
-        initial_reservoir = StrategicFixedProfile([20, 25, 30, 20])
-        min_level = StrategicFixedProfile([0.1, 0.2, 0.05, 0.1])
+
+        # Creation of the initial problem and the RegHydroStor node without a pump.
+        case = small_graph()
+        max_storage         = FixedProfile(100)
+        initial_reservoir   = StrategicFixedProfile([20, 25, 30, 20])
+        min_level           = StrategicFixedProfile([0.1, 0.2, 0.05, 0.1])
         
         hydro = RP.RegHydroStor("-hydro", FixedProfile(2.), max_storage, 
             false, initial_reservoir, FixedProfile(1), min_level, 
             FixedProfile(10), FixedProfile(10), Dict(Power=>0.9), Dict(Power=>1), 
             Dict(CO2=>0.01, NG=>0), Dict(""=>EMB.EmptyData()))
         
-        push!(data[:nodes], hydro)
-        link_from = EMB.Direct(41, data[:nodes][4], data[:nodes][1], EMB.Linear())
-        push!(data[:links], link_from)
-        link_to = EMB.Direct(14, data[:nodes][1], data[:nodes][4], EMB.Linear())
-        push!(data[:links], link_to)
+        # Updating the nodes and the links
+        push!(case[:nodes], hydro)
+        link_from = EMB.Direct(41, case[:nodes][4], case[:nodes][1], EMB.Linear())
+        push!(case[:links], link_from)
+        link_to = EMB.Direct(14, case[:nodes][1], case[:nodes][4], EMB.Linear())
+        push!(case[:links], link_to)
 
-        m, data = RP.run_model("", GLPK.Optimizer, data)
+        # Run the model
+        m, case = RP.run_model("", GLPK.Optimizer, case)
 
-        𝒯 = data[:T]
+        # Extraction of the time structure
+        𝒯 = case[:T]
 
+        # Run of the general and node tests
         general_tests(m)
-
-        general_node_tests(m, data, hydro)
+        general_node_tests(m, case, hydro)
 
         @testset "no pump" begin
             # No pump means no inflow.
@@ -192,9 +215,9 @@ end
         
         @testset "flow_in" begin
             # Check that the zero equality constraint is set on the flow_in variable 
-            # when the pump is not allowed. If this fais, there might be errors in 
+            # when the pump is not allowed. If this false, there might be errors in 
             # the links to the node. The hydro node need one in and one out.
-            @test_broken sum(occursin("flow_in[n-hydro,t1_1,Power] == 0.0", string(constraint))
+            @test sum(occursin("flow_in[n-hydro,t1_1,Power] == 0.0", string(constraint))
                 for constraint ∈ all_constraints(m, AffExpr, MOI.EqualTo{Float64})) == 1
         end
             
@@ -202,39 +225,42 @@ end
 
 
     @testset "RegHydroStor with pump" begin
-        # Setup a model with a RegHydroStor without a pump.
-        
+
+        # Creation of the initial problem and the RegHydroStor node with a pump.
         products = [NG, Power, CO2]
         𝒫ᵉᵐ₀ = Dict(k  => 0. for k ∈ products if typeof(k) == ResourceEmit{Float64})
         source = EMB.RefSource("-source", DynamicProfile([10 10 10 10 10 0 0 0 0 0;
                                                           10 10 10 10 10 0 0 0 0 0;]),
                                 FixedProfile(10), FixedProfile(10), Dict(Power => 1), 𝒫ᵉᵐ₀, Dict(""=>EMB.EmptyData()))
         sink = EMB.RefSink("-sink", FixedProfile(7), Dict(:Surplus => 0, :Deficit => 1e6), Dict(Power => 1), 𝒫ᵉᵐ₀)
-        
-        data = small_graph(source, sink)
+        case = small_graph(source, sink)
         
         max_storage = FixedProfile(100)
         initial_reservoir = StrategicFixedProfile([20, 25])
         min_level = StrategicFixedProfile([0.1, 0.2])
-        
         hydro = RP.RegHydroStor("-hydro", FixedProfile(10.), max_storage, 
             true, initial_reservoir, FixedProfile(1), min_level, 
             FixedProfile(30), FixedProfile(10), Dict(Power=>1), Dict(Power=>0.9), 
             Dict(CO2=>0.01, NG=>0), Dict(""=>EMB.EmptyData()))
         
-        push!(data[:nodes], hydro)
-        link_from = EMB.Direct(41, data[:nodes][4], data[:nodes][1], EMB.Linear())
-        push!(data[:links], link_from)
-        link_to = EMB.Direct(14, data[:nodes][1], data[:nodes][4], EMB.Linear())
-        push!(data[:links], link_to)
+        # Updating the nodes and the links
+        push!(case[:nodes], hydro)
+        link_from = EMB.Direct(41, case[:nodes][4], case[:nodes][1], EMB.Linear())
+        push!(case[:links], link_from)
+        link_to = EMB.Direct(14, case[:nodes][1], case[:nodes][4], EMB.Linear())
+        push!(case[:links], link_to)
 
-        data[:T] = UniformTwoLevel(1, 2, 1, UniformTimes(1, 10, 1))
-        m, data = RP.run_model("", GLPK.Optimizer, data)
-        𝒯 = data[:T]
+        case[:T] = UniformTwoLevel(1, 2, 1, UniformTimes(1, 10, 1))
 
+        # Run the model
+        m, case = RP.run_model("", GLPK.Optimizer, case)
+
+        # Extraction of the time structure
+        𝒯 = case[:T]
+
+        # Run of the general and node tests
         general_tests(m)
-
-        general_node_tests(m, data, hydro)
+        general_node_tests(m, case, hydro)
 
         @testset "flow_in" begin
             # Check that the zero equality constraint is not set on the flow_in variable 
