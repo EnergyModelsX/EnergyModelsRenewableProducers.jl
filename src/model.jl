@@ -1,6 +1,9 @@
 
-" Create a curtailment variable for every NonDisRES node. This method is called
-from EnergyModelsBase utilizing multiple dispatch."
+""" 
+    EMB.variables_node(m, 𝒩, 𝒯, node::NonDisRES, modeltype)
+
+Create a `curtailment` variable for every NonDisRES node. This method is called
+from EnergyModelsBase utilizing multiple dispatch."""
 function EMB.variables_node(m, 𝒩, 𝒯, node::NonDisRES, modeltype)
     𝒩ⁿᵈʳ = EMB.node_sub(𝒩, NonDisRES)
 
@@ -8,12 +11,17 @@ function EMB.variables_node(m, 𝒩, 𝒯, node::NonDisRES, modeltype)
 end
 
 
-" Constraints for a non-dispatchable renewable energy source."
+"""
+    EMB.create_node(m, n::NonDisRES, 𝒯, 𝒫)
+
+Sets all constraints for a non-dispatchable renewable energy source.
+"""
 function EMB.create_node(m, n::NonDisRES, 𝒯, 𝒫)
     # Declaration of the required subsets.
     𝒫ᵒᵘᵗ = keys(n.Output)
     𝒫ᵉᵐ = EMB.res_sub(𝒫, EMB.ResourceEmit)
     𝒯ᴵⁿᵛ = EMB.strategic_periods(𝒯)
+    n.Cap
 
     # Non dispatchable renewable energy sources operate at their max
     # capacity with repsect to the current profile (e.g. wind) at every time.
@@ -43,7 +51,11 @@ function EMB.create_node(m, n::NonDisRES, 𝒯, 𝒫)
 end
 
 
-# function prepare_node(m, n::RegHydroStor, 𝒯, 𝒫)
+"""
+    EMB.create_node(m, n::RegHydroStor, 𝒯, 𝒫)
+
+Sets all constraints for the regulated hydro storage node.
+"""
 function EMB.create_node(m, n::RegHydroStor, 𝒯, 𝒫)
     # The resource (there should be only one) in n.Output is stored. The resources in n.input are
     # either stored, or used by the storage.

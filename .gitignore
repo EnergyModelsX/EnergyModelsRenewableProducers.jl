@@ -27,4 +27,7 @@ docs/site/
 # environment.
 Manifest.toml
 
+# MacOS
+.DS_Store
+
 # End of https://www.toptal.com/developers/gitignore/api/julia

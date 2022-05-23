@@ -1,6 +1,29 @@
-" A non-dispatchable renewable energy source."
+""" A non-dispatchable renewable energy source.
+
+
+# Fields
+
+**`id`**
+
+**`Cap`** is the installed capacity as a `TimeProfile`.
+
+**`Profile`** is the power production at each operational period as a ratio of the 
+installed capacity at that time.
+
+**`Opex_var`** is the variational operational costs.
+
+**`Opex_fixed`** is the fixed operational costs.
+
+**`Output`**
+
+**`Emissions`**
+
+**`Data`**
+
+"""
 struct NonDisRES <: EMB.Source
     id
+    "Installed capacity"
     Cap::TimeProfile                    # Installed capacity.
     Profile::TimeProfile                # Power production profile as a ratio of the max capacity.
     Opex_var::TimeProfile               # Operational costs per GWh produced.
@@ -11,10 +34,39 @@ struct NonDisRES <: EMB.Source
 end
 
 
-" A regulated hydropower storage without pumping capabilities, modelled as a Source."
+""" A regulated hydropower storage with pumping capabilities, modelled as a Storage node.
+
+## Fields
+
+**`id`**
+
+**`Rate_cap`**
+
+**`Stor_cap`**
+
+**`Has_pump::Bool`** states wheter the stored resource can flow in.
+
+**`Level_init`**
+
+**`Level_inflow`**
+
+**`Level_min`**
+
+**`Opex_var`**
+
+**`Opex_fixed`**
+
+**`Input::Dict`** the stored and used resources.
+
+**`Output::Dict`** can only contain one entry, and states the stored resource.
+
+**`Emissions`**
+
+**`Data`**
+"""
 struct RegHydroStor <: EMB.Storage
     id
-    Rate_cap::TimeProfile                    # Installed capacity.
+    Rate_cap::TimeProfile               # Installed capacity.
     Stor_cap::TimeProfile               # Initial installed storage capacity in the dam.
     
     Has_pump::Bool

@@ -8,7 +8,10 @@ using RenewableProducers
 const RP = RenewableProducers
 
 
-" This method checks that the RegHydroStor node is valid. "
+"""
+    EMB.check_node(n::RP.RegHydroStor, 𝒯, modeltype::EMB.OperationalModel)
+    
+This method checks that the RegHydroStor node is valid. """
 function EMB.check_node(n::RP.RegHydroStor, 𝒯, modeltype::EMB.OperationalModel)
     
     @assert_or_log length(n.Output) == 1 "Only one resource can be stored, so only this one can flow out."
