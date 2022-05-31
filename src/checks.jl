@@ -1,9 +1,7 @@
 using EnergyModelsBase
-using Test
-using TimeStructures
 using JuMP
-using GLPK
 using RenewableProducers
+using TimeStructures
 
 const RP = RenewableProducers
 
