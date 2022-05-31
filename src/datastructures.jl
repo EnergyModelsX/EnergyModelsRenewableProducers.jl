@@ -1,83 +1,60 @@
 """ A non-dispatchable renewable energy source.
 
-
 # Fields
-
-**`id`**
-
-**`Cap`** is the installed capacity as a `TimeProfile`.
-
-**`Profile`** is the power production at each operational period as a ratio of the 
-installed capacity at that time.
-
-**`Opex_var`** is the variational operational costs.
-
-**`Opex_fixed`** is the fixed operational costs.
-
-**`Output`**
-
-**`Emissions`**
-
-**`Data`**
+**`id`** is the name/identifyer of the node.\n
+**`Cap::TimeProfile`** is the installed capacity.\n
+**`Profile::TimeProfile`** is the power production at each operational period as a ratio of the 
+installed capacity at that time.\n
+**`Opex_var::TimeProfile`** is the variational operational costs per energy unit produced.\n
+**`Opex_fixed::TimeProfile`** is the fixed operational costs.\n
+**`Output::Dict{EMB.Resource, Real}`** are the generated `Resource`s, normally Power.\n
+**`Emissions::Dict{EMB.ResourceEmit, Real}`**: emissions per energy unit produced.\n
+**`Data::Dict{String, EMB.Data}` is the additional data (e.g. for investments).**
 
 """
 struct NonDisRES <: EMB.Source
     id
-    "Installed capacity"
-    Cap::TimeProfile                    # Installed capacity.
-    Profile::TimeProfile                # Power production profile as a ratio of the max capacity.
-    Opex_var::TimeProfile               # Operational costs per GWh produced.
-    Opex_fixed::TimeProfile             # Fixed operational costs
-    Output::Dict{EMB.Resource, Real}    # Generated resources, normally Power
-    Emissions::Dict{EMB.ResourceEmit, Real} # Emissions per GWh produced.
-    Data::Dict{String, EMB.Data}        # Additional data (e.g. for investments)
+    Cap::TimeProfile
+    Profile::TimeProfile
+    Opex_var::TimeProfile
+    Opex_fixed::TimeProfile
+    Output::Dict{EMB.Resource, Real}
+    Emissions::Dict{EMB.ResourceEmit, Real}
+    Data::Dict{String, EMB.Data}
 end
 
 
 """ A regulated hydropower storage with pumping capabilities, modelled as a Storage node.
 
 ## Fields
-
-**`id`**
-
-**`Rate_cap`**
-
-**`Stor_cap`**
-
-**`Has_pump::Bool`** states wheter the stored resource can flow in.
-
-**`Level_init`**
-
-**`Level_inflow`**
-
-**`Level_min`**
-
-**`Opex_var`**
-
-**`Opex_fixed`**
-
-**`Input::Dict`** the stored and used resources.
-
-**`Output::Dict`** can only contain one entry, and states the stored resource.
-
-**`Emissions`**
-
-**`Data`**
+**`id`** is the name/identifyer of the node.\n
+**`Rate_cap::TimeProfile`**: installed capacity.\n
+**`Stor_cap::TimeProfile`** Initial installed storage capacity in the dam.\n
+**`Has_pump::Bool`** states wheter the stored resource can flow in.\n
+**`Level_init::TimeProfile`** Initial energy stored in the dam, in units of power.\n
+**`Level_inflow::TimeProfile`** Inflow of power per operational period.\n
+**`Level_min::TimeProfile`** Minimum fraction of the reservoir capacity that can be left.\n
+**`Opex_var::TimeProfile`** Operational cost per GWh produced.\n
+**`Opex_fixed::TimeProfile`** Fixed operational costs.\n
+**`Input::Dict{EMB.Resource, Real}`** the stored and used resources. The values in the Dict is a ratio describing the energy loss when using the pumps.\n
+**`Output::Dict{EMB.Resource, Real}`** can only contain one entry, and states the stored resource.\n
+**`Emissions::Dict{ResourceEmit, Real}`** emissions per energy unit produced.\n
+**`Data::Dict{String, EMB.Data}`** additional data (e.g. for investments).\n
 """
 struct RegHydroStor <: EMB.Storage
     id
-    Rate_cap::TimeProfile               # Installed capacity.
-    Stor_cap::TimeProfile               # Initial installed storage capacity in the dam.
+    Rate_cap::TimeProfile
+    Stor_cap::TimeProfile
     
     Has_pump::Bool
-    Level_init::TimeProfile             # Initial energy stored in the dam, in units of power.
-    Level_inflow::TimeProfile           # Inflow of power per operational period.
-    Level_min::TimeProfile              # Minimum fraction of the reservoir capacity that can be left.
+    Level_init::TimeProfile
+    Level_inflow::TimeProfile
+    Level_min::TimeProfile
     
-    Opex_var::TimeProfile               # Operational cost per GWh produced.
-    Opex_fixed::TimeProfile             # Fixed operational costs
-    Input::Dict{EMB.Resource, Real}     # Power used when pumping water into the reservoir.
-    Output::Dict{EMB.Resource, Real}    # Power produced per operational period.
-    Emissions::Dict{ResourceEmit, Real} # Emissions per GWh produced.
-    Data::Dict{String, EMB.Data}        # Additional data (e.g. for investments)
+    Opex_var::TimeProfile
+    Opex_fixed::TimeProfile
+    Input::Dict{EMB.Resource, Real}
+    Output::Dict{EMB.Resource, Real}
+    Emissions::Dict{ResourceEmit, Real}
+    Data::Dict{String, EMB.Data}
 end

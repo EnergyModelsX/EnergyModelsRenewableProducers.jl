@@ -18,6 +18,11 @@ makedocs(
     modules = [RenewableProducers],
     pages = [
         "Home" => "index.md",
+        "Manual" => Any[
+            "Quick Start" => "manual/quick-start.md",
+            "Philosofy" => "manual/philosofy.md",
+            "Example" => "manual/simple-example.md",
+        ],
         "Library" => Any[
             "Public" => "library/public.md",
             "Internals" => "library/internals.md"

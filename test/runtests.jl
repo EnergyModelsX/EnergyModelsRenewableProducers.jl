@@ -217,7 +217,7 @@ end
             # Check that the zero equality constraint is set on the flow_in variable 
             # when the pump is not allowed. If this false, there might be errors in 
             # the links to the node. The hydro node need one in and one out.
-            @test sum(occursin("flow_in[n-hydro,t1_1,Power] == 0.0", string(constraint))
+            @test sum(occursin("flow_in[n-hydro,t1_1,Power] = 0.0", string(constraint))
                 for constraint ∈ all_constraints(m, AffExpr, MOI.EqualTo{Float64})) == 1
         end
             
@@ -266,7 +266,7 @@ end
             # Check that the zero equality constraint is not set on the flow_in variable 
             # when the pump is allowed. If this fails, there might be errors in the links
             # to the node. The hydro node need one in and one out.
-            @test sum(occursin("flow_in[n-hydro,t1_1,Power] == 0.0", string(constraint))
+            @test sum(occursin("flow_in[n-hydro,t1_1,Power] = 0.0", string(constraint))
                 for constraint ∈ all_constraints(m, AffExpr, MOI.EqualTo{Float64})) == 0
         end
 

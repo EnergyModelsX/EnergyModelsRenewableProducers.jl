@@ -2,8 +2,8 @@
 """ 
     EMB.variables_node(m, 𝒩, 𝒯, node::NonDisRES, modeltype)
 
-Create a `curtailment` variable for every NonDisRES node. This method is called
-from EnergyModelsBase utilizing multiple dispatch."""
+Create the optimization variable `:curtailment` for every NonDisRES node. This method is called
+from `EnergyModelsBase.jl` utilizing multiple dispatch."""
 function EMB.variables_node(m, 𝒩, 𝒯, node::NonDisRES, modeltype)
     𝒩ⁿᵈʳ = EMB.node_sub(𝒩, NonDisRES)
 

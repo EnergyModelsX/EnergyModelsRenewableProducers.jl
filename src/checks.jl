@@ -1,18 +1,32 @@
-using EnergyModelsBase
-using Test
-using TimeStructures
-using JuMP
 using GLPK
-using RenewableProducers
+using JuMP
+using Test
 
-const RP = RenewableProducers
+using EnergyModelsBase
+using TimeStructures
+using RenewableProducers
 
 
 """
-    EMB.check_node(n::RP.RegHydroStor, 𝒯, modeltype::EMB.OperationalModel)
+    EMB.check_node(n::NonDisRES, 𝒯, modeltype::EMB.EnergyModel)
     
-This method checks that the RegHydroStor node is valid. """
-function EMB.check_node(n::RP.RegHydroStor, 𝒯, modeltype::EMB.OperationalModel)
+This method checks that the [`NonDisRES`](@ref) node is valid. 
+
+## Checks
+ - The field `n.Profile` is required to be in the range ``[0, 1]`` for all time steps ``t ∈ \\mathcal{T}``.
+"""
+function EMB.check_node(n::NonDisRES, 𝒯, modeltype::EMB.OperationalModel) # TODO: make into EnergyModel
+    
+    @assert_or_log sum(n.Profile[t] ≤ 1 for t ∈ 𝒯) == length(𝒯) "The profile field must be less or equalt to 1."
+    @assert_or_log sum(n.Profile[t] ≥ 0 for t ∈ 𝒯) == length(𝒯) "The profile field must be non-negative."
+end
+
+
+"""
+    EMB.check_node(n::RegHydroStor, 𝒯, modeltype::EMB.EnergyModel)
+
+This method checks that the [`RegHydroStor`](@ref) node is valid.  """
+function EMB.check_node(n::RegHydroStor, 𝒯, modeltype::EMB.OperationalModel) # TODO: make into EnergyModel
     
     @assert_or_log length(n.Output) == 1 "Only one resource can be stored, so only this one can flow out."
     
