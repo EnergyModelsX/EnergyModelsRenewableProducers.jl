@@ -20,7 +20,7 @@ makedocs(
         "Home" => "index.md",
         "Manual" => Any[
             "Quick Start" => "manual/quick-start.md",
-            "Philosofy" => "manual/philosofy.md",
+            "Philosophy" => "manual/philosophy.md",
             "Example" => "manual/simple-example.md",
         ],
         "Library" => Any[
