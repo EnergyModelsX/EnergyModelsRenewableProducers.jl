@@ -1,11 +1,8 @@
-using GLPK
 using JuMP
-using Test
 
 using EnergyModelsBase
-using TimeStructures
 using RenewableProducers
-
+using TimeStructures
 
 """
     EMB.check_node(n::NonDisRES, 𝒯, modeltype::EMB.EnergyModel)

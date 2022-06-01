@@ -16,50 +16,50 @@ Power = ResourceCarrier("Power", 0.)
 ROUND_DIGITS = 8
 
 
-function small_graph(source = nothing, sink = nothing)
+function small_graph(source=nothing, sink=nothing)
     # products = [NG, Power, CO2]
     products = [NG, Power, CO2]
 
     # Creation of a dictionary with entries of 0. for all resources
-    𝒫₀ = Dict(k  => 0 for k ∈ products)
+    𝒫₀ = Dict(k => 0 for k ∈ products)
 
     # Creation of a dictionary with entries of 0. for all emission resources
-    𝒫ᵉᵐ₀ = Dict(k  => 0. for k ∈ products if typeof(k) == ResourceEmit{Float64})
+    𝒫ᵉᵐ₀ = Dict(k => 0.0 for k ∈ products if typeof(k) == ResourceEmit{Float64})
     𝒫ᵉᵐ₀[CO2] = 0.0
 
     # Creation of the source and sink module as well as the arrays used for nodes and links
     if isnothing(source)
-        source = EMB.RefSource(2, FixedProfile(1), FixedProfile(30), FixedProfile(10),
-                               Dict(NG => 1), 𝒫ᵉᵐ₀, Dict(""=>EMB.EmptyData()))
+        source = RefSource(2, FixedProfile(1), FixedProfile(30), FixedProfile(10),
+            Dict(NG => 1), 𝒫ᵉᵐ₀, Dict("" => EMB.EmptyData()))
     end
     if isnothing(sink)
-        sink = EMB.RefSink(3, FixedProfile(20), Dict(:Surplus => 0, :Deficit => 1e6),
-                               Dict(Power => 1), 𝒫ᵉᵐ₀)
+        sink = RefSink(3, FixedProfile(20),
+            Dict(:Surplus => FixedProfile(0), :Deficit => FixedProfile(1e6)),
+            Dict(Power => 1), 𝒫ᵉᵐ₀)
     end
 
     nodes = [
-            EMB.GenAvailability(1, 𝒫₀, 𝒫₀), source, sink
-            ]
+        GenAvailability(1, 𝒫₀, 𝒫₀), source, sink
+    ]
     links = [
-            EMB.Direct(21, nodes[2], nodes[1], EMB.Linear())
-            EMB.Direct(13, nodes[1], nodes[3], EMB.Linear())
-            ]
+        Direct(21, nodes[2], nodes[1], Linear())
+        Direct(13, nodes[1], nodes[3], Linear())
+    ]
 
     # Creation of the time structure and the used global data
     T = UniformTwoLevel(1, 4, 1, UniformTimes(1, 24, 1))
     global_data = EMB.GlobalData(Dict(CO2 => StrategicFixedProfile([450, 400, 350, 300]),
-                                      NG  => FixedProfile(1e6)
-                                      ))
+        NG => FixedProfile(1e6)
+    ))
 
     # Creation of the case dictionary
     case = Dict(
-                :nodes          => nodes,
-                :links          => links,
-                :products       => products,
-                :T              => T,
-                :global_data    => global_data,
-                )
-    return case
+        :nodes => nodes,
+        :links => links,
+        :products => products,
+        :T => T,
+        :global_data => global_data,
+    )
     return case
 end
 
@@ -217,8 +217,8 @@ end
             # Check that the zero equality constraint is set on the flow_in variable 
             # when the pump is not allowed. If this false, there might be errors in 
             # the links to the node. The hydro node need one in and one out.
-            @test sum(occursin("flow_in[n-hydro,t1_1,Power] = 0.0", string(constraint))
-                for constraint ∈ all_constraints(m, AffExpr, MOI.EqualTo{Float64})) == 1
+            @test sum(sum(occursin("flow_in[n-hydro,$(t),Power] = 0.0", string(constraint))
+                for constraint ∈ all_constraints(m, AffExpr, MOI.EqualTo{Float64})) == 1 for t ∈ 𝒯) == length(𝒯)
         end
             
     end # testset RegHydroStor without pump
@@ -232,7 +232,10 @@ end
         source = EMB.RefSource("-source", DynamicProfile([10 10 10 10 10 0 0 0 0 0;
                                                           10 10 10 10 10 0 0 0 0 0;]),
                                 FixedProfile(10), FixedProfile(10), Dict(Power => 1), 𝒫ᵉᵐ₀, Dict(""=>EMB.EmptyData()))
-        sink = EMB.RefSink("-sink", FixedProfile(7), Dict(:Surplus => 0, :Deficit => 1e6), Dict(Power => 1), 𝒫ᵉᵐ₀)
+
+        sink = EMB.RefSink("-sink", FixedProfile(7), 
+            Dict(:Surplus => FixedProfile(0), :Deficit => FixedProfile(1e6)), Dict(Power => 1), 𝒫ᵉᵐ₀)
+
         case = small_graph(source, sink)
         
         max_storage = FixedProfile(100)
