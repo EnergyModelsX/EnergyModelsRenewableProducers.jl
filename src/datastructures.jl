@@ -9,7 +9,7 @@ installed capacity at that time.\n
 **`Opex_fixed::TimeProfile`** is the fixed operational costs.\n
 **`Output::Dict{EMB.Resource, Real}`** are the generated `Resource`s, normally Power.\n
 **`Emissions::Dict{EMB.ResourceEmit, Real}`**: emissions per energy unit produced.\n
-**`Data::Dict{String, EMB.Data}` is the additional data (e.g. for investments).**
+**`Data::Dict{String, EMB.Data}`** is the additional data (e.g. for investments).
 
 """
 struct NonDisRES <: EMB.Source
