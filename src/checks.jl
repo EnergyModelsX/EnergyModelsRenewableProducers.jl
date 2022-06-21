@@ -12,7 +12,7 @@ This method checks that the [`NonDisRES`](@ref) node is valid.
 ## Checks
  - The field `n.Profile` is required to be in the range ``[0, 1]`` for all time steps ``t ∈ \\mathcal{T}``.
 """
-function EMB.check_node(n::NonDisRES, 𝒯, modeltype::EnergyModel)
+function EMB.check_node(n::NonDisRES, 𝒯, modeltype::OperationalModel)
     
     @assert_or_log sum(n.Profile[t] ≤ 1 for t ∈ 𝒯) == length(𝒯) "The profile field must be less or equalt to 1."
     @assert_or_log sum(n.Profile[t] ≥ 0 for t ∈ 𝒯) == length(𝒯) "The profile field must be non-negative."
@@ -24,7 +24,7 @@ end
 
 This method checks that the [`RegHydroStor`](@ref) node is valid.
 """
-function EMB.check_node(n::RegHydroStor, 𝒯, modeltype::EnergyModel)
+function EMB.check_node(n::RegHydroStor, 𝒯, modeltype::OperationalModel)
     
     @assert_or_log length(n.Output) == 1 "Only one resource can be stored, so only this one can flow out."
     

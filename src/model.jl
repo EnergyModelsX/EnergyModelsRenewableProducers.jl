@@ -3,8 +3,8 @@
     EMB.variables_node(m, 𝒩, 𝒯, node::NonDisRES, modeltype)
 
 Create the optimization variable `:curtailment` for every NonDisRES node. This method is called
-from `EnergyModelsBase.jl` utilizing multiple dispatch."""
-function EMB.variables_node(m, 𝒩, 𝒯, node::NonDisRES, modeltype)
+from `EnergyModelsBase.jl`."""
+function EMB.variables_node(m, 𝒩, 𝒯, node::NonDisRES, modeltype::EnergyModel)
     𝒩ⁿᵈʳ = EMB.node_sub(𝒩, NonDisRES)
 
     @variable(m, curtailment[𝒩ⁿᵈʳ, 𝒯] >= 0)
