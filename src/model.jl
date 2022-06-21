@@ -1,19 +1,27 @@
 
-" Create a curtailment variable for every NonDisRES node. This method is called
-from EnergyModelsBase utilizing multiple dispatch."
-function EMB.variables_node(m, 𝒩, 𝒯, node::NonDisRES, modeltype)
+""" 
+    EMB.variables_node(m, 𝒩, 𝒯, node::NonDisRES, modeltype)
+
+Create the optimization variable `:curtailment` for every NonDisRES node. This method is called
+from `EnergyModelsBase.jl`."""
+function EMB.variables_node(m, 𝒩, 𝒯, node::NonDisRES, modeltype::EnergyModel)
     𝒩ⁿᵈʳ = EMB.node_sub(𝒩, NonDisRES)
 
     @variable(m, curtailment[𝒩ⁿᵈʳ, 𝒯] >= 0)
 end
 
 
-" Constraints for a non-dispatchable renewable energy source."
+"""
+    EMB.create_node(m, n::NonDisRES, 𝒯, 𝒫)
+
+Sets all constraints for a non-dispatchable renewable energy source.
+"""
 function EMB.create_node(m, n::NonDisRES, 𝒯, 𝒫)
     # Declaration of the required subsets.
     𝒫ᵒᵘᵗ = keys(n.Output)
     𝒫ᵉᵐ = EMB.res_sub(𝒫, EMB.ResourceEmit)
     𝒯ᴵⁿᵛ = EMB.strategic_periods(𝒯)
+    n.Cap
 
     # Non dispatchable renewable energy sources operate at their max
     # capacity with repsect to the current profile (e.g. wind) at every time.
@@ -43,7 +51,11 @@ function EMB.create_node(m, n::NonDisRES, 𝒯, 𝒫)
 end
 
 
-# function prepare_node(m, n::RegHydroStor, 𝒯, 𝒫)
+"""
+    EMB.create_node(m, n::RegHydroStor, 𝒯, 𝒫)
+
+Sets all constraints for the regulated hydro storage node.
+"""
 function EMB.create_node(m, n::RegHydroStor, 𝒯, 𝒫)
     # The resource (there should be only one) in n.Output is stored. The resources in n.input are
     # either stored, or used by the storage.
@@ -64,13 +76,15 @@ function EMB.create_node(m, n::RegHydroStor, 𝒯, 𝒫)
         if t == first_operational(t_inv)
             @constraint(m, 
                 m[:stor_level][n, t] ==  n.Level_init[t]
-                            + n.Level_inflow[t] + n.Input[p_stor] * m[:flow_in][n, t , p_stor] 
+                            + (n.Level_inflow[t] + n.Input[p_stor] * m[:flow_in][n, t , p_stor] 
                             - m[:stor_rate_use][n, t])
+                            * t.duration)
         else
             @constraint(m, 
                 m[:stor_level][n, t] ==  m[:stor_level][n, previous(t, 𝒯)]
-                            + n.Level_inflow[t] + n.Input[p_stor] * m[:flow_in][n, t, p_stor]
+                            + (n.Level_inflow[t] + n.Input[p_stor] * m[:flow_in][n, t, p_stor]
                             - m[:stor_rate_use][n, t])
+                            * t.duration)
         end
     end
 
