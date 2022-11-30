@@ -1,12 +1,12 @@
 using EnergyModelsBase
+using EnergyModelsRenewableProducers
 using Test
 using TimeStructures
 using JuMP
 using GLPK
-using RenewableProducers
 
 const EMB = EnergyModelsBase
-const RP = RenewableProducers
+const RP = EnergyModelsRenewableProducers
 
 
 NG = ResourceEmit("NG", 0.2)

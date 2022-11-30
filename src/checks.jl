@@ -1,7 +1,7 @@
 using JuMP
 
 using EnergyModelsBase
-using RenewableProducers
+using EnergyModelsRenewableProducers
 using TimeStructures
 
 """

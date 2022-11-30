@@ -10,12 +10,12 @@ catch
     using Documenter
 end
 
-using RenewableProducers
+using EnergyModelsRenewableProducers
 
 makedocs(
-    sitename = "RenewableProducers",
+    sitename = "EnergyModelsRenewableProducers",
     format = Documenter.HTML(),
-    modules = [RenewableProducers],
+    modules = [EnergyModelsRenewableProducers],
     pages = [
         "Home" => "index.md",
         "Manual" => Any[
