@@ -1,20 +1,19 @@
 using EnergyModelsBase
 using EnergyModelsRenewableProducers
+using HiGHS
+using JuMP
 using Test
 using TimeStructures
-using JuMP
-using GLPK
 
 const EMB = EnergyModelsBase
 const RP = EnergyModelsRenewableProducers
-
 
 NG = ResourceEmit("NG", 0.2)
 CO2 = ResourceEmit("CO2", 1.)
 Power = ResourceCarrier("Power", 0.)
 
 ROUND_DIGITS = 8
-
+OPTIMIZER = optimizer_with_attributes(HiGHS.Optimizer, MOI.Silent()=>true)
 
 function small_graph(source=nothing, sink=nothing)
     # products = [NG, Power, CO2]
@@ -155,7 +154,7 @@ end
         push!(case[:links], link)
 
         # Run the model
-        m, case = RP.run_model("", GLPK.Optimizer, case)
+        m, case = RP.run_model("", OPTIMIZER, case)
 
         # Extraction of the time structure
         𝒯 = case[:T]
@@ -199,7 +198,7 @@ end
         push!(case[:links], link_to)
 
         # Run the model
-        m, case = RP.run_model("", GLPK.Optimizer, case)
+        m, case = RP.run_model("", OPTIMIZER, case)
 
         # Extraction of the time structure
         𝒯 = case[:T]
@@ -256,7 +255,7 @@ end
         case[:T] = UniformTwoLevel(1, 2, 1, UniformTimes(1, 10, 1))
 
         # Run the model
-        m, case = RP.run_model("", GLPK.Optimizer, case)
+        m, case = RP.run_model("", OPTIMIZER, case)
 
         # Extraction of the time structure
         𝒯 = case[:T]

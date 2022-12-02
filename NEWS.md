@@ -1,5 +1,9 @@
 # RenewableProducers changelog
 
+Version 0.1.2 (2022-12-02)
+--------------------------
+* Minor test fixes in preparation of internal release
+  
 Version 0.1.1 (2021-09-07)
 --------------------------
 ### Changes in naming
