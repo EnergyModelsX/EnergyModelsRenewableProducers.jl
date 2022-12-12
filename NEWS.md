@@ -1,18 +1,15 @@
 # RenewableProducers changelog
 
-<<<<<<< HEAD
-Version 0.1.2 (2022-12-12)
+Version 0.1.3 (2022-12-12)
 --------------------------
 ### Internal release
 * Renamed to follow common prefix naming scheme
 * Update README
 
-=======
 Version 0.1.2 (2022-12-02)
 --------------------------
 * Minor test fixes in preparation of internal release
   
->>>>>>> main
 Version 0.1.1 (2021-09-07)
 --------------------------
 ### Changes in naming
