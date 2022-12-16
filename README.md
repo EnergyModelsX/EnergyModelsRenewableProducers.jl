@@ -1,5 +1,6 @@
 # EnergyModelsRenewableProducers
 
+[![Docs: stable](https://img.shields.io/badge/docs-stable-4495d1.svg)](https://clean_export.pages.sintef.no/energymodelsrenewableproducers.jl)
 <!--- [![Code Style: Blue](https://img.shields.io/badge/code%20style-blue-4495d1.svg)](https://github.com/invenia/BlueStyle)
 --->
 `EnergyModelsRenewableProducers` is a package to model renewable power generation
