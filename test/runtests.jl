@@ -1,11 +1,9 @@
+using EnergyModelsBase
+using EnergyModelsRenewableProducers
 using HiGHS
 using JuMP
 using Test
-
 using TimeStructures
-using EnergyModelsBase
-using EnergyModelsRenewableProducers
-
 
 const EMB = EnergyModelsBase
 const RP = EnergyModelsRenewableProducers
