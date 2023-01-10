@@ -1,15 +1,14 @@
 """ A non-dispatchable renewable energy source.
 
 # Fields
-**`id`** is the name/identifyer of the node.\n
-**`Cap::TimeProfile`** is the installed capacity.\n
-**`Profile::TimeProfile`** is the power production at each operational period as a ratio of the 
+- **`id`** is the name/identifyer of the node.\n
+- **`Cap::TimeProfile`** is the installed capacity.\n
+- **`Profile::TimeProfile`** is the power production at each operational period as a ratio of the 
 installed capacity at that time.\n
-**`Opex_var::TimeProfile`** is the variational operational costs per energy unit produced.\n
-**`Opex_fixed::TimeProfile`** is the fixed operational costs.\n
-**`Output::Dict{EMB.Resource, Real}`** are the generated `Resource`s, normally Power.\n
-**`Emissions::Dict{EMB.ResourceEmit, Real}`**: emissions per energy unit produced.\n
-**`Data::Dict{String, EMB.Data}`** is the additional data (e.g. for investments).
+- **`Opex_var::TimeProfile`** is the variational operational costs per energy unit produced.\n
+- **`Opex_fixed::TimeProfile`** is the fixed operational costs.\n
+- **`Output::Dict{EMB.Resource, Real}`** are the generated `Resource`s, normally Power.\n
+- **`Data::Dict{String, EMB.Data}`** is the additional data (e.g. for investments).
 
 """
 struct NonDisRES <: EMB.Source
@@ -19,7 +18,6 @@ struct NonDisRES <: EMB.Source
     Opex_var::TimeProfile
     Opex_fixed::TimeProfile
     Output::Dict{EMB.Resource, Real}
-    Emissions::Dict{EMB.ResourceEmit, Real}
     Data::Dict{String, EMB.Data}
 end
 
@@ -27,19 +25,19 @@ end
 """ A regulated hydropower storage with pumping capabilities, modelled as a Storage node.
 
 ## Fields
-**`id`** is the name/identifyer of the node.\n
-**`Rate_cap::TimeProfile`**: installed capacity.\n
-**`Stor_cap::TimeProfile`** Initial installed storage capacity in the dam.\n
-**`Has_pump::Bool`** states wheter the stored resource can flow in.\n
-**`Level_init::TimeProfile`** Initial energy stored in the dam, in units of power.\n
-**`Level_inflow::TimeProfile`** Inflow of power per operational period.\n
-**`Level_min::TimeProfile`** Minimum fraction of the reservoir capacity that can be left.\n
-**`Opex_var::TimeProfile`** Operational cost per GWh produced.\n
-**`Opex_fixed::TimeProfile`** Fixed operational costs.\n
-**`Input::Dict{EMB.Resource, Real}`** the stored and used resources. The values in the Dict is a ratio describing the energy loss when using the pumps.\n
-**`Output::Dict{EMB.Resource, Real}`** can only contain one entry, and states the stored resource.\n
-**`Emissions::Dict{ResourceEmit, Real}`** emissions per energy unit produced.\n
-**`Data::Dict{String, EMB.Data}`** additional data (e.g. for investments).\n
+- **`id`** is the name/identifyer of the node.\n
+- **`Rate_cap::TimeProfile`**: installed capacity.\n
+- **`Stor_cap::TimeProfile`** Initial installed storage capacity in the dam.\n
+- **`Has_pump::Bool`** states wheter the stored resource can flow in.\n
+- **`Level_init::TimeProfile`** Initial energy stored in the dam, in units of power.\n
+- **`Level_inflow::TimeProfile`** Inflow of power per operational period.\n
+- **`Level_min::TimeProfile`** Minimum fraction of the reservoir capacity that can be left.\n
+- **`Opex_var::TimeProfile`** Operational cost per GWh produced.\n
+- **`Opex_fixed::TimeProfile`** Fixed operational costs.\n
+- **`Stor_res::ResourceCarrier`** is the stored `Resource`.\n
+- **`Input::Dict{EMB.Resource, Real}`** the stored and used resources. The values in the Dict is a ratio describing the energy loss when using the pumps.\n
+- **`Output::Dict{EMB.Resource, Real}`** can only contain one entry, and states the stored resource.\n
+- **`Data::Dict{String, EMB.Data}`** additional data (e.g. for investments).\n
 """
 struct RegHydroStor <: EMB.Storage
     id
@@ -53,8 +51,8 @@ struct RegHydroStor <: EMB.Storage
     
     Opex_var::TimeProfile
     Opex_fixed::TimeProfile
+    Stor_res::ResourceCarrier
     Input::Dict{EMB.Resource, Real}
     Output::Dict{EMB.Resource, Real}
-    Emissions::Dict{ResourceEmit, Real}
     Data::Dict{String, EMB.Data}
 end

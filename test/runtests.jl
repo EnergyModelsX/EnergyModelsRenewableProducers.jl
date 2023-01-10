@@ -8,7 +8,6 @@ using TimeStructures
 const EMB = EnergyModelsBase
 const RP = EnergyModelsRenewableProducers
 
-NG = ResourceEmit("NG", 0.2)
 CO2 = ResourceEmit("CO2", 1.)
 Power = ResourceCarrier("Power", 0.)
 
@@ -16,25 +15,21 @@ ROUND_DIGITS = 8
 OPTIMIZER = optimizer_with_attributes(HiGHS.Optimizer, MOI.Silent()=>true)
 
 function small_graph(source=nothing, sink=nothing)
-    # products = [NG, Power, CO2]
-    products = [NG, Power, CO2]
+
+    products = [Power, CO2]
 
     # Creation of a dictionary with entries of 0. for all resources
     𝒫₀ = Dict(k => 0 for k ∈ products)
 
-    # Creation of a dictionary with entries of 0. for all emission resources
-    𝒫ᵉᵐ₀ = Dict(k => 0.0 for k ∈ products if typeof(k) == ResourceEmit{Float64})
-    𝒫ᵉᵐ₀[CO2] = 0.0
-
     # Creation of the source and sink module as well as the arrays used for nodes and links
     if isnothing(source)
         source = RefSource(2, FixedProfile(1), FixedProfile(30), FixedProfile(10),
-            Dict(NG => 1), 𝒫ᵉᵐ₀, Dict("" => EMB.EmptyData()))
+            Dict(Power => 1), Dict("" => EMB.EmptyData()))
     end
     if isnothing(sink)
         sink = RefSink(3, FixedProfile(20),
             Dict(:Surplus => FixedProfile(0), :Deficit => FixedProfile(1e6)),
-            Dict(Power => 1), 𝒫ᵉᵐ₀)
+            Dict(Power => 1))
     end
 
     nodes = [
@@ -47,9 +42,9 @@ function small_graph(source=nothing, sink=nothing)
 
     # Creation of the time structure and the used global data
     T = UniformTwoLevel(1, 4, 1, UniformTimes(1, 24, 1))
-    global_data = EMB.GlobalData(Dict(CO2 => StrategicFixedProfile([450, 400, 350, 300]),
-        NG => FixedProfile(1e6)
-    ))
+    global_data = EMB.GlobalData(Dict(CO2 => StrategicFixedProfile([450, 400, 350, 300])),
+                                CO2,
+    )
 
     # Creation of the case dictionary
     case = Dict(
@@ -146,7 +141,7 @@ end
         # Creation of the initial problem and the NonDisRES node
         case = small_graph()
         wind = RP.NonDisRES("wind", FixedProfile(2), FixedProfile(0.9), 
-            FixedProfile(10), FixedProfile(10), Dict(Power=>1), Dict(CO2=>0.1, NG=>0), Dict(""=>EMB.EmptyData()))
+            FixedProfile(10), FixedProfile(10), Dict(Power=>1), Dict(""=>EMB.EmptyData()))
 
         # Updating the nodes and the links
         push!(case[:nodes], wind)
@@ -187,8 +182,8 @@ end
         
         hydro = RP.RegHydroStor("-hydro", FixedProfile(2.), max_storage, 
             false, initial_reservoir, FixedProfile(1), min_level, 
-            FixedProfile(10), FixedProfile(10), Dict(Power=>0.9), Dict(Power=>1), 
-            Dict(CO2=>0.01, NG=>0), Dict(""=>EMB.EmptyData()))
+            FixedProfile(10), FixedProfile(10), Power, Dict(Power=>0.9), Dict(Power=>1), 
+            Dict(""=>EMB.EmptyData()))
         
         # Updating the nodes and the links
         push!(case[:nodes], hydro)
@@ -226,14 +221,13 @@ end
     @testset "RegHydroStor with pump" begin
 
         # Creation of the initial problem and the RegHydroStor node with a pump.
-        products = [NG, Power, CO2]
-        𝒫ᵉᵐ₀ = Dict(k  => 0. for k ∈ products if typeof(k) == ResourceEmit{Float64})
+        products = [Power, CO2]
         source = EMB.RefSource("-source", DynamicProfile([10 10 10 10 10 0 0 0 0 0;
                                                           10 10 10 10 10 0 0 0 0 0;]),
-                                FixedProfile(10), FixedProfile(10), Dict(Power => 1), 𝒫ᵉᵐ₀, Dict(""=>EMB.EmptyData()))
+                                FixedProfile(10), FixedProfile(10), Dict(Power => 1), Dict(""=>EMB.EmptyData()))
 
         sink = EMB.RefSink("-sink", FixedProfile(7), 
-            Dict(:Surplus => FixedProfile(0), :Deficit => FixedProfile(1e6)), Dict(Power => 1), 𝒫ᵉᵐ₀)
+            Dict(:Surplus => FixedProfile(0), :Deficit => FixedProfile(1e6)), Dict(Power => 1))
 
         case = small_graph(source, sink)
         
@@ -242,8 +236,8 @@ end
         min_level = StrategicFixedProfile([0.1, 0.2])
         hydro = RP.RegHydroStor("-hydro", FixedProfile(10.), max_storage, 
             true, initial_reservoir, FixedProfile(1), min_level, 
-            FixedProfile(30), FixedProfile(10), Dict(Power=>1), Dict(Power=>0.9), 
-            Dict(CO2=>0.01, NG=>0), Dict(""=>EMB.EmptyData()))
+            FixedProfile(30), FixedProfile(10), Power, Dict(Power=>1), Dict(Power=>0.9), 
+            Dict(""=>EMB.EmptyData()))
         
         # Updating the nodes and the links
         push!(case[:nodes], hydro)

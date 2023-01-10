@@ -12,16 +12,16 @@ end
 
 
 """
-    EMB.create_node(m, n::NonDisRES, 𝒯, 𝒫)
+    EMB.create_node(m, n::NonDisRES, 𝒯, 𝒫, global_data::AbstractGlobalData)
 
 Sets all constraints for a non-dispatchable renewable energy source.
 """
-function EMB.create_node(m, n::NonDisRES, 𝒯, 𝒫)
+function EMB.create_node(m, n::NonDisRES, 𝒯, 𝒫, global_data::AbstractGlobalData)
+
     # Declaration of the required subsets.
     𝒫ᵒᵘᵗ = keys(n.Output)
     𝒫ᵉᵐ = EMB.res_sub(𝒫, EMB.ResourceEmit)
     𝒯ᴵⁿᵛ = EMB.strategic_periods(𝒯)
-    n.Cap
 
     # Non dispatchable renewable energy sources operate at their max
     # capacity with repsect to the current profile (e.g. wind) at every time.
@@ -29,20 +29,13 @@ function EMB.create_node(m, n::NonDisRES, 𝒯, 𝒫)
         m[:cap_use][n, t] + m[:curtailment][n, t] == n.Profile[t] * m[:cap_inst][n, t])
 
 
-    # Constraints identical to other Source nodes.
+    # Constraint for the individual output stream connections.
+    @constraint(m, [t ∈ 𝒯, p ∈ 𝒫ᵒᵘᵗ], m[:flow_out][n, t, p] == m[:cap_use][n, t] * n.Output[p])
 
-    # Constraint for the individual stream connections.
-    for p ∈ 𝒫ᵒᵘᵗ
-        @constraint(m, [t ∈ 𝒯], 
-            m[:flow_out][n, t, p] == m[:cap_use][n, t] * n.Output[p])
-    end
+    @constraint(m, [t ∈ 𝒯], m[:cap_use][n, t] <= m[:cap_inst][n, t])
 
-    @constraint(m, [t ∈ 𝒯], 
-        m[:cap_use][n, t] <= m[:cap_inst][n, t])
-
-    # Constraint for the emissions associated to energy sources from construction.
-    @constraint(m, [t ∈ 𝒯, p_em ∈ 𝒫ᵉᵐ],
-        m[:emissions_node][n, t, p_em] == m[:cap_use][n, t]*n.Emissions[p_em])
+    # Constraint for the emissions to avoid problems with unconstrained variables.
+    @constraint(m, [t ∈ 𝒯, p_em ∈ 𝒫ᵉᵐ], m[:emissions_node][n, t, p_em] == 0)
 
     # Constraint for the Opex contributions
     @constraint(m, [t_inv ∈ 𝒯ᴵⁿᵛ],
@@ -52,14 +45,15 @@ end
 
 
 """
-    EMB.create_node(m, n::RegHydroStor, 𝒯, 𝒫)
+    EMB.create_node(m, n::RegHydroStor, 𝒯, 𝒫, global_data::AbstractGlobalData)
 
 Sets all constraints for the regulated hydro storage node.
 """
-function EMB.create_node(m, n::RegHydroStor, 𝒯, 𝒫)
-    # The resource (there should be only one) in n.Output is stored. The resources in n.input are
-    # either stored, or used by the storage.
-    p_stor = [k for (k, v) ∈ n.Output][1]
+function EMB.create_node(m, n::RegHydroStor, 𝒯, 𝒫, global_data::AbstractGlobalData)
+    
+    # Declaration of the required subsets.
+    p_stor = n.Stor_res
+    𝒫ᵒᵘᵗ = keys(n.Output)
     𝒫ᵉᵐ   = EMB.res_sub(𝒫, ResourceEmit)
     𝒯ᴵⁿᵛ  = strategic_periods(𝒯)
 
@@ -92,7 +86,6 @@ function EMB.create_node(m, n::RegHydroStor, 𝒯, 𝒫)
     @constraint(m, [t ∈ 𝒯], m[:flow_out][n, t, p_stor] == m[:stor_rate_use][n, t] * n.Output[p_stor])
 
     # The storage level at every time must be less than the installed storage capacity.
-    # TODO it should be pssible to invest in stor_cap_inst, this might have to be moved.
     @constraint(m, [t ∈ 𝒯], m[:stor_level][n, t] <= m[:stor_cap_inst][n, t])
     
     # Can not produce more energy than what is availbable in the reservoir.
@@ -102,21 +95,13 @@ function EMB.create_node(m, n::RegHydroStor, 𝒯, 𝒫)
     # to drain it completely.
     @constraint(m, [t ∈ 𝒯], m[:stor_level][n, t] >= n.Level_min[t] * m[:stor_cap_inst][n, t])
 
-    # Assuming no investments, the production at every operational
-    # period is bounded by the installed capacity.
+    # The production at every operational period is bounded by the installed capacity.
     @constraint(m, [t ∈ 𝒯], m[:stor_rate_use][n, t] <= m[:stor_rate_inst][n, t])
 
-    # Constraints identical to other Source nodes.
-    𝒫ᵒᵘᵗ = keys(n.Output)
-    𝒫ᵉᵐ = EMB.res_sub(𝒫, ResourceEmit)
-    𝒯ᴵⁿᵛ = strategic_periods(𝒯)
+    # Constraint for the emissions to avoid problems with unconstrained variables.
+    @constraint(m, [t ∈ 𝒯, p_em ∈ 𝒫ᵉᵐ], m[:emissions_node][n, t, p_em] == 0)
 
-    # Constraint for the emissions associated to energy sources from construction.
-    @constraint(m, [t ∈ 𝒯, p_em ∈ 𝒫ᵉᵐ],
-        m[:emissions_node][n, t, p_em] == m[:stor_rate_use][n, t]*n.Emissions[p_em])
-
-    # Constraint for the Opex contributions
+    # Constraint for the OPEX contributions
     @constraint(m, [t_inv ∈ 𝒯ᴵⁿᵛ],
         m[:opex_var][n, t_inv] == sum(m[:stor_rate_use][n, t] * n.Opex_var[t] * t.duration for t ∈ t_inv))
-
 end

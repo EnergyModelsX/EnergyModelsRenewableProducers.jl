@@ -12,7 +12,7 @@ function run_model(fn, optimizer=nothing)
     
     # Add a non-dispatchable renewable energy source to the system
     rs = NonDisRES(8, FixedProfile(2.), FixedProfile(1000), 
-                   FixedProfile(10), Dict(Power=>1.), emissions)
+                   FixedProfile(10), Dict(Power=>1.))
     push!(case[:nodes], rs)
 
     # Link it to the Availability node
