@@ -1,9 +1,14 @@
 # RenewableProducers changelog
 
-Version 0.2.0 (2023-01-1x)
+Version 0.2.0 (2023-02-03)
 --------------------------
-### Changed type structure
+### Adjustmends to updates in EnergyModelsBase
+Adjustment to version 0.3.0, namely:
+* Changed type (`Node`) calls in tests to be consistent with version 0.3.0
+* Removal of the type `GlobalData` and replacement with fields in the type `OperationalModel` in all tests
 * Changed type structure to be consistent with EMB version 0.3.0
+* Substitution of certain constraints in `create_node` through functions which utilize dispatching on `node` types
+* Changed the input to the function `variables_node`
 
 Version 0.1.3 (2022-12-12)
 --------------------------

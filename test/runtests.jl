@@ -42,7 +42,7 @@ function small_graph(source=nothing, sink=nothing)
 
     # Creation of the time structure and the used global data
     T = UniformTwoLevel(1, 4, 1, UniformTimes(1, 24, 1))
-    global_data = EMB.GlobalData(Dict(CO2 => StrategicFixedProfile([450, 400, 350, 300])),
+    modeltype = OperationalModel(Dict(CO2 => StrategicFixedProfile([450, 400, 350, 300])),
                                 CO2,
     )
 
@@ -52,9 +52,8 @@ function small_graph(source=nothing, sink=nothing)
         :links => links,
         :products => products,
         :T => T,
-        :global_data => global_data,
     )
-    return case
+    return case, modeltype
 end
 
 
@@ -139,7 +138,7 @@ end
     @testset "NonDisRES" begin
 
         # Creation of the initial problem and the NonDisRES node
-        case = small_graph()
+        case, modeltype = small_graph()
         wind = RP.NonDisRES("wind", FixedProfile(2), FixedProfile(0.9), 
             FixedProfile(10), FixedProfile(10), Dict(Power=>1), Dict(""=>EMB.EmptyData()))
 
@@ -149,7 +148,7 @@ end
         push!(case[:links], link)
 
         # Run the model
-        m, case = RP.run_model("", OPTIMIZER, case)
+        m, case = RP.run_model("", OPTIMIZER, case, modeltype)
 
         # Extraction of the time structure
         𝒯 = case[:T]
@@ -175,7 +174,7 @@ end
     @testset "RegHydroStor without pump" begin
 
         # Creation of the initial problem and the RegHydroStor node without a pump.
-        case = small_graph()
+        case, modeltype = small_graph()
         max_storage         = FixedProfile(100)
         initial_reservoir   = StrategicFixedProfile([20, 25, 30, 20])
         min_level           = StrategicFixedProfile([0.1, 0.2, 0.05, 0.1])
@@ -193,7 +192,7 @@ end
         push!(case[:links], link_to)
 
         # Run the model
-        m, case = RP.run_model("", OPTIMIZER, case)
+        m, case = RP.run_model("", OPTIMIZER, case, modeltype)
 
         # Extraction of the time structure
         𝒯 = case[:T]
@@ -229,7 +228,7 @@ end
         sink = EMB.RefSink("-sink", FixedProfile(7), 
             Dict(:Surplus => FixedProfile(0), :Deficit => FixedProfile(1e6)), Dict(Power => 1))
 
-        case = small_graph(source, sink)
+        case, modeltype = small_graph(source, sink)
         
         max_storage = FixedProfile(100)
         initial_reservoir = StrategicFixedProfile([20, 25])
@@ -249,7 +248,7 @@ end
         case[:T] = UniformTwoLevel(1, 2, 1, UniformTimes(1, 10, 1))
 
         # Run the model
-        m, case = RP.run_model("", OPTIMIZER, case)
+        m, case = RP.run_model("", OPTIMIZER, case, modeltype)
 
         # Extraction of the time structure
         𝒯 = case[:T]

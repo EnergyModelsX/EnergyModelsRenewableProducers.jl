@@ -1,25 +1,23 @@
 
 """ 
-    EMB.variables_node(m, 𝒩, 𝒯, node::NonDisRES, modeltype)
+    EMB.variables_node(m, 𝒩ⁿᵈʳ::Vector{NonDisRES}, 𝒯, modeltype::EnergyModel)
 
 Create the optimization variable `:curtailment` for every NonDisRES node. This method is called
 from `EnergyModelsBase.jl`."""
-function EMB.variables_node(m, 𝒩, 𝒯, node::NonDisRES, modeltype::EnergyModel)
-    𝒩ⁿᵈʳ = EMB.node_sub(𝒩, NonDisRES)
+function EMB.variables_node(m, 𝒩ⁿᵈʳ::Vector{NonDisRES}, 𝒯, modeltype::EnergyModel)
 
     @variable(m, curtailment[𝒩ⁿᵈʳ, 𝒯] >= 0)
 end
 
 
 """
-    EMB.create_node(m, n::NonDisRES, 𝒯, 𝒫, global_data::AbstractGlobalData)
+    EMB.create_node(m, n::NonDisRES, 𝒯, 𝒫, modeltype::EnergyModel)
 
 Sets all constraints for a non-dispatchable renewable energy source.
 """
-function EMB.create_node(m, n::NonDisRES, 𝒯, 𝒫, global_data::AbstractGlobalData)
+function EMB.create_node(m, n::NonDisRES, 𝒯, 𝒫, modeltype::EnergyModel)
 
     # Declaration of the required subsets.
-    𝒫ᵒᵘᵗ = keys(n.Output)
     𝒫ᵉᵐ = EMB.res_sub(𝒫, EMB.ResourceEmit)
     𝒯ᴵⁿᵛ = EMB.strategic_periods(𝒯)
 
@@ -28,32 +26,31 @@ function EMB.create_node(m, n::NonDisRES, 𝒯, 𝒫, global_data::AbstractGloba
     @constraint(m, [t ∈ 𝒯],
         m[:cap_use][n, t] + m[:curtailment][n, t] == n.Profile[t] * m[:cap_inst][n, t])
 
-
-    # Constraint for the individual output stream connections.
-    @constraint(m, [t ∈ 𝒯, p ∈ 𝒫ᵒᵘᵗ], m[:flow_out][n, t, p] == m[:cap_use][n, t] * n.Output[p])
-
-    @constraint(m, [t ∈ 𝒯], m[:cap_use][n, t] <= m[:cap_inst][n, t])
-
     # Constraint for the emissions to avoid problems with unconstrained variables.
     @constraint(m, [t ∈ 𝒯, p_em ∈ 𝒫ᵉᵐ], m[:emissions_node][n, t, p_em] == 0)
+        
+    # Call of the function for the outlet flow from the `Source` node
+    EMB.constraints_flow_out(m, n, 𝒯)
 
-    # Constraint for the Opex contributions
-    @constraint(m, [t_inv ∈ 𝒯ᴵⁿᵛ],
-        m[:opex_var][n, t_inv] == sum(m[:cap_use][n, t] * n.Opex_var[t] * t.duration for t ∈ t_inv))
+    # Call of the function for limiting the capacity to the maximum installed capacity
+    EMB.constraints_capacity(m, n, 𝒯)
+
+    # Call of the functions for both fixed and variable OPEX constraints introduction
+    EMB.constraints_opex_fixed(m, n, 𝒯ᴵⁿᵛ)
+    EMB.constraints_opex_var(m, n, 𝒯ᴵⁿᵛ)
 
 end
 
 
 """
-    EMB.create_node(m, n::RegHydroStor, 𝒯, 𝒫, global_data::AbstractGlobalData)
+    EMB.create_node(m, n::RegHydroStor, 𝒯, 𝒫, modeltype::EnergyModel)
 
 Sets all constraints for the regulated hydro storage node.
 """
-function EMB.create_node(m, n::RegHydroStor, 𝒯, 𝒫, global_data::AbstractGlobalData)
+function EMB.create_node(m, n::RegHydroStor, 𝒯, 𝒫, modeltype::EnergyModel)
     
     # Declaration of the required subsets.
     p_stor = n.Stor_res
-    𝒫ᵒᵘᵗ = keys(n.Output)
     𝒫ᵉᵐ   = EMB.res_sub(𝒫, ResourceEmit)
     𝒯ᴵⁿᵛ  = strategic_periods(𝒯)
 
@@ -85,9 +82,6 @@ function EMB.create_node(m, n::RegHydroStor, 𝒯, 𝒫, global_data::AbstractGl
     # The flow_out is equal to the production stor_rate_use.
     @constraint(m, [t ∈ 𝒯], m[:flow_out][n, t, p_stor] == m[:stor_rate_use][n, t] * n.Output[p_stor])
 
-    # The storage level at every time must be less than the installed storage capacity.
-    @constraint(m, [t ∈ 𝒯], m[:stor_level][n, t] <= m[:stor_cap_inst][n, t])
-    
     # Can not produce more energy than what is availbable in the reservoir.
     @constraint(m, [t ∈ 𝒯], m[:stor_rate_use][n, t] <= m[:stor_level][n, t])
     
@@ -95,13 +89,14 @@ function EMB.create_node(m, n::RegHydroStor, 𝒯, 𝒫, global_data::AbstractGl
     # to drain it completely.
     @constraint(m, [t ∈ 𝒯], m[:stor_level][n, t] >= n.Level_min[t] * m[:stor_cap_inst][n, t])
 
-    # The production at every operational period is bounded by the installed capacity.
-    @constraint(m, [t ∈ 𝒯], m[:stor_rate_use][n, t] <= m[:stor_rate_inst][n, t])
-
     # Constraint for the emissions to avoid problems with unconstrained variables.
     @constraint(m, [t ∈ 𝒯, p_em ∈ 𝒫ᵉᵐ], m[:emissions_node][n, t, p_em] == 0)
+        
+    # Call of the function for limiting the capacity to the maximum installed capacity
+    EMB.constraints_capacity(m, n, 𝒯)
+    
+    # Call of the functions for both fixed and variable OPEX constraints introduction
+    EMB.constraints_opex_fixed(m, n, 𝒯ᴵⁿᵛ)
+    EMB.constraints_opex_var(m, n, 𝒯ᴵⁿᵛ)
 
-    # Constraint for the OPEX contributions
-    @constraint(m, [t_inv ∈ 𝒯ᴵⁿᵛ],
-        m[:opex_var][n, t_inv] == sum(m[:stor_rate_use][n, t] * n.Opex_var[t] * t.duration for t ∈ t_inv))
 end

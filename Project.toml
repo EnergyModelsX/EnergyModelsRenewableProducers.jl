@@ -10,7 +10,7 @@ Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
 TimeStructures = "260f4295-b40d-47c0-843b-64f3de373d90"
 
 [compat]
-EnergyModelsBase = "0.3.0"
+EnergyModelsBase = "^0.3.1"
 JuMP = "1.5"
 TimeStructures = "0.1.10"
 julia = "^1.6"
