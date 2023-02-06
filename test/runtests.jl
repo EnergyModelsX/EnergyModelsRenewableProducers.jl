@@ -148,7 +148,7 @@ end
         push!(case[:links], link)
 
         # Run the model
-        m, case = RP.run_model("", OPTIMIZER, case, modeltype)
+        m = EMB.run_model(case, modeltype, OPTIMIZER)
 
         # Extraction of the time structure
         𝒯 = case[:T]
@@ -192,7 +192,7 @@ end
         push!(case[:links], link_to)
 
         # Run the model
-        m, case = RP.run_model("", OPTIMIZER, case, modeltype)
+        m = EMB.run_model(case, modeltype, OPTIMIZER)
 
         # Extraction of the time structure
         𝒯 = case[:T]
@@ -248,7 +248,7 @@ end
         case[:T] = UniformTwoLevel(1, 2, 1, UniformTimes(1, 10, 1))
 
         # Run the model
-        m, case = RP.run_model("", OPTIMIZER, case, modeltype)
+        m = EMB.run_model(case, modeltype, OPTIMIZER)
 
         # Extraction of the time structure
         𝒯 = case[:T]
@@ -275,4 +275,6 @@ end
         end
 
     end # testset RegHydroStor with pump
+
+    include("test_examples.jl")
 end

@@ -16,7 +16,6 @@ const TS  = TimeStructures
 
 include("datastructures.jl")
 include("model.jl")
-include("user_interface.jl")
 include("checks.jl")
 
 export NonDisRES
