@@ -1,5 +1,9 @@
 # RenewableProducers changelog
 
+Version 0.2.1 (2023-02-03)
+--------------------------
+* Take the examples out to the folder `examples`.
+
 Version 0.2.0 (2023-02-03)
 --------------------------
 ### Adjustmends to updates in EnergyModelsBase
