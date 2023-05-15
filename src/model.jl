@@ -30,14 +30,14 @@ function EMB.create_node(m, n::NonDisRES, 𝒯, 𝒫, modeltype::EnergyModel)
     @constraint(m, [t ∈ 𝒯, p_em ∈ 𝒫ᵉᵐ], m[:emissions_node][n, t, p_em] == 0)
         
     # Call of the function for the outlet flow from the `Source` node
-    EMB.constraints_flow_out(m, n, 𝒯)
+    EMB.constraints_flow_out(m, n, 𝒯, modeltype)
 
     # Call of the function for limiting the capacity to the maximum installed capacity
-    EMB.constraints_capacity(m, n, 𝒯)
+    EMB.constraints_capacity(m, n, 𝒯, modeltype)
 
     # Call of the functions for both fixed and variable OPEX constraints introduction
-    EMB.constraints_opex_fixed(m, n, 𝒯ᴵⁿᵛ)
-    EMB.constraints_opex_var(m, n, 𝒯ᴵⁿᵛ)
+    EMB.constraints_opex_fixed(m, n, 𝒯ᴵⁿᵛ, modeltype)
+    EMB.constraints_opex_var(m, n, 𝒯ᴵⁿᵛ, modeltype)
 
 end
 
@@ -93,10 +93,10 @@ function EMB.create_node(m, n::RegHydroStor, 𝒯, 𝒫, modeltype::EnergyModel)
     @constraint(m, [t ∈ 𝒯, p_em ∈ 𝒫ᵉᵐ], m[:emissions_node][n, t, p_em] == 0)
         
     # Call of the function for limiting the capacity to the maximum installed capacity
-    EMB.constraints_capacity(m, n, 𝒯)
+    EMB.constraints_capacity(m, n, 𝒯, modeltype)
     
     # Call of the functions for both fixed and variable OPEX constraints introduction
-    EMB.constraints_opex_fixed(m, n, 𝒯ᴵⁿᵛ)
-    EMB.constraints_opex_var(m, n, 𝒯ᴵⁿᵛ)
+    EMB.constraints_opex_fixed(m, n, 𝒯ᴵⁿᵛ, modeltype)
+    EMB.constraints_opex_var(m, n, 𝒯ᴵⁿᵛ, modeltype)
 
 end
