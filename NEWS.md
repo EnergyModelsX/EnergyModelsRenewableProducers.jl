@@ -1,5 +1,9 @@
 # RenewableProducers changelog
 
+Version 0.2.2 (2023-05-15)
+--------------------------
+ * Adjustment to changes in `EnergyModelsBase` v 0.3.3 related to the calls for the constraint functions
+
 Version 0.2.1 (2023-02-03)
 --------------------------
 * Take the examples out to the folder `examples`.
