@@ -37,7 +37,7 @@ function demo_data()
         FixedProfile(30),
         FixedProfile(10),
         Dict(NG => 1),
-        Dict("" => EMB.EmptyData()),
+        [],
         𝒫ᵉᵐ₀,
     )
     sink = RefSink(
@@ -71,7 +71,7 @@ function demo_data()
         FixedProfile(10),
         FixedProfile(10),
         Dict(Power => 1),
-        Dict("" => EMB.EmptyData()),
+        [],
     )
 
     # Update nodes and links

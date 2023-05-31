@@ -31,13 +31,13 @@ function generate_data()
     
     # Add a non-dispatchable renewable energy source to the system
     rs = NonDisRES(2, FixedProfile(2.), FixedProfile(0.8), FixedProfile(5),
-                   FixedProfile(10), Dict(Power=>1.), Dict())
+                   FixedProfile(10), Dict(Power=>1.), [])
 
     hydro = RegHydroStor(3, FixedProfile(2.),  FixedProfile(90), 
                          false, FixedProfile(10),
                          FixedProfile(1), FixedProfile(0.0), FixedProfile(4),
                          FixedProfile(3), Power, Dict(Power=>0.9), Dict(Power=>1), 
-                         Dict())
+                         [])
 
     sink = RefSink(
         4,

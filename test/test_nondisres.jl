@@ -6,7 +6,7 @@
     # Creation of the initial problem and the NonDisRES node
     case, modeltype = small_graph()
     wind = RP.NonDisRES("wind", FixedProfile(2), FixedProfile(0.9), 
-        FixedProfile(10), FixedProfile(10), Dict(Power=>1), Dict(""=>EMB.EmptyData()))
+        FixedProfile(10), FixedProfile(10), Dict(Power=>1), [])
 
     # Updating the nodes and the links
     push!(case[:nodes], wind)

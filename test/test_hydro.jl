@@ -73,7 +73,7 @@ end
     hydro = RP.RegHydroStor("-hydro", FixedProfile(2.), max_storage, 
         false, initial_reservoir, FixedProfile(1), min_level, 
         FixedProfile(10), FixedProfile(10), Power, Dict(Power=>0.9), Dict(Power=>1), 
-        Dict(""=>EMB.EmptyData()))
+        [])
     
     # Updating the nodes and the links
     push!(case[:nodes], hydro)
@@ -101,7 +101,7 @@ end
         # Check that the zero equality constraint is set on the flow_in variable 
         # when the pump is not allowed. If this false, there might be errors in 
         # the links to the node. The hydro node need one in and one out.
-        @test sum(sum(occursin(r"flow_in\[n\_\-hydro,t1_1,Power\] \=* 0.0", string(constraint))
+        @test sum(sum(occursin("flow_in[n_-hydro,$t,Power] = 0", string(constraint))
             for constraint ∈ all_constraints(m, AffExpr, MOI.EqualTo{Float64})) == 1 for t ∈ 𝒯) == length(𝒯)
     end
         
@@ -114,7 +114,7 @@ end # testset RegHydroStor without pump
     products = [Power, CO2]
     source = EMB.RefSource("-source", DynamicProfile([10 10 10 10 10 0 0 0 0 0;
                                                         10 10 10 10 10 0 0 0 0 0;]),
-                            FixedProfile(10), FixedProfile(10), Dict(Power => 1), Dict(""=>EMB.EmptyData()))
+                            FixedProfile(10), FixedProfile(10), Dict(Power => 1), [])
 
     sink = EMB.RefSink("-sink", FixedProfile(7), 
         Dict(:Surplus => FixedProfile(0), :Deficit => FixedProfile(1e6)), Dict(Power => 1))
@@ -127,7 +127,7 @@ end # testset RegHydroStor without pump
     hydro = RP.RegHydroStor("-hydro", FixedProfile(10.), max_storage, 
         true, initial_reservoir, FixedProfile(1), min_level, 
         FixedProfile(30), FixedProfile(10), Power, Dict(Power=>1), Dict(Power=>0.9), 
-        Dict(""=>EMB.EmptyData()))
+        [])
     
     # Updating the nodes and the links
     push!(case[:nodes], hydro)
