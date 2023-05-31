@@ -1,8 +1,12 @@
 # RenewableProducers.jl
 
-This Julia package two nodes with corresponding JuMP constraints, extending the package 
-[`EnergyModelsBase.jl`](https://stash.code.sintef.no/projects/CE/repos/renewableproducers.jl/) 
-with more detailed representation of renewable energy sources.
+```@docs
+EnergyModelsRenewableProducers
+```
+
+This Julia package implements two nodes with corresponding JuMP constraints, extending the package 
+[`EnergyModelsBase.jl`](https://clean_export.pages.sintef.no/energymodelsbase.jl/) 
+with more detailed representation of *renewable energy sources*.
 
 The first node [`NonDisRES`](@ref) models a non-dispatchable renewable energy source, like 
 wind power, solar power, or run of river hydropower. These all use intermittent energy 
@@ -13,12 +17,6 @@ availability of the energy source at the time. This struct is described in detai
 The other node [`RegHydroStor`](@ref) implements a regulated hydropower storage plant, 
 both with- and without pumps for filling the reservoir with excess energy. This struct is 
 also documented in [Library/Public](@ref sec_lib_public).
-
-
-## `EnergyModelsBase.jl`
-
-This should be a short pitch about the energy system model, and how it differs from other 
-models.
 
 
 ## Manual outline

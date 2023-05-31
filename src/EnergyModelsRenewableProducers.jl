@@ -2,8 +2,9 @@
 Main module for `EnergyModelsRenewableProducers.jl`.
 
 This module implements two types (Nodes) with constraints.
-- `NonDisRES <: Source` represents a non-dispatchable renewable producer, as wind, solar etc.
-- `RegHydroStor <: Storage` represents a regulated hydro storage.
+ - [`NonDisRes`](@ref) is a subtype of `Source` and represents a
+   non-dispatchable renewable producer, as wind, solar etc.
+ - [`RegHydroStor`](@ref) is a subtype of `Storage` represents a regulated hydro storage.
 """
 module EnergyModelsRenewableProducers
 
