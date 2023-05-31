@@ -24,7 +24,7 @@ function small_graph(source=nothing, sink=nothing)
     # Creation of the source and sink module as well as the arrays used for nodes and links
     if isnothing(source)
         source = RefSource(2, FixedProfile(1), FixedProfile(30), FixedProfile(10),
-            Dict(Power => 1), Dict("" => EMB.EmptyData()))
+            Dict(Power => 1), [])
     end
     if isnothing(sink)
         sink = RefSink(3, FixedProfile(20),

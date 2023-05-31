@@ -7,8 +7,8 @@
 installed capacity at that time.\n
 - **`Opex_var::TimeProfile`** is the variational operational costs per energy unit produced.\n
 - **`Opex_fixed::TimeProfile`** is the fixed operational costs.\n
-- **`Output::Dict{EMB.Resource, Real}`** are the generated `Resource`s, normally Power.\n
-- **`Data::Dict{String, EMB.Data}`** is the additional data (e.g. for investments).
+- **`Output::Dict{Resource, Real}`** are the generated `Resource`s, normally Power.\n
+- **`Data::Array{Data}`** is the additional data (e.g. for investments).
 
 """
 struct NonDisRES <: EMB.Source
@@ -17,8 +17,8 @@ struct NonDisRES <: EMB.Source
     Profile::TimeProfile
     Opex_var::TimeProfile
     Opex_fixed::TimeProfile
-    Output::Dict{EMB.Resource, Real}
-    Data::Dict{String, EMB.Data}
+    Output::Dict{Resource, Real}
+    Data::Array{Data}
 end
 
 
@@ -35,9 +35,9 @@ end
 - **`Opex_var::TimeProfile`** Operational cost per GWh produced.\n
 - **`Opex_fixed::TimeProfile`** Fixed operational costs.\n
 - **`Stor_res::ResourceCarrier`** is the stored `Resource`.\n
-- **`Input::Dict{EMB.Resource, Real}`** the stored and used resources. The values in the Dict is a ratio describing the energy loss when using the pumps.\n
-- **`Output::Dict{EMB.Resource, Real}`** can only contain one entry, and states the stored resource.\n
-- **`Data::Dict{String, EMB.Data}`** additional data (e.g. for investments).\n
+- **`Input::Dict{Resource, Real}`** the stored and used resources. The values in the Dict is a ratio describing the energy loss when using the pumps.\n
+- **`Output::Dict{Resource, Real}`** can only contain one entry, and states the stored resource.\n
+- **`Data::Array{Data}`** additional data (e.g. for investments).\n
 """
 struct RegHydroStor <: EMB.Storage
     id
@@ -52,7 +52,7 @@ struct RegHydroStor <: EMB.Storage
     Opex_var::TimeProfile
     Opex_fixed::TimeProfile
     Stor_res::ResourceCarrier
-    Input::Dict{EMB.Resource, Real}
-    Output::Dict{EMB.Resource, Real}
-    Data::Dict{String, EMB.Data}
+    Input::Dict{Resource, Real}
+    Output::Dict{Resource, Real}
+    Data::Array{Data}
 end
