@@ -14,20 +14,33 @@ The [`NonDisRES`](@ref) node is modelled very similar to a regular `EMB.Source}`
 
 ## `RegHydroStor` (regulated hydro storage)
 
-A hydropower plant is much more flexible than, e.g., a wind farm since the water can be stored for later use. Energy can be produced (almost) whenever it is needed. Some hydropower plants also have pumps installed. These are used to pump water into the reservoir when excess and cheap energy is available in the network. A hydropower plant thus resembles both a `EMB.Source` and a `EMB.Storage`. 
+A hydropower plant is much more flexible than, e.g., a wind farm since the water
+can be stored for later use. Energy can be produced (almost) whenever it is
+needed. Some hydropower plants also have pumps installed. These are used to pump
+water into the reservoir when excess and cheap energy is available in the
+network.
 
-The field `Capacity` describes the installed capacity of the (aggregated) hydropower plant. The variable `Level_init` represents the initial energy available in the reservoir in the beginning of each investment period, while `Stor_cap` is the installed storage capacity in the reservoir. The variable `Level_inflow` describes the inflow into the reservoir (measured in energy units), while `Level_min` is the allowed minimum storage level in the dam, given as a ratio of the installed storage capacity of the reservoir at every operational period. The required minimum level is enforced by NVE and varies over the year.
+The field `Rate_cap` describes the installed production capacity of the
+(aggregated) hydropower plant. The variable `Level_init` represents the initial
+energy available in the reservoir in the beginning of each investment period,
+while `Stor_cap` is the installed storage capacity in the reservoir. The
+variable `Level_inflow` describes the inflow into the reservoir (measured in
+energy units), while `Level_min` is the allowed minimum storage level in the
+dam, given as a ratio of the installed storage capacity of the reservoir at
+every operational period. The required minimum level is enforced by NVE and
+varies over the year. The resources stored in the hydro storage is set as
+`Stored_res`, similar as to a regular `EMB.RefStorage`.
 
-!!! note 
-    The four last variables are mostly used in the same way as in `EMB.Storage`, the only difference is the `Input` and `Output` variables. In a `EMB.Storage`, the resource ``p`` with a value of 1 is registered as the stored resource. In the implementation of [`RegHydroStor`](@ref), it was desirable to use this value to model a loss of energy when using the pumps. We therefore need to allow that the stored resource ``p_\texttt{stor}`` has values less than 1 (but non-negative) in the `Input` dictionary.
+The five last variables are used in the same way as in `EMB.Storage`.  In the
+implementation of [`RegHydroStor`](@ref), the values set in `Input` represents a
+loss of energy when using the pumps. A value of `1` means no energy loss, while
+a value of `0` represents 100% energy loss of that inflow variable.
 
-    Therefore, we use the `output` variable for registering what resource is stored. Since the program only allows one entry here, only the resource used as key needs to be checked to determine this.
+## [Reference](@id sec_lib_public_docs)
 
 
-## [Documentation](@id sec_lib_public_docs)
-
-```@docs
-RenewableProducers
-NonDisRES
-RegHydroStor
+```@autodocs
+Modules = [EnergyModelsRenewableProducers]
+Private = false
+Order = [:type, :function]
 ```

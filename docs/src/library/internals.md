@@ -15,7 +15,7 @@ for the stored resource ``p_\texttt{stor}`` `::Resource` for the node ``n`` `::R
 
 ## [Optimization variables](@id sec_lib_internal_opt_vars)
 
-The only new optimization variable added by this package, is `:curtailment[n, t]` defined for all nodes ``n`` `::NonDisRes` and all ``t\in\mathcal{T}``. This is created by the method [`RenewableProducers.EMB.create_node`](@ref) which is a method called from `EnergyModelsBase`. The variable represents the amount of energy *not* produced by node ``n`` `::NonDisRes` at operational period ``t``. 
+The only new optimization variable added by this package, is `:curtailment[n, t]` defined for all nodes ``n`` `::NonDisRes` and all ``t\in\mathcal{T}``. This variable is created by the method [`EnergyModelsBase.variables_node`](@ref) which is a method called from `EnergyModelsBase`. The variable represents the amount of energy *not* produced by node ``n`` `::NonDisRes` at operational period ``t``.
 
 The variable is defined by the following constraint,
 
@@ -26,8 +26,8 @@ for all nodes ``n`` `::NonDisRES`.
 
 ## Methods
 
-```@docs
-RenewableProducers.EMB.variables_node
-RenewableProducers.EMB.create_node
-RenewableProducers.EMB.check_node
+```@autodocs
+Modules = [EnergyModelsRenewableProducers]
+Public = false
+Order = [:type, :function]
 ```

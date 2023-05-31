@@ -35,8 +35,9 @@ end
 - **`Opex_var::TimeProfile`** Operational cost per GWh produced.\n
 - **`Opex_fixed::TimeProfile`** Fixed operational costs.\n
 - **`Stor_res::ResourceCarrier`** is the stored `Resource`.\n
-- **`Input::Dict{Resource, Real}`** the stored and used resources. The values in the Dict is a ratio describing the energy loss when using the pumps.\n
-- **`Output::Dict{Resource, Real}`** can only contain one entry, and states the stored resource.\n
+- **`Input::Dict{Resource, Real}`** the stored and used resources. The
+values in the Dict is a ratio describing the energy loss when using the pumps.\n
+- **`Output::Dict{Resource, Real}`** can only contain one entry, the stored resource.\n
 - **`Data::Array{Data}`** additional data (e.g. for investments).\n
 """
 struct RegHydroStor <: EMB.Storage
