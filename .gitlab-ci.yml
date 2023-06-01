@@ -30,13 +30,22 @@ before_script:
 
 # Below is the template to run your tests in Julia
 .test_template: &test_definition
+  stage: test
   script:
     - echo "Run tests"
     - julia -e 'using Pkg; Pkg.Registry.status()'
-    - julia --project=. -e 'using Pkg; Pkg.test(; coverage = true)'
+    - julia --project=. -e 'using Pkg; Pkg.test(; coverage = true);
+        Pkg.add("Coverage");
+        Pkg.instantiate();
+        using Coverage;
+        processed = process_folder();
+        covered_lines, total_lines = get_summary(processed);
+        percentage = covered_lines / total_lines * 100;
+        return println("Code coverage $(percentage)%")'
+  coverage: '/Code coverage \d+\.\d+/'
   rules:
     - when: always
-    
+
 
 test:1.9:
   stage: test
@@ -47,6 +56,45 @@ test:1.9:
   stage: test
   image: julia:1.9
   <<: *test_definition
+
+
+formatting:
+  image: "julia:latest"
+  stage: test
+  script:
+    - |-
+      julia -e '@info "Verifying formatting"'
+    - |
+      julia --eval '
+      import Pkg
+      Pkg.add("JuliaFormatter")
+      using JuliaFormatter
+      properly_formatted = format("."; verbose = true)
+
+      if properly_formatted
+        @info "Formatting verified"
+      else
+        @info "Formatting failed - some files have not yet been formatted"
+      end
+      exit(properly_formatted ? 0 : 1)'
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event" || $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+
+# Test that the pages compile, without making it public. Only runs on merge requests.
+test:pages:
+  image: julia:1.9
+  stage: test
+  script:
+    - cd docs
+    - julia -e 'using Pkg; Pkg.Registry.status()'
+    - julia --project=. -e 'using Pkg; Pkg.add("Documenter")'  # install Documenter
+    - julia --project=. --color=yes make.jl  # make documentation
+  artifacts:
+    paths:
+      - public
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
 
 
 # Deploy the documentation.
@@ -65,7 +113,6 @@ pages:
       - public
   rules:
     # Only execute this on the default branch and on merge requests.
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
 
 

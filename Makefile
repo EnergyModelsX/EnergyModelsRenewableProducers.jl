@@ -10,8 +10,7 @@ format:  ## Format all julia files.
 	julia --project=@. --eval 'using Pkg; \
 		Pkg.add("JuliaFormatter"); \
 		using JuliaFormatter; \
-		format("./src"); \
-		format("./test");'
+		format(".");'
 
 .PHONY: test
 test:  ## Run the tests
