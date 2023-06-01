@@ -1,12 +1,18 @@
 
-
 # Test set for the non dispatchable renewable energy source type
 @testset "NonDisRES" begin
 
     # Creation of the initial problem and the NonDisRES node
     case, modeltype = small_graph()
-    wind = RP.NonDisRES("wind", FixedProfile(2), FixedProfile(0.9), 
-        FixedProfile(10), FixedProfile(10), Dict(Power=>1), [])
+    wind = RP.NonDisRES(
+        "wind",
+        FixedProfile(2),
+        FixedProfile(0.9),
+        FixedProfile(10),
+        FixedProfile(10),
+        Dict(Power => 1),
+        [],
+    )
 
     # Updating the nodes and the links
     push!(case[:nodes], wind)
@@ -26,13 +32,17 @@
     @testset "cap_inst" begin
         @test sum(value.(m[:cap_inst][wind, t]) == wind.Cap[wind] for t ∈ 𝒯) == length(𝒯)
     end
-    
+
     @testset "cap_use bounds" begin
         # Test that cap_use is bounded by cap_inst.
-        @test sum(value.(m[:cap_use][wind, t]) <= value.(m[:cap_inst][wind, t]) for t ∈ 𝒯) == length(𝒯)
-            
+        @test sum(
+            value.(m[:cap_use][wind, t]) <= value.(m[:cap_inst][wind, t]) for t ∈ 𝒯
+        ) == length(𝒯)
+
         # Test that cap_use is set correctly with respect to the profile.
-        @test sum(value.(m[:cap_use][wind, t]) <= wind.Profile[t] * value.(m[:cap_inst][wind, t])
-                for t ∈ 𝒯) == length(𝒯)
+        @test sum(
+            value.(m[:cap_use][wind, t]) <= wind.Profile[t] * value.(m[:cap_inst][wind, t])
+            for t ∈ 𝒯
+        ) == length(𝒯)
     end
 end

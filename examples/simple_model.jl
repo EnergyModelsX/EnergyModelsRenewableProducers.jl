@@ -4,7 +4,7 @@ Pkg.activate(joinpath(@__DIR__, "../test"))
 # Install the dependencies.
 Pkg.instantiate()
 # Add the current package to the environment.
-Pkg.develop(path=joinpath(@__DIR__, ".."))
+Pkg.develop(path = joinpath(@__DIR__, ".."))
 
 using EnergyModelsBase
 using EnergyModelsRenewableProducers
@@ -15,7 +15,6 @@ using TimeStructures
 
 const EMB = EnergyModelsBase
 const RP = EnergyModelsRenewableProducers
-
 
 function demo_data()
     NG = ResourceEmit("NG", 0.2)
@@ -55,14 +54,9 @@ function demo_data()
 
     # Create time structure and the used global data
     T = UniformTwoLevel(1, 4, 1, UniformTimes(1, 24, 1))
-    
+
     # Create the case dictionary
-    case = Dict(
-        :nodes => nodes,
-        :links => links,
-        :products => products,
-        :T => T,
-    )
+    case = Dict(:nodes => nodes, :links => links, :products => products, :T => T)
 
     wind = RP.NonDisRES(
         "wind",
@@ -82,12 +76,11 @@ function demo_data()
     # model = EMB.OperationalModel()
     model = EMB.OperationalModel(
         Dict(CO2 => StrategicFixedProfile([450, 400, 350, 300]), NG => FixedProfile(1e6)),
-        CO2
+        CO2,
     )
 
     return case, model
 end
-
 
 case, model = demo_data()
 
@@ -103,5 +96,3 @@ pretty_table(
         header = [:Node, :TimePeriod, :Curtailment],
     ),
 )
-
-# @time demo_res()

@@ -12,15 +12,14 @@ installed capacity at that time.\n
 
 """
 struct NonDisRES <: EMB.Source
-    id
+    id::Any
     Cap::TimeProfile
     Profile::TimeProfile
     Opex_var::TimeProfile
     Opex_fixed::TimeProfile
-    Output::Dict{Resource, Real}
+    Output::Dict{Resource,Real}
     Data::Array{Data}
 end
-
 
 """ A regulated hydropower storage with pumping capabilities, modelled as a Storage node.
 
@@ -41,19 +40,19 @@ values in the Dict is a ratio describing the energy loss when using the pumps.\n
 - **`Data::Array{Data}`** additional data (e.g. for investments).\n
 """
 struct RegHydroStor <: EMB.Storage
-    id
+    id::Any
     Rate_cap::TimeProfile
     Stor_cap::TimeProfile
-    
+
     Has_pump::Bool
     Level_init::TimeProfile
     Level_inflow::TimeProfile
     Level_min::TimeProfile
-    
+
     Opex_var::TimeProfile
     Opex_fixed::TimeProfile
     Stor_res::ResourceCarrier
-    Input::Dict{Resource, Real}
-    Output::Dict{Resource, Real}
+    Input::Dict{Resource,Real}
+    Output::Dict{Resource,Real}
     Data::Array{Data}
 end

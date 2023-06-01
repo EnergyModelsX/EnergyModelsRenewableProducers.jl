@@ -13,7 +13,7 @@ using JuMP
 using TimeStructures
 
 const EMB = EnergyModelsBase
-const TS  = TimeStructures
+const TS = TimeStructures
 
 include("datastructures.jl")
 include("model.jl")
