@@ -3,7 +3,7 @@ using EnergyModelsRenewableProducers
 using HiGHS
 using JuMP
 using Test
-using TimeStructures
+using TimeStruct
 
 const EMB = EnergyModelsBase
 const RP = EnergyModelsRenewableProducers
@@ -47,9 +47,8 @@ function small_graph(source = nothing, sink = nothing)
     ]
 
     # Creation of the time structure and the used global data
-    T = UniformTwoLevel(1, 4, 1, UniformTimes(1, 24, 1))
-    modeltype =
-        OperationalModel(Dict(CO2 => StrategicFixedProfile([450, 400, 350, 300])), CO2)
+    T = TwoLevel(4, 1, SimpleTimes(24, 1))
+    modeltype = OperationalModel(Dict(CO2 => StrategicProfile([450, 400, 350, 300])), CO2)
 
     # Creation of the case dictionary
     case = Dict(:nodes => nodes, :links => links, :products => products, :T => T)

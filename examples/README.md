@@ -15,12 +15,12 @@ julia> using EnergyModelsRenewableProducers
 # Get the path of the examples directory
 julia> exdir = joinpath(pkgdir(EnergyModelsRenewableProducers), "examples")
 # Include the code into the Julia REPL to run the examples
-julia> include(joinpath(exdir, "simple_model.jl"))
+julia> include(joinpath(exdir, "simple_nondisres.jl"))
 ```
 
 ## The code was downloaded with `git clone`
 
 First, add the internal [*Clean Export* Julia package registry](https://gitlab.sintef.no/clean_export/registrycleanexport). The examples can then be run from the terminal with
 ```shell script
-~/.../energymodelsrenewableproducers.jl/examples $ julia simple_model.jl
+~/.../energymodelsrenewableproducers.jl/examples $ julia simple_nondisres.jl
 ```

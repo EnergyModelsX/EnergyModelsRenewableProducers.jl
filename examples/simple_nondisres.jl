@@ -11,10 +11,9 @@ using EnergyModelsRenewableProducers
 using HiGHS
 using JuMP
 using PrettyTables
-using TimeStructures
+using TimeStruct
 
 const EMB = EnergyModelsBase
-const RP = EnergyModelsRenewableProducers
 
 function demo_data()
     NG = ResourceEmit("NG", 0.2)
@@ -53,12 +52,12 @@ function demo_data()
     ]
 
     # Create time structure and the used global data
-    T = UniformTwoLevel(1, 4, 1, UniformTimes(1, 24, 1))
+    T = TwoLevel(4, 1, SimpleTimes(24, 1))
 
     # Create the case dictionary
     case = Dict(:nodes => nodes, :links => links, :products => products, :T => T)
 
-    wind = RP.NonDisRES(
+    wind = NonDisRES(
         "wind",
         FixedProfile(2),
         FixedProfile(0.9),
@@ -75,7 +74,7 @@ function demo_data()
 
     # model = EMB.OperationalModel()
     model = EMB.OperationalModel(
-        Dict(CO2 => StrategicFixedProfile([450, 400, 350, 300]), NG => FixedProfile(1e6)),
+        Dict(CO2 => StrategicProfile([450, 400, 350, 300]), NG => FixedProfile(1e6)),
         CO2,
     )
 

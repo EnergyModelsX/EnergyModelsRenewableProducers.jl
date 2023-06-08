@@ -7,7 +7,7 @@ This method checks that the [`NonDisRES`](@ref) node is valid.
  - The field `n.Profile` is required to be in the range ``[0, 1]`` for all time steps ``t ∈ \\mathcal{T}``.
 """
 function EMB.check_node(n::NonDisRES, 𝒯, modeltype::OperationalModel)
-    @assert_or_log sum(n.Profile[t] ≤ 1 for t ∈ 𝒯) == length(𝒯) "The profile field must be less or equalt to 1."
+    @assert_or_log sum(n.Profile[t] ≤ 1 for t ∈ 𝒯) == length(𝒯) "The profile field must be less or equal to 1."
     @assert_or_log sum(n.Profile[t] ≥ 0 for t ∈ 𝒯) == length(𝒯) "The profile field must be non-negative."
 end
 
@@ -31,7 +31,7 @@ function EMB.check_node(n::RegHydroStor, 𝒯, modeltype::OperationalModel)
     @assert_or_log sum(n.Level_init[t] <= n.Stor_cap[t] for t ∈ 𝒯) == length(𝒯) "The initial reservoir has to be less or equal to the max storage capacity."
 
     for t_inv ∈ strategic_periods(𝒯)
-        t = first_operational(t_inv)
+        t = first(t_inv)
         # Check that the reservoir doesn't overfill in the first operational period of an investment period.
         @assert_or_log n.Level_init[t_inv] + n.Level_inflow[t] - n.Rate_cap[t] <=
                        n.Stor_cap[t] "The dam must have the installed production capacity to handle the inflow (" *

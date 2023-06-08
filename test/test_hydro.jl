@@ -23,21 +23,21 @@ function general_node_tests(m, case, n::RP.RegHydroStor)
         # At the first operation period of each investment period, the stor_level is set as 
         # the initial reservoir level minus the production in that period.
         @test sum(
-            value.(m[:stor_level][n, first_operational(t_inv)]) ≈
+            value.(m[:stor_level][n, first(t_inv)]) ≈
             n.Level_init[t_inv] +
-            n.Level_inflow[first_operational(t_inv)] +
-            value.(m[:flow_in][n, first_operational(t_inv), p_stor]) -
-            value.(m[:stor_rate_use][n, first_operational(t_inv)]) for
-            t_inv ∈ strategic_periods(𝒯)
+            n.Level_inflow[first(t_inv)] +
+            value.(m[:flow_in][n, first(t_inv), p_stor]) -
+            value.(m[:stor_rate_use][n, first(t_inv)]) for t_inv ∈ strategic_periods(𝒯)
         ) == length(strategic_periods(𝒯))
 
         # Check that stor_level is correct wrt. previous stor_level, inflow and stor_rate_use.
         @test sum(
             value.(m[:stor_level][n, t]) ≈
-            value.(m[:stor_level][n, previous(t)]) +
+            value.(m[:stor_level][n, t_prev]) +
             n.Level_inflow[t] +
             n.Input[p_stor] * value.(m[:flow_in][n, t, p_stor]) -
-            value.(m[:stor_rate_use][n, t]) for t ∈ 𝒯 if t.op > 1
+            value.(m[:stor_rate_use][n, t]) for t_inv ∈ strategic_periods(𝒯) for
+            (t_prev, t) ∈ withprev(t_inv) if !isnothing(t_prev)
         ) == length(𝒯) - 𝒯.len
     end
 
@@ -80,8 +80,8 @@ end
     # Creation of the initial problem and the RegHydroStor node without a pump.
     case, modeltype = small_graph()
     max_storage = FixedProfile(100)
-    initial_reservoir = StrategicFixedProfile([20, 25, 30, 20])
-    min_level = StrategicFixedProfile([0.1, 0.2, 0.05, 0.1])
+    initial_reservoir = StrategicProfile([20, 25, 30, 20])
+    min_level = StrategicProfile([0.1, 0.2, 0.05, 0.1])
 
     hydro = RP.RegHydroStor(
         "-hydro",
@@ -142,8 +142,7 @@ end # testset RegHydroStor without pump
     products = [Power, CO2]
     source = EMB.RefSource(
         "-source",
-        DynamicProfile([
-            10 10 10 10 10 0 0 0 0 0
+        OperationalProfile([
             10 10 10 10 10 0 0 0 0 0
         ]),
         FixedProfile(10),
@@ -162,8 +161,8 @@ end # testset RegHydroStor without pump
     case, modeltype = small_graph(source, sink)
 
     max_storage = FixedProfile(100)
-    initial_reservoir = StrategicFixedProfile([20, 25])
-    min_level = StrategicFixedProfile([0.1, 0.2])
+    initial_reservoir = StrategicProfile([20, 25])
+    min_level = StrategicProfile([0.1, 0.2])
     hydro = RP.RegHydroStor(
         "-hydro",
         FixedProfile(10.0),
@@ -187,7 +186,7 @@ end # testset RegHydroStor without pump
     link_to = EMB.Direct(14, case[:nodes][1], case[:nodes][4], EMB.Linear())
     push!(case[:links], link_to)
 
-    case[:T] = UniformTwoLevel(1, 2, 1, UniformTimes(1, 10, 1))
+    case[:T] = TwoLevel(2, 1, SimpleTimes(10, 1))
 
     # Run the model
     m = EMB.run_model(case, modeltype, OPTIMIZER)
