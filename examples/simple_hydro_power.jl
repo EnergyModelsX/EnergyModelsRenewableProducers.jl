@@ -1,6 +1,9 @@
 using Pkg
+# Activate the test-environment, where PrettyTables and HiGHS are added as dependencies.
 Pkg.activate(joinpath(@__DIR__, "../test"))
+# Install the dependencies.
 Pkg.instantiate()
+# Add the current package to the environment.
 Pkg.develop(path = joinpath(@__DIR__, ".."))
 
 using EnergyModelsBase
@@ -8,10 +11,9 @@ using EnergyModelsRenewableProducers
 using HiGHS
 using JuMP
 using PrettyTables
-using TimeStructures
+using TimeStruct
 
 const EMB = EnergyModelsBase
-const RP = EnergyModelsRenewableProducers
 
 function generate_data()
     @info "Generate data"
@@ -73,12 +75,12 @@ function generate_data()
     ]
 
     # Create time structure and the used global data
-    T = UniformTwoLevel(1, 4, 1, UniformTimes(1, 24, 1))
+    T = TwoLevel(4, 1, SimpleTimes(24, 1))
 
     case = Dict(:nodes => nodes, :links => links, :products => products, :T => T)
 
     modeltype = EMB.OperationalModel(
-        Dict(CO2 => StrategicFixedProfile([450, 400, 350, 300]), NG => FixedProfile(1e6)),
+        Dict(CO2 => StrategicProfile([450, 400, 350, 300]), NG => FixedProfile(1e6)),
         CO2,
     )
     return case, modeltype

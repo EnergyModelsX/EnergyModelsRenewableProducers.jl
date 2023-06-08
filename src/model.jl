@@ -62,8 +62,8 @@ function EMB.create_node(m, n::RegHydroStor, 𝒯, 𝒫, modeltype::EnergyModel)
     # of the previous operation period plus the inflow of period t minus the production
     # (stor_rate_use) of period t. For the first operational period in an investment period, 
     # stor_level is the initial reservoir level, plus inflow, minus the production in that period.
-    for t_inv ∈ 𝒯ᴵⁿᵛ, t ∈ t_inv
-        if t == first_operational(t_inv)
+    for t_inv ∈ 𝒯ᴵⁿᵛ, (t_prev, t) ∈ withprev(t_inv)
+        if isnothing(t_prev)
             @constraint(
                 m,
                 m[:stor_level][n, t] ==
@@ -71,17 +71,17 @@ function EMB.create_node(m, n::RegHydroStor, 𝒯, 𝒫, modeltype::EnergyModel)
                 (
                     n.Level_inflow[t] + n.Input[p_stor] * m[:flow_in][n, t, p_stor] -
                     m[:stor_rate_use][n, t]
-                ) * t.duration
+                ) * duration(t)
             )
         else
             @constraint(
                 m,
                 m[:stor_level][n, t] ==
-                m[:stor_level][n, previous(t, 𝒯)] +
+                m[:stor_level][n, t_prev] +
                 (
                     n.Level_inflow[t] + n.Input[p_stor] * m[:flow_in][n, t, p_stor] -
                     m[:stor_rate_use][n, t]
-                ) * t.duration
+                ) * duration(t)
             )
         end
     end

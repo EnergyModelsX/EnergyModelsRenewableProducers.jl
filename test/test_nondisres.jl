@@ -30,7 +30,7 @@
 
     # Check that the installed capacity variable corresponds to the provided values
     @testset "cap_inst" begin
-        @test sum(value.(m[:cap_inst][wind, t]) == wind.Cap[wind] for t ∈ 𝒯) == length(𝒯)
+        @test sum(value.(m[:cap_inst][wind, t]) == wind.Cap[t] for t ∈ 𝒯) == length(𝒯)
     end
 
     @testset "cap_use bounds" begin
