@@ -1,5 +1,5 @@
 
-""" 
+"""
     EMB.variables_node(m, 𝒩ⁿᵈʳ::Vector{NonDisRES}, 𝒯, modeltype::EnergyModel)
 
 Create the optimization variable `:curtailment` for every NonDisRES node. This method is called
@@ -16,8 +16,8 @@ Sets all constraints for a non-dispatchable renewable energy source.
 function EMB.create_node(m, n::NonDisRES, 𝒯, 𝒫, modeltype::EnergyModel)
 
     # Declaration of the required subsets.
-    𝒫ᵉᵐ = EMB.res_sub(𝒫, EMB.ResourceEmit)
-    𝒯ᴵⁿᵛ = EMB.strategic_periods(𝒯)
+    𝒫ᵉᵐ = EMB.res_sub(𝒫, ResourceEmit)
+    𝒯ᴵⁿᵛ = strategic_periods(𝒯)
 
     # Non dispatchable renewable energy sources operate at their max
     # capacity with repsect to the current profile (e.g. wind) at every time.
@@ -38,7 +38,7 @@ function EMB.create_node(m, n::NonDisRES, 𝒯, 𝒫, modeltype::EnergyModel)
 
     # Call of the functions for both fixed and variable OPEX constraints introduction
     EMB.constraints_opex_fixed(m, n, 𝒯ᴵⁿᵛ, modeltype)
-    return EMB.constraints_opex_var(m, n, 𝒯ᴵⁿᵛ, modeltype)
+    EMB.constraints_opex_var(m, n, 𝒯ᴵⁿᵛ, modeltype)
 end
 
 """
@@ -60,7 +60,7 @@ function EMB.create_node(m, n::RegHydroStor, 𝒯, 𝒫, modeltype::EnergyModel)
 
     # The storage level in the reservoir at operational time t, is the stor_level
     # of the previous operation period plus the inflow of period t minus the production
-    # (stor_rate_use) of period t. For the first operational period in an investment period, 
+    # (stor_rate_use) of period t. For the first operational period in an investment period,
     # stor_level is the initial reservoir level, plus inflow, minus the production in that period.
     for t_inv ∈ 𝒯ᴵⁿᵛ, (t_prev, t) ∈ withprev(t_inv)
         if isnothing(t_prev)
@@ -96,7 +96,7 @@ function EMB.create_node(m, n::RegHydroStor, 𝒯, 𝒫, modeltype::EnergyModel)
     # Can not produce more energy than what is availbable in the reservoir.
     @constraint(m, [t ∈ 𝒯], m[:stor_rate_use][n, t] <= m[:stor_level][n, t])
 
-    # The minimum contents of the reservoir is bounded below. Not allowed 
+    # The minimum contents of the reservoir is bounded below. Not allowed
     # to drain it completely.
     @constraint(
         m,
@@ -112,5 +112,5 @@ function EMB.create_node(m, n::RegHydroStor, 𝒯, 𝒫, modeltype::EnergyModel)
 
     # Call of the functions for both fixed and variable OPEX constraints introduction
     EMB.constraints_opex_fixed(m, n, 𝒯ᴵⁿᵛ, modeltype)
-    return EMB.constraints_opex_var(m, n, 𝒯ᴵⁿᵛ, modeltype)
+    EMB.constraints_opex_var(m, n, 𝒯ᴵⁿᵛ, modeltype)
 end
