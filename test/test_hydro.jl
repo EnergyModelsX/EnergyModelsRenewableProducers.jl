@@ -1,5 +1,5 @@
 
-function general_node_tests(m, case, n::RP.RegHydroStor)
+function general_node_tests(m, case, n::RP.HydroStorage)
 
     # Extract time structure and storage node
     𝒯 = case[:T]

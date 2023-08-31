@@ -18,8 +18,9 @@ const TS = TimeStruct
 include("datastructures.jl")
 include("model.jl")
 include("checks.jl")
+include("constraint_functions.jl")
 
 export NonDisRES
-export RegHydroStor
+export RegHydroStor, PumpedHydroStor, HydroStor
 
 end # module

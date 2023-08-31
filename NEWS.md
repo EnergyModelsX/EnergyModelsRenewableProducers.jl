@@ -1,6 +1,15 @@
 Release notes
 =============
 
+Version 0.4.1 (2023-08-31)
+--------------------------
+### Split the hydro storage node into to separate nodes
+ * Split `RegHydroStor` into to types `PumpedHydroStor` and `HydroStor`. Both are subtypes
+ of the new abstract type `HydroStorage <: EMB.Storage`.
+ * Fix: variational OPEX for `HydroStor` now depends on `flow_out` instead of
+ `flow_in`. The new type `PumpedHydroStor` has a separate parameter for variational OPEX
+ for the pumps, which depends on `flow_in`.
+
 Version 0.4.0 (2023-06-06)
 --------------------------
 ### Switch to TimeStruct.jl
