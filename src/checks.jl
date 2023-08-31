@@ -16,7 +16,7 @@ end
 
 This method checks that the [`RegHydroStor`](@ref) node is valid.
 """
-function EMB.check_node(n::RegHydroStor, 𝒯, modeltype::OperationalModel)
+function EMB.check_node(n::HydroStorage, 𝒯, modeltype::OperationalModel)
     @assert_or_log length(n.Output) == 1 "Only one resource can be stored, so only this one can flow out."
 
     for v ∈ values(n.Output)

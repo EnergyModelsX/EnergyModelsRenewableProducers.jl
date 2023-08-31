@@ -46,7 +46,7 @@ end
 
 Sets all constraints for the regulated hydro storage node.
 """
-function EMB.create_node(m, n::RegHydroStor, 𝒯, 𝒫, modeltype::EnergyModel)
+function EMB.create_node(m, n::HydroStorage, 𝒯, 𝒫, modeltype::EnergyModel)
 
     # Declaration of the required subsets.
     p_stor = n.Stor_res
@@ -54,7 +54,7 @@ function EMB.create_node(m, n::RegHydroStor, 𝒯, 𝒫, modeltype::EnergyModel)
     𝒯ᴵⁿᵛ = strategic_periods(𝒯)
 
     # If the reservoir has no pump, the stored resource cannot flow in.
-    if !n.Has_pump
+    if isa(n, HydroStor)
         @constraint(m, [t ∈ 𝒯], m[:flow_in][n, t, p_stor] == 0)
     end
 
