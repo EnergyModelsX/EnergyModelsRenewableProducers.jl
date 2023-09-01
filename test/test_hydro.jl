@@ -25,18 +25,18 @@ function general_node_tests(m, case, n::RP.HydroStorage)
         @test sum(
             value.(m[:stor_level][n, first(t_inv)]) ≈
             n.Level_init[t_inv] +
-            n.Level_inflow[first(t_inv)] +
+            duration(first(t_inv)) * (n.Level_inflow[first(t_inv)] +
             value.(m[:flow_in][n, first(t_inv), p_stor]) -
-            value.(m[:stor_rate_use][n, first(t_inv)]) for t_inv ∈ strategic_periods(𝒯)
+            value.(m[:stor_rate_use][n, first(t_inv)])) for t_inv ∈ strategic_periods(𝒯)
         ) == length(strategic_periods(𝒯))
 
         # Check that stor_level is correct wrt. previous stor_level, inflow and stor_rate_use.
         @test sum(
             value.(m[:stor_level][n, t]) ≈
             value.(m[:stor_level][n, t_prev]) +
-            n.Level_inflow[t] +
+            duration(t) * (n.Level_inflow[t] +
             n.Input[p_stor] * value.(m[:flow_in][n, t, p_stor]) -
-            value.(m[:stor_rate_use][n, t]) for t_inv ∈ strategic_periods(𝒯) for
+            value.(m[:stor_rate_use][n, t])) for t_inv ∈ strategic_periods(𝒯) for
             (t_prev, t) ∈ withprev(t_inv) if !isnothing(t_prev)
         ) == length(𝒯) - 𝒯.len
     end
