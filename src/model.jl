@@ -42,6 +42,17 @@ function EMB.create_node(m, n::NonDisRES, 𝒯, 𝒫, modeltype::EnergyModel)
 end
 
 """
+    EMB.variables_node(m, 𝒩::Vector{HydroStorage}, 𝒯, modeltype::EnergyModel)
+
+Create the optimization variable `:hydro_spill` for every HydroStorage node. This variable
+enables hydro storage nodes to spill water from the reservoir without producing energy.
+Wihtout this slack variable, parameters with too much inflow would else lead to an
+infeasible model. """
+function EMB.variables_node(m, 𝒩::Vector{HydroStorage}, 𝒯, modeltype::EnergyModel)
+    @variable(m, hydro_spill[𝒩, 𝒯] >= 0)
+end
+
+"""
     EMB.create_node(m, n::RegHydroStor, 𝒯, 𝒫, modeltype::EnergyModel)
 
 Sets all constraints for the regulated hydro storage node.
@@ -70,7 +81,7 @@ function EMB.create_node(m, n::HydroStorage, 𝒯, 𝒫, modeltype::EnergyModel)
                 n.Level_init[t] +
                 (
                     n.Level_inflow[t] + n.Input[p_stor] * m[:flow_in][n, t, p_stor] -
-                    m[:stor_rate_use][n, t]
+                    m[:stor_rate_use][n, t] - m[:hydro_spill][n, t]
                 ) * duration(t)
             )
         else
@@ -80,7 +91,7 @@ function EMB.create_node(m, n::HydroStorage, 𝒯, 𝒫, modeltype::EnergyModel)
                 m[:stor_level][n, t_prev] +
                 (
                     n.Level_inflow[t] + n.Input[p_stor] * m[:flow_in][n, t, p_stor] -
-                    m[:stor_rate_use][n, t]
+                    m[:stor_rate_use][n, t] - m[:hydro_spill][n, t]
                 ) * duration(t)
             )
         end

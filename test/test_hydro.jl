@@ -25,18 +25,22 @@ function general_node_tests(m, case, n::RP.HydroStorage)
         @test sum(
             value.(m[:stor_level][n, first(t_inv)]) ≈
             n.Level_init[t_inv] +
-            n.Level_inflow[first(t_inv)] +
-            value.(m[:flow_in][n, first(t_inv), p_stor]) -
-            value.(m[:stor_rate_use][n, first(t_inv)]) for t_inv ∈ strategic_periods(𝒯)
+            duration(first(t_inv)) * (
+                n.Level_inflow[first(t_inv)] +
+                value.(m[:flow_in][n, first(t_inv), p_stor]) -
+                value.(m[:stor_rate_use][n, first(t_inv)]) -
+                value.(m[:hydro_spill][n, first(t_inv)])
+            ) for t_inv ∈ strategic_periods(𝒯)
         ) == length(strategic_periods(𝒯))
 
         # Check that stor_level is correct wrt. previous stor_level, inflow and stor_rate_use.
         @test sum(
             value.(m[:stor_level][n, t]) ≈
             value.(m[:stor_level][n, t_prev]) +
-            n.Level_inflow[t] +
-            n.Input[p_stor] * value.(m[:flow_in][n, t, p_stor]) -
-            value.(m[:stor_rate_use][n, t]) for t_inv ∈ strategic_periods(𝒯) for
+            duration(t) * (
+                n.Level_inflow[t] + n.Input[p_stor] * value.(m[:flow_in][n, t, p_stor]) -
+                value.(m[:stor_rate_use][n, t]) - value.(m[:hydro_spill][n, t])
+            ) for t_inv ∈ strategic_periods(𝒯) for
             (t_prev, t) ∈ withprev(t_inv) if !isnothing(t_prev)
         ) == length(𝒯) - 𝒯.len
     end
@@ -78,12 +82,12 @@ end
 @testset "RegHydroStor without pump" begin
 
     # Creation of the initial problem and the RegHydroStor node without a pump.
-    case, modeltype = small_graph()
     max_storage = FixedProfile(100)
     initial_reservoir = StrategicProfile([20, 25, 30, 20])
     min_level = StrategicProfile([0.1, 0.2, 0.05, 0.1])
 
-    hydro = RP.RegHydroStor(
+    # Regular nice hydro storage node.
+    hydro1 = RP.RegHydroStor(
         "-hydro",
         FixedProfile(2.0),
         max_storage,
@@ -99,40 +103,67 @@ end
         [],
     )
 
-    # Updating the nodes and the links
-    push!(case[:nodes], hydro)
-    link_from = EMB.Direct(41, case[:nodes][4], case[:nodes][1], EMB.Linear())
-    push!(case[:links], link_from)
-    link_to = EMB.Direct(14, case[:nodes][1], case[:nodes][4], EMB.Linear())
-    push!(case[:links], link_to)
+    # Gives infeasible model without spill-variable (because without spill, the inflow is
+    # much greater than what the Rate_cap can handle, given the Stor_cap of the storage).
+    hydro2 = RP.RegHydroStor(
+        "-hydro",
+        FixedProfile(2.0),
+        FixedProfile(40),
+        false,
+        initial_reservoir,
+        FixedProfile(10),
+        min_level,
+        FixedProfile(10),
+        FixedProfile(10),
+        Power,
+        Dict(Power => 0.9),
+        Dict(Power => 1),
+        [],
+    )
+    for hydro ∈ [hydro1, hydro2]
+        # Create the basic energy system model.
+        case, modeltype = small_graph()
 
-    # Run the model
-    m = EMB.run_model(case, modeltype, OPTIMIZER)
+        # Updating the nodes and the links
+        push!(case[:nodes], hydro)
+        link_from = EMB.Direct(41, case[:nodes][4], case[:nodes][1], EMB.Linear())
+        push!(case[:links], link_from)
+        link_to = EMB.Direct(14, case[:nodes][1], case[:nodes][4], EMB.Linear())
+        push!(case[:links], link_to)
 
-    # Extraction of the time structure
-    𝒯 = case[:T]
+        # Run the model
+        m = EMB.run_model(case, modeltype, OPTIMIZER)
 
-    # Run of the general and node tests
-    general_tests(m)
-    general_node_tests(m, case, hydro)
+        # Extraction of the time structure
+        𝒯 = case[:T]
 
-    @testset "no pump" begin
-        # No pump means no inflow.
-        @test sum(
-            value.(m[:flow_in][hydro, t, p]) == 0 for t ∈ 𝒯 for p ∈ keys(hydro.Input)
-        ) == length(𝒯)
-    end
+        # Run of the general and node tests
+        general_tests(m)
+        general_node_tests(m, case, hydro)
 
-    @testset "flow_in" begin
-        # Check that the zero equality constraint is set on the flow_in variable 
-        # when the pump is not allowed. If this false, there might be errors in 
-        # the links to the node. The hydro node need one in and one out.
-        @test sum(
-            sum(
-                occursin("flow_in[n_-hydro,$t,Power] = 0", string(constraint)) for
-                constraint ∈ all_constraints(m, AffExpr, MOI.EqualTo{Float64})
-            ) == 1 for t ∈ 𝒯
-        ) == length(𝒯)
+        @testset "no pump" begin
+            # No pump means no inflow.
+            @test sum(
+                value.(m[:flow_in][hydro, t, p]) == 0 for t ∈ 𝒯 for p ∈ keys(hydro.Input)
+            ) == length(𝒯)
+        end
+
+        @testset "flow_in" begin
+            # Check that the zero equality constraint is set on the flow_in variable
+            # when the pump is not allowed. If this false, there might be errors in
+            # the links to the node. The hydro node need one in and one out.
+            @test sum(
+                sum(
+                    occursin("flow_in[n_-hydro,$t,Power] = 0", string(constraint)) for
+                    constraint ∈ all_constraints(m, AffExpr, MOI.EqualTo{Float64})
+                ) == 1 for t ∈ 𝒯
+            ) == length(𝒯)
+        end
+
+        if hydro == hydro2
+            # hydro2 should lead to spillage.
+            @test sum(value.(m[:hydro_spill][hydro, t]) for t ∈ 𝒯) > 0
+        end
     end
 end # testset RegHydroStor without pump
 

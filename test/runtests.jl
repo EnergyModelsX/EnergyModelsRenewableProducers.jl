@@ -47,7 +47,7 @@ function small_graph(source = nothing, sink = nothing)
     ]
 
     # Creation of the time structure and the used global data
-    T = TwoLevel(4, 1, SimpleTimes(24, 1))
+    T = TwoLevel(4, 1, SimpleTimes(24, 2))
     modeltype = OperationalModel(Dict(CO2 => StrategicProfile([450, 400, 350, 300])), CO2)
 
     # Creation of the case dictionary
