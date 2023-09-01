@@ -1,6 +1,12 @@
 Release notes
 =============
 
+Version 0.4.2 (2023-09-01)
+--------------------------
+### Create a variable :spill for hydro storage node.
+ * This variable enables hydro storage nodes to spill water from the reservoir without
+   producing energy.
+
 Version 0.4.1 (2023-08-31)
 --------------------------
 ### Split the hydro storage node into to separate nodes

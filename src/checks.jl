@@ -32,13 +32,9 @@ function EMB.check_node(n::HydroStorage, 𝒯, modeltype::OperationalModel)
 
     for t_inv ∈ strategic_periods(𝒯)
         for t ∈ t_inv
-            # Check that the reservoir isn't guaranteed to overfill in any operational period of the investment period.
-            @assert_or_log n.Level_init[t_inv] + sum(
-                (n.Level_inflow[t₁] - n.Rate_cap[t₁]) * duration(t₁) for
-                t₁ ∈ t_inv if t₁ ≤ t
-            ) <= n.Stor_cap[t] "The dam must have the installed production capacity to handle the inflow (" *
-                               string(t) *
-                               ")."
+            @assert_or_log n.Level_init[t_inv] <= n.Stor_cap[t] "The initial level can not be greater than the dam capacity (" *
+                                                                string(t) *
+                                                                ")."
         end
 
         t = first(t_inv)
