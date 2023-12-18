@@ -22,18 +22,15 @@ function generate_data()
     # case, modeltype = EMB.read_data(fn)
 
     CO2 = ResourceEmit("CO2", 1.0)
-    NG = ResourceEmit("NG", 0.2)
     Power = ResourceCarrier("Power", 1.0)
 
-    products = [CO2, NG, Power]
-    emissions = Dict(CO2 => 0.01, NG => 0)
-    𝒫₀ = Dict(p => 0 for p ∈ products)
+    products = [CO2, Power]
 
-    av = GenAvailability(1, 𝒫₀, 𝒫₀)
+    av = GenAvailability(1, products)
 
     # Add a non-dispatchable renewable energy source to the system
     rs = NonDisRES(
-        2,
+        "wind",
         FixedProfile(2.0),
         FixedProfile(0.8),
         FixedProfile(5),
@@ -43,7 +40,7 @@ function generate_data()
     )
 
     hydro = RegHydroStor(
-        3,
+        "hydropower",
         FixedProfile(2.0),
         FixedProfile(90),
         false,
@@ -59,11 +56,11 @@ function generate_data()
     )
 
     sink = RefSink(
-        4,
+        "sink",
         FixedProfile(20),
-        Dict(:Surplus => FixedProfile(0), :Deficit => FixedProfile(1e6)),
+        Dict(:surplus => FixedProfile(0), :deficit => FixedProfile(1e6)),
         Dict(Power => 1),
-        emissions,
+        [],
     )
 
     nodes = [av, rs, hydro, sink]
@@ -79,8 +76,9 @@ function generate_data()
 
     case = Dict(:nodes => nodes, :links => links, :products => products, :T => T)
 
-    modeltype = EMB.OperationalModel(
-        Dict(CO2 => StrategicProfile([450, 400, 350, 300]), NG => FixedProfile(1e6)),
+    modeltype = OperationalModel(
+        Dict(CO2 => StrategicProfile([450, 400, 350, 300])),
+        Dict(CO2 => FixedProfile(0)),
         CO2,
     )
     return case, modeltype
@@ -91,7 +89,7 @@ case, modeltype = generate_data()
 m = EMB.run_model(case, modeltype, HiGHS.Optimizer)
 
 function inspect_results()
-    power = case[:products][3]
+    power = case[:products][2]
     sink = case[:nodes][4]
     T = case[:T]
 

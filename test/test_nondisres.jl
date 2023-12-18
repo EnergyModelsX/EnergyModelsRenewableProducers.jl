@@ -30,19 +30,21 @@
 
     # Check that the installed capacity variable corresponds to the provided values
     @testset "cap_inst" begin
-        @test sum(value.(m[:cap_inst][wind, t]) == wind.Cap[t] for t ∈ 𝒯) == length(𝒯)
+        @test sum(value.(m[:cap_inst][wind, t]) == EMB.capacity(wind)[t] for t ∈ 𝒯) ==
+              length(𝒯)
     end
 
     @testset "cap_use bounds" begin
         # Test that cap_use is bounded by cap_inst.
         @test sum(
-            value.(m[:cap_use][wind, t]) <= value.(m[:cap_inst][wind, t]) for t ∈ 𝒯
+            value.(m[:cap_use][wind, t]) ≤ value.(m[:cap_inst][wind, t]) + TEST_ATOL for
+            t ∈ 𝒯
         ) == length(𝒯)
 
         # Test that cap_use is set correctly with respect to the profile.
         @test sum(
-            value.(m[:cap_use][wind, t]) <= wind.Profile[t] * value.(m[:cap_inst][wind, t])
-            for t ∈ 𝒯
+            value.(m[:cap_use][wind, t]) ≤
+            RP.profile(wind, t) * value.(m[:cap_inst][wind, t] + TEST_ATOL) for t ∈ 𝒯
         ) == length(𝒯)
     end
 end

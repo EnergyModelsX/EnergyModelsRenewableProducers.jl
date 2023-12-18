@@ -16,7 +16,6 @@ Sets all constraints for a non-dispatchable renewable energy source.
 function EMB.create_node(m, n::NonDisRES, 𝒯, 𝒫, modeltype::EnergyModel)
 
     # Declaration of the required subsets.
-    𝒫ᵉᵐ = EMB.res_sub(𝒫, ResourceEmit)
     𝒯ᴵⁿᵛ = strategic_periods(𝒯)
 
     # Non dispatchable renewable energy sources operate at their max
@@ -24,21 +23,18 @@ function EMB.create_node(m, n::NonDisRES, 𝒯, 𝒫, modeltype::EnergyModel)
     @constraint(
         m,
         [t ∈ 𝒯],
-        m[:cap_use][n, t] + m[:curtailment][n, t] == n.Profile[t] * m[:cap_inst][n, t]
+        m[:cap_use][n, t] + m[:curtailment][n, t] == profile(n, t) * m[:cap_inst][n, t]
     )
 
-    # Constraint for the emissions to avoid problems with unconstrained variables.
-    @constraint(m, [t ∈ 𝒯, p_em ∈ 𝒫ᵉᵐ], m[:emissions_node][n, t, p_em] == 0)
-
     # Call of the function for the outlet flow from the `Source` node
-    EMB.constraints_flow_out(m, n, 𝒯, modeltype)
+    constraints_flow_out(m, n, 𝒯, modeltype)
 
     # Call of the function for limiting the capacity to the maximum installed capacity
-    EMB.constraints_capacity(m, n, 𝒯, modeltype)
+    constraints_capacity(m, n, 𝒯, modeltype)
 
     # Call of the functions for both fixed and variable OPEX constraints introduction
-    EMB.constraints_opex_fixed(m, n, 𝒯ᴵⁿᵛ, modeltype)
-    EMB.constraints_opex_var(m, n, 𝒯ᴵⁿᵛ, modeltype)
+    constraints_opex_fixed(m, n, 𝒯ᴵⁿᵛ, modeltype)
+    constraints_opex_var(m, n, 𝒯ᴵⁿᵛ, modeltype)
 end
 
 """
@@ -60,8 +56,7 @@ Sets all constraints for the regulated hydro storage node.
 function EMB.create_node(m, n::HydroStorage, 𝒯, 𝒫, modeltype::EnergyModel)
 
     # Declaration of the required subsets.
-    p_stor = n.Stor_res
-    𝒫ᵉᵐ = EMB.res_sub(𝒫, ResourceEmit)
+    p_stor = EMB.storage_resource(n)
     𝒯ᴵⁿᵛ = strategic_periods(𝒯)
 
     # If the reservoir has no pump, the stored resource cannot flow in.
@@ -69,39 +64,14 @@ function EMB.create_node(m, n::HydroStorage, 𝒯, 𝒫, modeltype::EnergyModel)
         @constraint(m, [t ∈ 𝒯], m[:flow_in][n, t, p_stor] == 0)
     end
 
-    # The storage level in the reservoir at operational time t, is the stor_level
-    # of the previous operation period plus the inflow of period t minus the production
-    # (stor_rate_use) of period t. For the first operational period in an investment period,
-    # stor_level is the initial reservoir level, plus inflow, minus the production in that period.
-    for t_inv ∈ 𝒯ᴵⁿᵛ, (t_prev, t) ∈ withprev(t_inv)
-        if isnothing(t_prev)
-            @constraint(
-                m,
-                m[:stor_level][n, t] ==
-                n.Level_init[t] +
-                (
-                    n.Level_inflow[t] + n.Input[p_stor] * m[:flow_in][n, t, p_stor] -
-                    m[:stor_rate_use][n, t] - m[:hydro_spill][n, t]
-                ) * duration(t)
-            )
-        else
-            @constraint(
-                m,
-                m[:stor_level][n, t] ==
-                m[:stor_level][n, t_prev] +
-                (
-                    n.Level_inflow[t] + n.Input[p_stor] * m[:flow_in][n, t, p_stor] -
-                    m[:stor_rate_use][n, t] - m[:hydro_spill][n, t]
-                ) * duration(t)
-            )
-        end
-    end
+    # Energy balance constraints for stored electricity.
+    constraints_level(m, n, 𝒯, 𝒫, modeltype)
 
     # The flow_out is equal to the production stor_rate_use.
     @constraint(
         m,
         [t ∈ 𝒯],
-        m[:flow_out][n, t, p_stor] == m[:stor_rate_use][n, t] * n.Output[p_stor]
+        m[:flow_out][n, t, p_stor] == m[:stor_rate_use][n, t] * outputs(n, p_stor)
     )
 
     # Can not produce more energy than what is availbable in the reservoir.
@@ -112,16 +82,18 @@ function EMB.create_node(m, n::HydroStorage, 𝒯, 𝒫, modeltype::EnergyModel)
     @constraint(
         m,
         [t ∈ 𝒯],
-        m[:stor_level][n, t] >= n.Level_min[t] * m[:stor_cap_inst][n, t]
+        m[:stor_level][n, t] ≥ level_min(n, t) * m[:stor_cap_inst][n, t]
     )
 
-    # Constraint for the emissions to avoid problems with unconstrained variables.
-    @constraint(m, [t ∈ 𝒯, p_em ∈ 𝒫ᵉᵐ], m[:emissions_node][n, t, p_em] == 0)
+    # Iterate through all data and set up the constraints corresponding to the data
+    for data ∈ node_data(n)
+        constraints_data(m, n, 𝒯, 𝒫, modeltype, data)
+    end
 
     # Call of the function for limiting the capacity to the maximum installed capacity
-    EMB.constraints_capacity(m, n, 𝒯, modeltype)
+    constraints_capacity(m, n, 𝒯, modeltype)
 
     # Call of the functions for both fixed and variable OPEX constraints introduction
-    EMB.constraints_opex_fixed(m, n, 𝒯ᴵⁿᵛ, modeltype)
-    EMB.constraints_opex_var(m, n, 𝒯ᴵⁿᵛ, modeltype)
+    constraints_opex_fixed(m, n, 𝒯ᴵⁿᵛ, modeltype)
+    constraints_opex_var(m, n, 𝒯ᴵⁿᵛ, modeltype)
 end

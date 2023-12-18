@@ -1,5 +1,6 @@
 using Documenter
 
+using EnergyModelsBase
 using EnergyModelsRenewableProducers
 
 DocMeta.setdocmeta!(
