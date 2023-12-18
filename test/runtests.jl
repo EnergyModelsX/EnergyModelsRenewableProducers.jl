@@ -11,10 +11,11 @@ const RP = EnergyModelsRenewableProducers
 CO2 = ResourceEmit("CO2", 1.0)
 Power = ResourceCarrier("Power", 0.0)
 
+TEST_ATOL = 1e-6
 ROUND_DIGITS = 8
 OPTIMIZER = optimizer_with_attributes(HiGHS.Optimizer, MOI.Silent() => true)
 
-function small_graph(source = nothing, sink = nothing)
+function small_graph(source = nothing, sink = nothing; ops = SimpleTimes(24, 2))
     products = [Power, CO2]
 
     # Creation of a dictionary with entries of 0. for all resources
@@ -35,20 +36,25 @@ function small_graph(source = nothing, sink = nothing)
         sink = RefSink(
             3,
             FixedProfile(20),
-            Dict(:Surplus => FixedProfile(0), :Deficit => FixedProfile(1e6)),
+            Dict(:surplus => FixedProfile(0), :deficit => FixedProfile(1e6)),
             Dict(Power => 1),
+            [],
         )
     end
 
-    nodes = [GenAvailability(1, 𝒫₀, 𝒫₀), source, sink]
+    nodes = [GenAvailability(1, products), source, sink]
     links = [
         Direct(21, nodes[2], nodes[1], Linear())
         Direct(13, nodes[1], nodes[3], Linear())
     ]
 
     # Creation of the time structure and the used global data
-    T = TwoLevel(4, 1, SimpleTimes(24, 2))
-    modeltype = OperationalModel(Dict(CO2 => StrategicProfile([450, 400, 350, 300])), CO2)
+    T = TwoLevel(4, 1, ops)
+    modeltype = OperationalModel(
+        Dict(CO2 => StrategicProfile([450, 400, 350, 300])),
+        Dict(CO2 => FixedProfile(0)),
+        CO2,
+    )
 
     # Creation of the case dictionary
     case = Dict(:nodes => nodes, :links => links, :products => products, :T => T)

@@ -2,23 +2,23 @@
 
 # Fields
 - **`id`** is the name/identifyer of the node.\n
-- **`Cap::TimeProfile`** is the installed capacity.\n
-- **`Profile::TimeProfile`** is the power production at each operational period as a ratio of the 
+- **`cap::TimeProfile`** is the installed capacity.\n
+- **`profile::TimeProfile`** is the power production at each operational period as a ratio of the
 installed capacity at that time.\n
-- **`Opex_var::TimeProfile`** is the variational operational costs per energy unit produced.\n
-- **`Opex_fixed::TimeProfile`** is the fixed operational costs.\n
-- **`Output::Dict{Resource, Real}`** are the generated `Resource`s, normally Power.\n
-- **`Data::Array{Data}`** is the additional data (e.g. for investments).
+- **`opex_var::TimeProfile`** is the variational operational costs per energy unit produced.\n
+- **`opex_fixed::TimeProfile`** is the fixed operational costs.\n
+- **`output::Dict{Resource, Real}`** are the generated `Resource`s, normally Power.\n
+- **`data::Array{Data}`** is the additional data (e.g. for investments).
 
 """
 struct NonDisRES <: EMB.Source
     id::Any
-    Cap::TimeProfile
-    Profile::TimeProfile
-    Opex_var::TimeProfile
-    Opex_fixed::TimeProfile
-    Output::Dict{Resource,Real}
-    Data::Array{Data}
+    cap::TimeProfile
+    profile::TimeProfile
+    opex_var::TimeProfile
+    opex_fixed::TimeProfile
+    output::Dict{Resource,Real}
+    data::Array{Data}
 end
 
 """ An abstract type for hydro storage nodes, with or without pumping. """
@@ -28,135 +28,170 @@ abstract type HydroStorage <: EMB.Storage end
 
 ## Fields
 - **`id`** is the name/identifyer of the node.\n
-- **`Rate_cap::TimeProfile`**: installed capacity.\n
-- **`Stor_cap::TimeProfile`** Initial installed storage capacity in the dam.\n
-- **`Level_init::TimeProfile`** Initial energy stored in the dam, in units of power.\n
-- **`Level_inflow::TimeProfile`** Inflow of power per operational period.\n
-- **`Level_min::TimeProfile`** Minimum fraction of the reservoir capacity that can be left.\n
-- **`Opex_var::TimeProfile`** Operational cost per GWh produced.\n
-- **`Opex_fixed::TimeProfile`** Fixed operational costs.\n
-- **`Stor_res::ResourceCarrier`** is the stored `Resource`.\n
-- **`Input::Dict{Resource, Real}`** the stored and used resources. The
+- **`rate_cap::TimeProfile`**: installed capacity.\n
+- **`stor_cap::TimeProfile`** Initial installed storage capacity in the dam.\n
+- **`level_init::TimeProfile`** Initial energy stored in the dam, in units of power.\n
+- **`level_inflow::TimeProfile`** Inflow of power per operational period.\n
+- **`level_min::TimeProfile`** Minimum fraction of the reservoir capacity that can be left.\n
+- **`opex_var::TimeProfile`** Operational cost per GWh produced.\n
+- **`opex_fixed::TimeProfile`** Fixed operational costs.\n
+- **`stor_res::ResourceCarrier`** is the stored `Resource`.\n
+- **`input::Dict{Resource, Real}`** the stored and used resources. The
 values in the Dict is a ratio describing the energy loss when using the pumps.\n
-- **`Output::Dict{Resource, Real}`** can only contain one entry, the stored resource.\n
-- **`Data::Array{Data}`** additional data (e.g. for investments).\n
+- **`output::Dict{Resource, Real}`** can only contain one entry, the stored resource.\n
+- **`data::Array{Data}`** additional data (e.g. for investments).\n
 """
 struct HydroStor <: HydroStorage
     id::Any
-    Rate_cap::TimeProfile
-    Stor_cap::TimeProfile
+    rate_cap::TimeProfile
+    stor_cap::TimeProfile
 
-    Level_init::TimeProfile
-    Level_inflow::TimeProfile
-    Level_min::TimeProfile
+    level_init::TimeProfile
+    level_inflow::TimeProfile
+    level_min::TimeProfile
 
-    Opex_var::TimeProfile
-    Opex_fixed::TimeProfile
-    Stor_res::ResourceCarrier
-    Input::Dict{Resource,Real}
-    Output::Dict{Resource,Real}
-    Data::Array{Data}
+    opex_var::TimeProfile
+    opex_fixed::TimeProfile
+    stor_res::ResourceCarrier
+    input::Dict{Resource,Real}
+    output::Dict{Resource,Real}
+    data::Array{Data}
 end
 
 """ A regulated hydropower storage with pumping capabilities, modelled as a Storage node.
 
 ## Fields
 - **`id`** is the name/identifyer of the node.\n
-- **`Rate_cap::TimeProfile`**: installed capacity.\n
-- **`Stor_cap::TimeProfile`** Initial installed storage capacity in the dam.\n
-- **`Level_init::TimeProfile`** Initial energy stored in the dam, in units of power.\n
-- **`Level_inflow::TimeProfile`** Inflow of power per operational period.\n
-- **`Level_min::TimeProfile`** Minimum fraction of the reservoir capacity that can be left.\n
-- **`Opex_var::TimeProfile`** Operational cost per GWh produced.\n
-- **`Opex_var_pump::TimeProfile`** Operational cost per GWh pumped into the reservoir.\n
-- **`Opex_fixed::TimeProfile`** Fixed operational costs.\n
-- **`Stor_res::ResourceCarrier`** is the stored `Resource`.\n
-- **`Input::Dict{Resource, Real}`** the stored and used resources. The
+- **`rate_cap::TimeProfile`**: installed capacity.\n
+- **`stor_cap::TimeProfile`** Initial installed storage capacity in the dam.\n
+- **`level_init::TimeProfile`** Initial energy stored in the dam, in units of power.\n
+- **`level_inflow::TimeProfile`** Inflow of power per operational period.\n
+- **`level_min::TimeProfile`** Minimum fraction of the reservoir capacity that can be left.\n
+- **`opex_var::TimeProfile`** Operational cost per GWh produced.\n
+- **`opex_var_pump::TimeProfile`** Operational cost per GWh pumped into the reservoir.\n
+- **`opex_fixed::TimeProfile`** Fixed operational costs.\n
+- **`stor_res::ResourceCarrier`** is the stored `Resource`.\n
+- **`input::Dict{Resource, Real}`** the stored and used resources. The
 values in the Dict is a ratio describing the energy loss when using the pumps.\n
-- **`Output::Dict{Resource, Real}`** can only contain one entry, the stored resource.\n
-- **`Data::Array{Data}`** additional data (e.g. for investments).\n
+- **`output::Dict{Resource, Real}`** can only contain one entry, the stored resource.\n
+- **`data::Array{Data}`** additional data (e.g. for investments).\n
 """
 struct PumpedHydroStor <: HydroStorage
     id::Any
-    Rate_cap::TimeProfile
-    Stor_cap::TimeProfile
+    rate_cap::TimeProfile
+    stor_cap::TimeProfile
 
-    Level_init::TimeProfile
-    Level_inflow::TimeProfile
-    Level_min::TimeProfile
+    level_init::TimeProfile
+    level_inflow::TimeProfile
+    level_min::TimeProfile
 
-    Opex_var::TimeProfile
-    Opex_var_pump::TimeProfile
-    Opex_fixed::TimeProfile
-    Stor_res::ResourceCarrier
-    Input::Dict{Resource,Real}
-    Output::Dict{Resource,Real}
-    Data::Array{Data}
+    opex_var::TimeProfile
+    opex_var_pump::TimeProfile
+    opex_fixed::TimeProfile
+    stor_res::ResourceCarrier
+    input::Dict{Resource,Real}
+    output::Dict{Resource,Real}
+    data::Array{Data}
 end
 
 """ A constructor for a regulated hydropower storage, with or without pumping capabilities.
 
 ## Fields
 - **`id`** is the name/identifyer of the node.\n
-- **`Rate_cap::TimeProfile`**: installed capacity.\n
-- **`Stor_cap::TimeProfile`** Initial installed storage capacity in the dam.\n
-- **`Has_pump::Bool`** states wheter the stored resource can flow in.\n
-- **`Level_init::TimeProfile`** Initial energy stored in the dam, in units of power.\n
-- **`Level_inflow::TimeProfile`** Inflow of power per operational period.\n
-- **`Level_min::TimeProfile`** Minimum fraction of the reservoir capacity that can be left.\n
-- **`Opex_var::TimeProfile`** Operational cost per GWh produced.\n
-- **`Opex_fixed::TimeProfile`** Fixed operational costs.\n
-- **`Stor_res::ResourceCarrier`** is the stored `Resource`.\n
-- **`Input::Dict{Resource, Real}`** the stored and used resources. The
+- **`rate_cap::TimeProfile`**: installed capacity.\n
+- **`stor_cap::TimeProfile`** Initial installed storage capacity in the dam.\n
+- **`has_pump::Bool`** states wheter the stored resource can flow in.\n
+- **`level_init::TimeProfile`** Initial energy stored in the dam, in units of power.\n
+- **`level_inflow::TimeProfile`** Inflow of power per operational period.\n
+- **`level_min::TimeProfile`** Minimum fraction of the reservoir capacity that can be left.\n
+- **`opex_var::TimeProfile`** Operational cost per GWh produced.\n
+- **`opex_fixed::TimeProfile`** Fixed operational costs.\n
+- **`stor_res::ResourceCarrier`** is the stored `Resource`.\n
+- **`input::Dict{Resource, Real}`** the stored and used resources. The
 values in the Dict is a ratio describing the energy loss when using the pumps.\n
-- **`Output::Dict{Resource, Real}`** can only contain one entry, the stored resource.\n
-- **`Data::Array{Data}`** additional data (e.g. for investments).\n
+- **`output::Dict{Resource, Real}`** can only contain one entry, the stored resource.\n
+- **`data::Array{Data}`** additional data (e.g. for investments).\n
 """
 function RegHydroStor(
     id::Any,
-    Rate_cap::TimeProfile,
-    Stor_cap::TimeProfile,
-    Has_pump::Bool,
-    Level_init::TimeProfile,
-    Level_inflow::TimeProfile,
-    Level_min::TimeProfile,
-    Opex_var::TimeProfile,
-    Opex_fixed::TimeProfile,
-    Stor_res::ResourceCarrier,
-    Input,
-    Output,
+    rate_cap::TimeProfile,
+    stor_cap::TimeProfile,
+    has_pump::Bool,
+    level_init::TimeProfile,
+    level_inflow::TimeProfile,
+    level_min::TimeProfile,
+    opex_var::TimeProfile,
+    opex_fixed::TimeProfile,
+    stor_res::ResourceCarrier,
+    input,
+    output,
     Data,
 )
-    if Has_pump
+    if has_pump
         return PumpedHydroStor(
             id,
-            Rate_cap,
-            Stor_cap,
-            Level_init,
-            Level_inflow,
-            Level_min,
+            rate_cap,
+            stor_cap,
+            level_init,
+            level_inflow,
+            level_min,
             FixedProfile(0),
-            Opex_var,
-            Opex_fixed,
-            Stor_res,
-            Input,
-            Output,
+            opex_var,
+            opex_fixed,
+            stor_res,
+            input,
+            output,
             Data,
         )
     else
         return HydroStor(
             id,
-            Rate_cap,
-            Stor_cap,
-            Level_init,
-            Level_inflow,
-            Level_min,
+            rate_cap,
+            stor_cap,
+            level_init,
+            level_inflow,
+            level_min,
             FixedProfile(0),
-            Opex_fixed,
-            Stor_res,
-            Input,
-            Output,
+            opex_fixed,
+            stor_res,
+            input,
+            output,
             Data,
         )
     end
 end
+"""
+    profile(n::NonDisRES, t)
+
+Returns the profile of a node `n` of type `NonDisRES` at time period `t`.
+"""
+profile(n::NonDisRES, t) = n.profile[t]
+
+"""
+    level_init(n::HydroStorage, t)
+
+Returns the innitial level of a node `n` of type `HydroStorage` at time period `t`
+"""
+level_init(n::HydroStorage, t) = n.level_init[t]
+
+"""
+    level_inflow(n::HydroStorage, t)
+
+Returns the inflow to a node `n` of type `HydroStorage` at time period `t`
+"""
+level_inflow(n::HydroStorage, t) = n.level_inflow[t]
+
+"""
+    level_min(n::HydroStorage, t)
+
+Returns the minimum level of a node `n` of type `HydroStorage` at time period `t`
+"""
+level_min(n::HydroStorage, t) = n.level_min[t]
+
+"""
+    opex_var_pump(n::PumpedHydroStor, t)
+
+Returns the variable OPEX of a node `n` of type `PumpedHydroStor` related to pumping at
+time period `t`
+"""
+opex_var_pump(n::PumpedHydroStor, t) = n.opex_var_pump[t]

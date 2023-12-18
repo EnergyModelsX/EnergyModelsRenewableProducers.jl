@@ -1,6 +1,12 @@
 Release notes
 =============
 
+Version 0.5.0 (2023-12-18)
+--------------------------
+### Adjustment to release in EMB 0.6.0
+ * Adjusted the code for the new release.
+ * Implementation of support for `RepresentativePeriods` for `HydroStorage` nodes.
+
 Version 0.4.2 (2023-09-01)
 --------------------------
 ### Create a variable :spill for hydro storage node.

@@ -1,7 +1,7 @@
 name = "EnergyModelsRenewableProducers"
 uuid = "b007c34f-ba52-4995-ba37-fffe79fbde35"
 authors = ["Sigmund Eggen Holm <Sigmund.Holm@sintef.no>, Julian Straus <Julian.Straus@sintef.no>"]
-version = "0.4.2"
+version = "0.5.0"
 
 [deps]
 EnergyModelsBase = "5d7e687e-f956-46f3-9045-6f5a5fd49f50"
@@ -10,7 +10,7 @@ Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
 TimeStruct = "f9ed5ce0-9f41-4eaa-96da-f38ab8df101c"
 
 [compat]
-EnergyModelsBase = "^0.5.0"
+EnergyModelsBase = "^0.6.0"
 JuMP = "1.5"
-TimeStruct = "^0.6.1"
+TimeStruct = "^0.7.0"
 julia = "^1.6"

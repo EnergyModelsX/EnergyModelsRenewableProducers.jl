@@ -16,36 +16,27 @@ using TimeStruct
 const EMB = EnergyModelsBase
 
 function demo_data()
-    NG = ResourceEmit("NG", 0.2)
     CO2 = ResourceEmit("CO2", 1.0)
     Power = ResourceCarrier("Power", 0.0)
-    products = [NG, Power, CO2]
-
-    # Create dictionary with entries of 0. for all resources
-    𝒫₀ = Dict(k => 0 for k ∈ products)
-
-    # Create dictionary with entries of 0. for all emission resources
-    𝒫ᵉᵐ₀ = Dict(k => 0.0 for k ∈ products if typeof(k) == ResourceEmit{Float64})
-    𝒫ᵉᵐ₀[CO2] = 0.0
+    products = [Power, CO2]
 
     # Create source and sink module as well as the arrays used for nodes and links
     source = RefSource(
-        2,
+        "source",
         FixedProfile(1),
         FixedProfile(30),
         FixedProfile(10),
-        Dict(NG => 1),
+        Dict(Power => 1),
         [],
-        𝒫ᵉᵐ₀,
     )
     sink = RefSink(
-        3,
+        "sink",
         FixedProfile(20),
-        Dict(:Surplus => FixedProfile(0), :Deficit => FixedProfile(1e6)),
+        Dict(:surplus => FixedProfile(0), :deficit => FixedProfile(1e6)),
         Dict(Power => 1),
-        𝒫ᵉᵐ₀,
+        [],
     )
-    nodes = [GenAvailability(1, 𝒫₀, 𝒫₀), source, sink]
+    nodes = [GenAvailability(1, products), source, sink]
     links = [
         Direct(21, nodes[2], nodes[1], Linear())
         Direct(13, nodes[1], nodes[3], Linear())
@@ -69,12 +60,12 @@ function demo_data()
 
     # Update nodes and links
     push!(case[:nodes], wind)
-    link = EMB.Direct(41, case[:nodes][4], case[:nodes][1], EMB.Linear())
+    link = Direct(41, case[:nodes][4], case[:nodes][1], Linear())
     push!(case[:links], link)
 
-    # model = EMB.OperationalModel()
-    model = EMB.OperationalModel(
-        Dict(CO2 => StrategicProfile([450, 400, 350, 300]), NG => FixedProfile(1e6)),
+    model = OperationalModel(
+        Dict(CO2 => StrategicProfile([450, 400, 350, 300])),
+        Dict(CO2 => FixedProfile(0)),
         CO2,
     )
 
