@@ -1,6 +1,6 @@
 #! format: off
 """
-    EMB.constraints_level_aux(m, n::HydroStorage, 𝒯, 𝒫)
+    EMB.constraints_level_aux(m, n::HydroStorage, 𝒯, 𝒫, modeltype)
 
 Function for creating the Δ constraint for the level of a `HydroStorage` node.
 
@@ -8,7 +8,7 @@ The change storage level in the reservoir at operational periods `t` is the infl
 `level_inflow` plus the input `flow_in` minus the production `stor_rate_use` and the
 spillage of water due to overflow `hydro_spill`.
 """
-function EMB.constraints_level_aux(m, n::HydroStorage, 𝒯, 𝒫)
+function EMB.constraints_level_aux(m, n::HydroStorage, 𝒯, 𝒫, modeltype)
     # Declaration of the required subsets
     p_stor = storage_resource(n)
 
@@ -30,21 +30,23 @@ function EMB.constraints_level_aux(m, n::HydroStorage, 𝒯, 𝒫)
 end
 
 """
-    EMB.constraints_level(
+    EMB.constraints_level_sp(
         m,
         n::HydroStorage,
         t_inv::TS.StrategicPeriod{T, U},
-        𝒫
+        𝒫,
+        modeltype
         ) where {T, U<:SimpleTimes}
 
 Function for creating the level constraint for a `HydroStorage` node when the
 TimeStructure is given as `SimpleTimes`.
 """
-function EMB.constraints_level(
+function EMB.constraints_level_sp(
     m,
     n::HydroStorage,
     t_inv::TS.StrategicPeriod{T, U},
-    𝒫
+    𝒫,
+    modeltype
     ) where {T, U<:SimpleTimes}
 
     # Energy balance constraints for stored hydro power.
@@ -66,21 +68,23 @@ function EMB.constraints_level(
 end
 
 """
-    EMB.constraints_level(
+    EMB.constraints_level_sp(
         m,
         n::HydroStorage,
         t_inv::TS.StrategicPeriod{T, RepresentativePeriods{U, T, SimpleTimes{T}}},
-        𝒫
+        𝒫,
+        modeltype
         ) where {S<:ResourceCarrier, T, U}
 
 Function for creating the level constraint for a reference storage node with a
 `ResourceCarrier` resource when the TimeStructure is given as StrategicPeriod.
 """
-function EMB.constraints_level(
+function EMB.constraints_level_sp(
     m,
     n::HydroStorage,
     t_inv::TS.StrategicPeriod{T, RepresentativePeriods{U, T, SimpleTimes{T}}},
-    𝒫
+    𝒫,
+    modeltype
     ) where {T, U}
 
     # Declaration of the required subsets

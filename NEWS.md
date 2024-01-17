@@ -1,6 +1,10 @@
 Release notes
 =============
 
+Version 0.5.1 (2024-01-17)
+--------------------------
+ * Update the methods `constraints_level_aux` and `constraints_level` to match the signature updates for these methods in `EnergyModelsBase`. This includes renaming `constraints_level` to `constraints_level_sp`.
+
 Version 0.5.0 (2023-12-18)
 --------------------------
 ### Adjustment to release in EMB 0.6.0
@@ -31,7 +35,7 @@ Version 0.4.0 (2023-06-06)
 Version 0.3.0 (2023-05-30)
 --------------------------
  * Adjustment to changes in `EnergyModelsBase` v0.4.0 related to extra input data
- 
+
 Version 0.2.2 (2023-05-15)
 --------------------------
  * Adjustment to changes in `EnergyModelsBase` v 0.3.3 related to the calls for the constraint functions
@@ -59,7 +63,7 @@ Version 0.1.3 (2022-12-12)
 Version 0.1.2 (2022-12-02)
 --------------------------
 * Minor test fixes in preparation of internal release
-  
+
 Version 0.1.1 (2021-09-07)
 --------------------------
 ### Changes in naming
@@ -69,5 +73,5 @@ Version 0.1.1 (2021-09-07)
 Version 0.1.0 (2021-08-23)
 --------------------------
 * Initial version with inclusion of nodes for:
-    * nondispatchable renewable energy sources (NonDisRES) 
+    * nondispatchable renewable energy sources (NonDisRES)
     * regulated hydro generation (RegHydroStor, can be used for pumped hydro storage)
