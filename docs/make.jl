@@ -3,6 +3,8 @@ using Documenter
 using EnergyModelsBase
 using EnergyModelsRenewableProducers
 
+const EMB = EnergyModelsBase
+
 DocMeta.setdocmeta!(
     EnergyModelsRenewableProducers,
     :DocTestSetup,
@@ -24,7 +26,8 @@ makedocs(
         "Home" => "index.md",
         "Manual" => Any[
             "Quick Start"=>"manual/quick-start.md",
-            "Philosophy"=>"manual/philosophy.md",
+            "Optimization variables"=>"manual/optimization-variables.md",
+            "Constraint functions"=>"manual/constraint-functions.md",
             "Examples"=>"manual/simple-example.md",
         ],
         "Library" =>

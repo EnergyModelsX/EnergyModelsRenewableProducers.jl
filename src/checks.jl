@@ -1,22 +1,32 @@
 """
     EMB.check_node(n::NonDisRES, 𝒯, modeltype::EMB.EnergyModel)
 
-This method checks that the [`NonDisRES`](@ref) node is valid.
+This method checks that the *[`NonDisRES`](@ref NonDisRES_public)* node is valid.
 
 ## Checks
- - The field `n.Profile` is required to be in the range ``[0, 1]`` for all time steps ``t ∈ \\mathcal{T}``.
+ - The field `profile` is required to be in the range ``[0, 1]`` for all time steps ``t ∈ \\mathcal{T}``.
 """
-function EMB.check_node(n::NonDisRES, 𝒯, modeltype::OperationalModel)
+function EMB.check_node(n::NonDisRES, 𝒯, modeltype::EMB.EnergyModel)
     @assert_or_log sum(profile(n, t) ≤ 1 for t ∈ 𝒯) == length(𝒯) "The profile field must be less or equal to 1."
     @assert_or_log sum(profile(n, t) ≥ 0 for t ∈ 𝒯) == length(𝒯) "The profile field must be non-negative."
 end
 
 """
-    EMB.check_node(n::RegHydroStor, 𝒯, modeltype::EMB.EnergyModel)
+    EMB.check_node(n::HydroStorage, 𝒯, modeltype::EMB.EnergyModel)
 
-This method checks that the [`RegHydroStor`](@ref) node is valid.
+This method checks that the *[`HydroStorage`](@ref HydroStorage_public)* node is valid.
+
+## Checks
+ - The field `n.output` can only include a single `Resource`.\n
+ - The value of the field `output` is required to be smaller or equal to 1.\n
+ - The value of the field `input` is required to be in the range ``[0, 1]``.\n
+ - The value of the field `level_init` is required to be in the range \
+ ``[level\\_min, 1] \\cdot stor\\_cap(t)`` for all time steps ``t ∈ \\mathcal{T}``.\n
+ - The value of the field `level_init` is required to be in the range ``[0, 1]``.\n
+ - The value of the field `rate_cap` is required to be non-negative.\n
+ - The value of the field `level_min` is required to be in the range ``[0, 1]``.
 """
-function EMB.check_node(n::HydroStorage, 𝒯, modeltype::OperationalModel)
+function EMB.check_node(n::HydroStorage, 𝒯, modeltype::EMB.EnergyModel)
     @assert_or_log length(outputs(n)) == 1 "Only one resource can be stored, so only this one can flow out."
     cap = capacity(n)
 

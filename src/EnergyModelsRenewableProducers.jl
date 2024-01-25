@@ -23,7 +23,10 @@ include("model.jl")
 include("checks.jl")
 include("constraint_functions.jl")
 
+# Legacy constructors for node types
+include("legacy_constructor.jl")
+
 export NonDisRES
-export RegHydroStor, HydroStor, PumpedHydroStor
+export HydroStorage, RegHydroStor, HydroStor, PumpedHydroStor
 
 end # module

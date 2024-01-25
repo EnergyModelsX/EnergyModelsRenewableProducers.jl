@@ -2,9 +2,10 @@
 """
     EMB.constraints_level_aux(m, n::HydroStorage, 𝒯, 𝒫, modeltype)
 
-Function for creating the Δ constraint for the level of a `HydroStorage` node.
+Function for creating the Δ constraint for the level of a `HydroStorage` node as well as
+the specificaiton of the initial level in a strategic period.
 
-The change storage level in the reservoir at operational periods `t` is the inflow through
+The change in storage level in the reservoir at operational periods `t` is the inflow through
 `level_inflow` plus the input `flow_in` minus the production `stor_rate_use` and the
 spillage of water due to overflow `hydro_spill`.
 """
@@ -74,10 +75,10 @@ end
         t_inv::TS.StrategicPeriod{T, RepresentativePeriods{U, T, SimpleTimes{T}}},
         𝒫,
         modeltype
-        ) where {S<:ResourceCarrier, T, U}
+        ) where {T, U}
 
-Function for creating the level constraint for a reference storage node with a
-`ResourceCarrier` resource when the TimeStructure is given as StrategicPeriod.
+Function for creating the level constraint for a `HydroStorage` storage node when the
+operational `TimeStructure` is given as `RepresentativePeriods`.
 """
 function EMB.constraints_level_sp(
     m,
