@@ -39,15 +39,14 @@ function generate_data()
         [],
     )
 
-    hydro = RegHydroStor(
+    hydro = HydroStor(
         "hydropower",
         FixedProfile(2.0),
         FixedProfile(90),
-        false,
         FixedProfile(10),
         FixedProfile(1),
         FixedProfile(0.0),
-        FixedProfile(4),
+        FixedProfile(0),
         FixedProfile(3),
         Power,
         Dict(Power => 0.9),

@@ -95,19 +95,18 @@ function general_node_tests(m, case, n::RP.HydroStorage)
     end
 end
 
-@testset "RegHydroStor without pump" begin
+@testset "HydroStor - regulated hydro power plant" begin
 
-    # Creation of the initial problem and the RegHydroStor node without a pump.
+    # Creation of the initial problem and the HydroStor node
     max_storage = FixedProfile(100)
     initial_reservoir = StrategicProfile([20, 25, 30, 20])
     min_level = StrategicProfile([0.1, 0.2, 0.05, 0.1])
 
     # Regular nice hydro storage node.
-    hydro1 = RP.RegHydroStor(
+    hydro1 = HydroStor(
         "-hydro",
         FixedProfile(2.0),
         max_storage,
-        false,
         initial_reservoir,
         FixedProfile(1),
         min_level,
@@ -121,11 +120,10 @@ end
 
     # Gives infeasible model without spill-variable (because without spill, the inflow is
     # much greater than what the Rate_cap can handle, given the Stor_cap of the storage).
-    hydro2 = RP.RegHydroStor(
+    hydro2 = HydroStor(
         "-hydro",
         FixedProfile(2.0),
         FixedProfile(40),
-        false,
         initial_reservoir,
         FixedProfile(10),
         min_level,
@@ -264,11 +262,11 @@ end
             end
         end
     end
-end # testset RegHydroStor without pump
+end # testset HydroStor
 
-@testset "RegHydroStor with pump" begin
+@testset "PumpedHydroStor - regulated hydro storage with pumped storage" begin
 
-    # Creation of the initial problem and the RegHydroStor node with a pump.
+    # Creation of the initial problem and the PumpedHydroStor node with a pump.
     products = [Power, CO2]
     source = EMB.RefSource(
         "-source",
@@ -294,14 +292,14 @@ end # testset RegHydroStor without pump
     max_storage = FixedProfile(100)
     initial_reservoir = StrategicProfile([20, 25])
     min_level = StrategicProfile([0.1, 0.2])
-    hydro = RP.RegHydroStor(
+    hydro = RP.PumpedHydroStor(
         "-hydro",
         FixedProfile(10.0),
         max_storage,
-        true,
         initial_reservoir,
         FixedProfile(1),
         min_level,
+        FixedProfile(0),
         FixedProfile(30),
         FixedProfile(10),
         Power,
@@ -349,4 +347,4 @@ end # testset RegHydroStor without pump
             ) == length(𝒯)
         end
     end
-end # testset RegHydroStor with pump
+end # testset PumpedHydroStor

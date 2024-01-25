@@ -49,7 +49,7 @@ function EMB.variables_node(m, 𝒩::Vector{HydroStorage}, 𝒯, modeltype::Ener
 end
 
 """
-    EMB.create_node(m, n::RegHydroStor, 𝒯, 𝒫, modeltype::EnergyModel)
+    EMB.create_node(m, n::HydroStorage, 𝒯, 𝒫, modeltype::EnergyModel)
 
 Sets all constraints for the regulated hydro storage node.
 """

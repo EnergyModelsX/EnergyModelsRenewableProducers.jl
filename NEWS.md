@@ -1,9 +1,15 @@
 Release notes
 =============
 
+Version 0.5.2 (2024-01-19)
+--------------------------
+ * Updated the documenation to be in line with the updated done in `EnergyModelsBsae`.
+ * Moved `RegHydroStor` to a new file, `legacy_constructors.jl` to highlight that a user should use the new types, namely `HydroStor` and `PumpedHydroStor`.
+
 Version 0.5.1 (2024-01-17)
 --------------------------
- * Update the methods `constraints_level_aux` and `constraints_level` to match the signature updates for these methods in `EnergyModelsBase`. This includes renaming `constraints_level` to `constraints_level_sp`.
+ * Update the method `constraints_level` to match the signature updates for these methods in `EnergyModelsBase`. This includes renaming `constraints_level` to `constraints_level_sp`.
+ * Moved the function to `EMB.constraints_level_sp` to avoid problems.
 
 Version 0.5.0 (2023-12-18)
 --------------------------
