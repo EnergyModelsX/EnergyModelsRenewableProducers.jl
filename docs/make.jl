@@ -12,13 +12,15 @@ DocMeta.setdocmeta!(
     recursive = true,
 )
 
+# Copy the NEWS.md file
+news = "docs/src/manual/NEWS.md"
+cp("NEWS.md", news; force=true)
+
 makedocs(
     modules = [EnergyModelsRenewableProducers],
     sitename = "EnergyModelsRenewableProducers.jl",
-    repo = "https://gitlab.sintef.no/clean_export/energymodelsrenewableproducers.jl/blob/{commit}{path}#{line}",
     format = Documenter.HTML(
         prettyurls = get(ENV, "CI", "false") == "true",
-        canonical = "https://clean_export.pages.sintef.no/energymodelsrenewableproducers.jl/",
         edit_link = "main",
         assets = String[],
     ),
@@ -29,15 +31,13 @@ makedocs(
             "Optimization variables"=>"manual/optimization-variables.md",
             "Constraint functions"=>"manual/constraint-functions.md",
             "Examples"=>"manual/simple-example.md",
+            "Release notes" => "manual/NEWS.md",
         ],
         "Library" =>
             Any["Public"=>"library/public.md", "Internals"=>"library/internals.md"],
     ],
 )
 
-# Documenter can also automatically deploy documentation to gh-pages.
-# See "Hosting Documentation" and deploydocs() in the Documenter manual
-# for more information.
-#=deploydocs(
-    repo = "<repository url>"
-)=#
+deploydocs(;
+    repo = "github.com/EnergyModelsX/EnergyModelsRenewableProducers.jl.git",
+)
