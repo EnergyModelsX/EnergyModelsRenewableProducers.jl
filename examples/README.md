@@ -1,26 +1,32 @@
 # Running the examples
 
-## The package is installed with `] add`
+You have to add the package `EnergyModelsRenewableProducers` to your current project in order to run the example.
+It is not necessary to add the other used packages, as the example is instantiating itself.
+How to add packages is explained in the *[Quick start](https://energymodelsx.github.io/EnergyModelsRenewableProducers.jl/stable/manual/quick-start/)* of the documentation
 
-First, add the [*Clean Export* Julia packages repository](https://gitlab.sintef.no/clean_export/registrycleanexport). Then run 
-```
-~/some/directory/ $ julia           # Starts the Julia REPL
-julia> ]                            # Enter Pkg mode 
-pkg> add EnergyModelsRenewableProducers    # Install the package EnergyModelsRenewableProducers to the current environment.
-```
-From the Julia REPL, run
+You can run from the Julia REPL the following code:
+
 ```julia
 # Starts the Julia REPL
-julia> using EnergyModelsRenewableProducers
+using EnergyModelsRenewableProducers
 # Get the path of the examples directory
-julia> exdir = joinpath(pkgdir(EnergyModelsRenewableProducers), "examples")
-# Include the code into the Julia REPL to run the examples
-julia> include(joinpath(exdir, "simple_nondisres.jl"))
+exdir = joinpath(pkgdir(EnergyModelsRenewableProducers), "examples")
+# Include the code into the Julia REPL to run the first example of the NonDisRes node
+include(joinpath(exdir, "simple_nondisres.jl"))
+# Include the code into the Julia REPL to run the first example of the Hydropower node
+include(joinpath(exdir, "simple_hydro_power.jl"))
 ```
 
-## The code was downloaded with `git clone`
-
-First, add the internal [*Clean Export* Julia package registry](https://gitlab.sintef.no/clean_export/registrycleanexport). The examples can then be run from the terminal with
-```shell script
-~/.../energymodelsrenewableproducers.jl/examples $ julia simple_nondisres.jl
-```
+> **Note**
+>
+> The example is not running yet, as the instantiation would require that the package [`EnergyModelsBase`](https://github.com/EnergyModelsX/EnergyModelsBase.jl) is registered.
+> It is however possible to run the code directly from a local project in which the packages `TimeStruct`, `EnergyModelsBase`, `EnergyModelsRenewableProducers`, `HiGHS`, `JuMP`, and `PrettyTables` are loaded.
+> In this case, you have to comment lines 2-7 out:
+> ```julia
+> # Activate the test-environment, where HiGHS is added as dependency.
+> Pkg.activate(joinpath(@__DIR__, "../test"))
+> # Install the dependencies.
+> Pkg.instantiate()
+> # Add the package EnergyModelsRenewableProducers to the environment.
+> Pkg.develop(path=joinpath(@__DIR__, ".."))
+> ```
