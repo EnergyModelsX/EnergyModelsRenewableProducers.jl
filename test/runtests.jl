@@ -73,7 +73,7 @@ function general_tests(m)
 end
 
 @testset "RenewableProducers" begin
-    # include("test_nondisres.jl")
-    # include("test_hydro.jl")
+    include("test_nondisres.jl")
+    include("test_hydro.jl")
     include("test_examples.jl")
 end
