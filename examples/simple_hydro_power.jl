@@ -24,15 +24,15 @@ function generate_data()
     Power = ResourceCarrier("Power", 1.0)
     products = [CO2, Power]
 
-
     # Variables for the individual entries of the time structure
     op_duration = 2 # Each operational period has a duration of 2
     op_number = 4   # There are in total 4 operational periods
     operational_periods = SimpleTimes(op_number, op_duration)
 
     # The number of operational periods times the duration of the operational periods, which
-    # can also be extracted using the function `duration` which corresponds to the total
-    # duration of the operational periods in a `SimpleTimes` structure
+    # can also be extracted using the function `duration` of a `SimpleTimes` structure.
+    # This implies, that a strategic period is 8 times longer than an operational period,
+    # resulting in the values below as "/8h".
     op_per_strat = duration(operational_periods)
 
     # Create the time structure and global data
@@ -53,7 +53,6 @@ function generate_data()
         FixedProfile(5),    # Variable OPEX in EUR/MW
         FixedProfile(10),   # Fixed OPEX in EUR/8h
         Dict(Power => 1),   # Output from the Node, in this gase, Power
-        [],                 # Potential additional data
     )
 
     # Create a regulated hydro power plant without storage capacity
@@ -69,7 +68,7 @@ function generate_data()
         Power,              # Stored resource
         Dict(Power => 0.9), # Input to the power plant, irrelevant in this case
         Dict(Power => 1),   # Output from the Node, in this gase, Power
-        [],                 # Potential additional data
+        Data[],                 # Potential additional data
     )
 
     # Create a power demand node

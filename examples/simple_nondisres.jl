@@ -29,8 +29,9 @@ function demo_data()
     operational_periods = SimpleTimes(op_number, op_duration)
 
     # The number of operational periods times the duration of the operational periods, which
-    # can also be extracted using the function `duration` which corresponds to the total
-    # duration of the operational periods in a `SimpleTimes` structure
+    # can also be extracted using the function `duration` of a `SimpleTimes` structure.
+    # This implies, that a strategic period is 8 times longer than an operational period,
+    # resulting in the values below as "/8h".
     op_per_strat = duration(operational_periods)
 
     # Creation of the time structure and global data
@@ -49,7 +50,6 @@ function demo_data()
         FixedProfile(30),   # Variable OPEX in EUR/MW
         FixedProfile(10),   # Fixed OPEX in EUR/8h
         Dict(Power => 1),   # Output from the Node, in this gase, Power
-        [],                 # Potential additional data
     )
     sink = RefSink(
         "sink",             # Node ID
@@ -72,11 +72,10 @@ function demo_data()
     wind = NonDisRES(
         "wind",             # Node ID
         FixedProfile(4),    # Capacity in MW
-        OperationalProfile([0.9, 0.4, 0.1, 0.8]), # Profile
+        OperationalProfile([0.9, 0.4, 0.1, 0.8]), # Profile of the NonDisRES node
         FixedProfile(10),   # Variable OPEX in EUR/MW
         FixedProfile(10),   # Fixed OPEX in EUR/8h
         Dict(Power => 1),   # Output from the Node, in this gase, Power
-        [],                 # Potential additional data
     )
 
     # Update the case data with the non-dispatchable power source and link
@@ -89,7 +88,7 @@ end
 
 # Create the case and model data and run the model
 case, model = demo_data()
-optimizer = optimizer_with_attributes(HiGHS.Optimizer)#, MOI.Silent() => true)
+optimizer = optimizer_with_attributes(HiGHS.Optimizer, MOI.Silent() => true)
 m = EMB.run_model(case, model, optimizer)
 
 # Display some results

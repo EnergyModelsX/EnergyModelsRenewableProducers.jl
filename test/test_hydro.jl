@@ -1,5 +1,5 @@
 
-function general_node_tests(m, case, n::RP.HydroStorage)
+function general_node_tests(m, case, n::EMRP.HydroStorage)
 
     # Extract time structure and storage node
     𝒯 = case[:T]
@@ -9,7 +9,7 @@ function general_node_tests(m, case, n::RP.HydroStorage)
     @testset "stor_level bounds" begin
         # The storage level has to be greater than the required minimum.
         @test sum(
-            RP.level_min(n, t) * value.(m[:stor_cap_inst][n, t]) <=
+            EMRP.level_min(n, t) * value.(m[:stor_cap_inst][n, t]) <=
             round(value.(m[:stor_level][n, t]), digits = ROUND_DIGITS) for t ∈ 𝒯
         ) == length(𝒯)
 
@@ -25,7 +25,7 @@ function general_node_tests(m, case, n::RP.HydroStorage)
         # - constraints_level_aux(m, n::HydroStorage, 𝒯, 𝒫)
         @test sum(
             value.(value.(m[:stor_level_Δ_op][n, t])) ≈
-            RP.level_inflow(n, t) + inputs(n, p_stor) * value.(m[:flow_in][n, t, p_stor]) -
+            EMRP.level_inflow(n, t) + inputs(n, p_stor) * value.(m[:flow_in][n, t, p_stor]) -
             value.(m[:stor_rate_use][n, t]) - value.(m[:hydro_spill][n, t]) for t ∈ 𝒯,
             atol ∈ TEST_ATOL
         ) ≈ length(𝒯) atol = TEST_ATOL
@@ -34,9 +34,9 @@ function general_node_tests(m, case, n::RP.HydroStorage)
         # the initial reservoir level minus the production in that period.
         @test sum(
             value.(m[:stor_level][n, first(t_inv)]) ≈
-            RP.level_init(n, t_inv) +
+            EMRP.level_init(n, t_inv) +
             duration(first(t_inv)) * (
-                RP.level_inflow(n, first(t_inv)) +
+                EMRP.level_inflow(n, first(t_inv)) +
                 value.(m[:flow_in][n, first(t_inv), p_stor]) -
                 value.(m[:stor_rate_use][n, first(t_inv)]) -
                 value.(m[:hydro_spill][n, first(t_inv)])
@@ -53,7 +53,7 @@ function general_node_tests(m, case, n::RP.HydroStorage)
             value.(m[:stor_level][n, t]) ≈
             value.(m[:stor_level][n, t_prev]) +
             duration(t) * (
-                RP.level_inflow(n, t) +
+                EMRP.level_inflow(n, t) +
                 inputs(n, p_stor) * value.(m[:flow_in][n, t, p_stor]) -
                 value.(m[:stor_rate_use][n, t]) - value.(m[:hydro_spill][n, t])
             ) for t_inv ∈ strategic_periods(𝒯) for
@@ -115,7 +115,6 @@ end
         Power,
         Dict(Power => 0.9),
         Dict(Power => 1),
-        [],
     )
 
     # Gives infeasible model without spill-variable (because without spill, the inflow is
@@ -132,7 +131,6 @@ end
         Power,
         Dict(Power => 0.9),
         Dict(Power => 1),
-        [],
     )
     for hydro ∈ [hydro1, hydro2]
         # Create the basic energy system model.
@@ -166,12 +164,19 @@ end
             # Check that the zero equality constraint is set on the flow_in variable
             # when the pump is not allowed. If this false, there might be errors in
             # the links to the node. The hydro node need one in and one out.
-            @test sum(
+            logic_1 = sum(
                 sum(
                     occursin("flow_in[n_-hydro,$t,Power] = 0", string(constraint)) for
                     constraint ∈ all_constraints(m, AffExpr, MOI.EqualTo{Float64})
                 ) == 1 for t ∈ 𝒯
             ) == length(𝒯)
+            logic_2 = sum(
+                sum(
+                    occursin("flow_in[n_-hydro,$t,Power] == 0", string(constraint)) for
+                    constraint ∈ all_constraints(m, AffExpr, MOI.EqualTo{Float64})
+                ) == 1 for t ∈ 𝒯
+            ) == length(𝒯)
+            @test logic_1 || logic_2
         end
 
         if hydro == hydro2
@@ -276,7 +281,6 @@ end # testset HydroStor
         FixedProfile(10),
         FixedProfile(10),
         Dict(Power => 1),
-        [],
     )
 
     sink = EMB.RefSink(
@@ -284,7 +288,6 @@ end # testset HydroStor
         FixedProfile(7),
         Dict(:surplus => FixedProfile(0), :deficit => FixedProfile(1e6)),
         Dict(Power => 1),
-        [],
     )
 
     case, modeltype = small_graph(source, sink)
@@ -292,7 +295,7 @@ end # testset HydroStor
     max_storage = FixedProfile(100)
     initial_reservoir = StrategicProfile([20, 25])
     min_level = StrategicProfile([0.1, 0.2])
-    hydro = RP.PumpedHydroStor(
+    hydro = EMRP.PumpedHydroStor(
         "-hydro",
         FixedProfile(10.0),
         max_storage,
@@ -305,7 +308,6 @@ end # testset HydroStor
         Power,
         Dict(Power => 1),
         Dict(Power => 0.9),
-        [],
     )
 
     # Updating the nodes and the links
@@ -331,10 +333,19 @@ end # testset HydroStor
         # Check that the zero equality constraint is not set on the flow_in variable
         # when the pump is allowed. If this fails, there might be errors in the links
         # to the node. The hydro node need one in and one out.
-        @test sum(
-            occursin("flow_in[n-hydro,t1_1,Power] = 0.0", string(constraint)) for
-            constraint ∈ all_constraints(m, AffExpr, MOI.EqualTo{Float64})
-        ) == 0
+        logic_1 = sum(
+            sum(
+                occursin("flow_in[n_-hydro,$t,Power] = 0", string(constraint)) for
+                constraint ∈ all_constraints(m, AffExpr, MOI.EqualTo{Float64})
+            ) == 0 for t ∈ 𝒯
+        ) == length(𝒯)
+        logic_2 = sum(
+            sum(
+                occursin("flow_in[n_-hydro,$t,Power] == 0", string(constraint)) for
+                constraint ∈ all_constraints(m, AffExpr, MOI.EqualTo{Float64})
+            ) == 0 for t ∈ 𝒯
+        ) == length(𝒯)
+        @test logic_1 || logic_2
     end
 
     @testset "deficit" begin
