@@ -1,6 +1,11 @@
 Release notes
 =============
 
+Version 0.5.3 (2024-01-30)
+--------------------------
+ * Updated the restrictions on the fields individual types to be consistent.
+ * Added option to not include the field `data` for the individual `TransmissionMode`s.
+
 Version 0.5.2 (2024-01-19)
 --------------------------
  * Updated the documenation to be in line with the updated done in `EnergyModelsBsae`.
