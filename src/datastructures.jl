@@ -8,7 +8,7 @@ of the installed capacity at that time.\n
 - **`opex_var::TimeProfile`** is the variational operational costs per energy unit produced.\n
 - **`opex_fixed::TimeProfile`** is the fixed operational costs.\n
 - **`output::Dict{Resource, Real}`** are the generated `Resource`s, normally Power.\n
-- **`data::Vector{<:Data}`** is the additional data (e.g. for investments). The field \
+- **`data::Vector{Data}`** is the additional data (e.g. for investments). The field \
 `data` is conditional through usage of a constructor.
 
 """
@@ -19,7 +19,7 @@ struct NonDisRES <: EMB.Source
     opex_var::TimeProfile
     opex_fixed::TimeProfile
     output::Dict{<:Resource, <:Real}
-    data::Vector{<:Data}
+    data::Vector{Data}
 end
 function NonDisRES(
         id::Any,
@@ -50,7 +50,7 @@ abstract type HydroStorage <: EMB.Storage end
 - **`input::Dict{Resource, Real}`** the stored and used resources. The \
 values in the Dict is a ratio describing the energy loss when using the pumps.\n
 - **`output::Dict{Resource, Real}`** can only contain one entry, the stored resource.\n
-- **`data::Vector{<:Data}`** additional data (e.g. for investments). The field \
+- **`data::Vector{Data}`** additional data (e.g. for investments). The field \
 `data` is conditional through usage of a constructor.
 """
 struct HydroStor <: HydroStorage
@@ -67,7 +67,7 @@ struct HydroStor <: HydroStorage
     stor_res::ResourceCarrier
     input::Dict{<:Resource, <:Real}
     output::Dict{<:Resource, <:Real}
-    data::Vector{<:Data}
+    data::Vector{Data}
 end
 function HydroStor(
         id::Any,
@@ -114,7 +114,7 @@ end
 - **`input::Dict{Resource, Real}`** the stored and used resources. The \
 values in the Dict is a ratio describing the energy loss when using the pumps.\n
 - **`output::Dict{Resource, Real}`** can only contain one entry, the stored resource.\n
-- **`data::Vector{<:Data}`** additional data (e.g. for investments). The field \
+- **`data::Vector{Data}`** additional data (e.g. for investments). The field \
 `data` is conditional through usage of a constructor.\n
 """
 struct PumpedHydroStor <: HydroStorage
@@ -132,7 +132,7 @@ struct PumpedHydroStor <: HydroStorage
     stor_res::ResourceCarrier
     input::Dict{<:Resource, <:Real}
     output::Dict{<:Resource, <:Real}
-    data::Vector{<:Data}
+    data::Vector{Data}
 end
 function PumpedHydroStor(
         id::Any,
