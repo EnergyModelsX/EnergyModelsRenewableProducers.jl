@@ -6,7 +6,7 @@ using Test
 using TimeStruct
 
 const EMB = EnergyModelsBase
-const RP = EnergyModelsRenewableProducers
+const EMRP = EnergyModelsRenewableProducers
 
 CO2 = ResourceEmit("CO2", 1.0)
 Power = ResourceCarrier("Power", 0.0)
@@ -16,11 +16,8 @@ ROUND_DIGITS = 8
 OPTIMIZER = optimizer_with_attributes(HiGHS.Optimizer, MOI.Silent() => true)
 
 function small_graph(source = nothing, sink = nothing; ops = SimpleTimes(24, 2))
+
     products = [Power, CO2]
-
-    # Creation of a dictionary with entries of 0. for all resources
-    𝒫₀ = Dict(k => 0 for k ∈ products)
-
     # Creation of the source and sink module as well as the arrays used for nodes and links
     if isnothing(source)
         source = RefSource(
@@ -29,7 +26,6 @@ function small_graph(source = nothing, sink = nothing; ops = SimpleTimes(24, 2))
             FixedProfile(30),
             FixedProfile(10),
             Dict(Power => 1),
-            [],
         )
     end
     if isnothing(sink)
@@ -38,7 +34,6 @@ function small_graph(source = nothing, sink = nothing; ops = SimpleTimes(24, 2))
             FixedProfile(20),
             Dict(:surplus => FixedProfile(0), :deficit => FixedProfile(1e6)),
             Dict(Power => 1),
-            [],
         )
     end
 

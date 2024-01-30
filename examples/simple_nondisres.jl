@@ -50,7 +50,6 @@ function demo_data()
         FixedProfile(30),   # Variable OPEX in EUR/MW
         FixedProfile(10),   # Fixed OPEX in EUR/8h
         Dict(Power => 1),   # Output from the Node, in this gase, Power
-        [],                 # Potential additional data
     )
     sink = RefSink(
         "sink",             # Node ID
@@ -77,7 +76,6 @@ function demo_data()
         FixedProfile(10),   # Variable OPEX in EUR/MW
         FixedProfile(10),   # Fixed OPEX in EUR/8h
         Dict(Power => 1),   # Output from the Node, in this gase, Power
-        [],                 # Potential additional data
     )
 
     # Update the case data with the non-dispatchable power source and link

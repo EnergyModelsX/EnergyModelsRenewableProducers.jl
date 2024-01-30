@@ -4,14 +4,13 @@
 
     # Creation of the initial problem and the NonDisRES node
     case, modeltype = small_graph()
-    wind = RP.NonDisRES(
+    wind = EMRP.NonDisRES(
         "wind",
         FixedProfile(2),
         FixedProfile(0.9),
         FixedProfile(10),
         FixedProfile(10),
         Dict(Power => 1),
-        [],
     )
 
     # Updating the nodes and the links
@@ -44,7 +43,7 @@
         # Test that cap_use is set correctly with respect to the profile.
         @test sum(
             value.(m[:cap_use][wind, t]) ≤
-            RP.profile(wind, t) * value.(m[:cap_inst][wind, t] + TEST_ATOL) for t ∈ 𝒯
+            EMRP.profile(wind, t) * value.(m[:cap_inst][wind, t] + TEST_ATOL) for t ∈ 𝒯
         ) == length(𝒯)
     end
 end

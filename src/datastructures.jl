@@ -8,7 +8,7 @@ of the installed capacity at that time.\n
 - **`opex_var::TimeProfile`** is the variational operational costs per energy unit produced.\n
 - **`opex_fixed::TimeProfile`** is the fixed operational costs.\n
 - **`output::Dict{Resource, Real}`** are the generated `Resource`s, normally Power.\n
-- **`data::Array{Data}`** is the additional data (e.g. for investments).
+- **`data::Vector{<:Data}`** is the additional data (e.g. for investments).
 
 """
 struct NonDisRES <: EMB.Source
@@ -17,8 +17,18 @@ struct NonDisRES <: EMB.Source
     profile::TimeProfile
     opex_var::TimeProfile
     opex_fixed::TimeProfile
-    output::Dict{Resource,Real}
-    data::Array{Data}
+    output::Dict{<:Resource, <:Real}
+    data::Vector{<:Data}
+end
+function NonDisRES(
+        id::Any,
+        cap::TimeProfile,
+        profile::TimeProfile,
+        opex_var::TimeProfile,
+        opex_fixed::TimeProfile,
+        output::Dict{<:Resource, <:Real},
+    )
+    return NonDisRES(id, cap, profile, opex_var, opex_fixed, output, Data[])
 end
 
 """ An abstract type for hydro storage nodes, with or without pumping. """
@@ -39,7 +49,8 @@ abstract type HydroStorage <: EMB.Storage end
 - **`input::Dict{Resource, Real}`** the stored and used resources. The \
 values in the Dict is a ratio describing the energy loss when using the pumps.\n
 - **`output::Dict{Resource, Real}`** can only contain one entry, the stored resource.\n
-- **`data::Array{Data}`** additional data (e.g. for investments).\n
+- **`data::Vector{<:Data}`** additional data (e.g. for investments) this field is \
+optional as a constructor is used.\n
 """
 struct HydroStor <: HydroStorage
     id::Any
@@ -53,9 +64,37 @@ struct HydroStor <: HydroStorage
     opex_var::TimeProfile
     opex_fixed::TimeProfile
     stor_res::ResourceCarrier
-    input::Dict{Resource,Real}
-    output::Dict{Resource,Real}
-    data::Array{Data}
+    input::Dict{<:Resource, <:Real}
+    output::Dict{<:Resource, <:Real}
+    data::Vector{<:Data}
+end
+function HydroStor(
+        id::Any,
+        rate_cap::TimeProfile,
+        stor_cap::TimeProfile,
+        level_init::TimeProfile,
+        level_inflow::TimeProfile,
+        level_min::TimeProfile,
+        opex_var::TimeProfile,
+        opex_fixed::TimeProfile,
+        stor_res::ResourceCarrier,
+        input::Dict{<:Resource, <:Real},
+        output::Dict{<:Resource, <:Real},
+    )
+    return HydroStor(
+        id,
+        rate_cap,
+        stor_cap,
+        level_init,
+        level_inflow,
+        level_min,
+        opex_var,
+        opex_fixed,
+        stor_res,
+        input,
+        output,
+        Data[],
+    )
 end
 
 """ A regulated hydropower storage with pumping capabilities, modelled as a `Storage` node.
@@ -74,7 +113,7 @@ end
 - **`input::Dict{Resource, Real}`** the stored and used resources. The \
 values in the Dict is a ratio describing the energy loss when using the pumps.\n
 - **`output::Dict{Resource, Real}`** can only contain one entry, the stored resource.\n
-- **`data::Array{Data}`** additional data (e.g. for investments).\n
+- **`data::Vector{<:Data}`** additional data (e.g. for investments).\n
 """
 struct PumpedHydroStor <: HydroStorage
     id::Any
@@ -89,36 +128,66 @@ struct PumpedHydroStor <: HydroStorage
     opex_var_pump::TimeProfile
     opex_fixed::TimeProfile
     stor_res::ResourceCarrier
-    input::Dict{Resource,Real}
-    output::Dict{Resource,Real}
-    data::Array{Data}
+    input::Dict{<:Resource, <:Real}
+    output::Dict{<:Resource, <:Real}
+    data::Vector{<:Data}
+end
+function PumpedHydroStor(
+        id::Any,
+        rate_cap::TimeProfile,
+        stor_cap::TimeProfile,
+        level_init::TimeProfile,
+        level_inflow::TimeProfile,
+        level_min::TimeProfile,
+        opex_var::TimeProfile,
+        opex_var_pump::TimeProfile,
+        opex_fixed::TimeProfile,
+        stor_res::ResourceCarrier,
+        input::Dict{<:Resource, <:Real},
+        output::Dict{<:Resource, <:Real},
+    )
+    return PumpedHydroStor(
+        id,
+        rate_cap,
+        stor_cap,
+        level_init,
+        level_inflow,
+        level_min,
+        opex_var,
+        opex_var_pump,
+        opex_fixed,
+        stor_res,
+        input,
+        output,
+        Data[],
+    )
 end
 
 """
     profile(n::NonDisRES, t)
 
-Returns the profile of a node `n` of type `NonDisRES` at time period `t`.
+Returns the profile of a node `n` of type `NonDisRES` at operational period `t`.
 """
 profile(n::NonDisRES, t) = n.profile[t]
 
 """
     level_init(n::HydroStorage, t)
 
-Returns the innitial level of a node `n` of type `HydroStorage` at time period `t`
+Returns the innitial level of a node `n` of type `HydroStorage` at operational period `t`
 """
 level_init(n::HydroStorage, t) = n.level_init[t]
 
 """
     level_inflow(n::HydroStorage, t)
 
-Returns the inflow to a node `n` of type `HydroStorage` at time period `t`
+Returns the inflow to a node `n` of type `HydroStorage` at operational period `t`
 """
 level_inflow(n::HydroStorage, t) = n.level_inflow[t]
 
 """
     level_min(n::HydroStorage, t)
 
-Returns the minimum level of a node `n` of type `HydroStorage` at time period `t`
+Returns the minimum level of a node `n` of type `HydroStorage` at operational period `t`
 """
 level_min(n::HydroStorage, t) = n.level_min[t]
 
@@ -126,6 +195,6 @@ level_min(n::HydroStorage, t) = n.level_min[t]
     opex_var_pump(n::PumpedHydroStor, t)
 
 Returns the variable OPEX of a node `n` of type `PumpedHydroStor` related to pumping at
-time period `t`
+operational period `t`
 """
 opex_var_pump(n::PumpedHydroStor, t) = n.opex_var_pump[t]

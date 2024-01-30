@@ -53,7 +53,6 @@ function generate_data()
         FixedProfile(5),    # Variable OPEX in EUR/MW
         FixedProfile(10),   # Fixed OPEX in EUR/8h
         Dict(Power => 1),   # Output from the Node, in this gase, Power
-        [],                 # Potential additional data
     )
 
     # Create a regulated hydro power plant without storage capacity
@@ -69,7 +68,7 @@ function generate_data()
         Power,              # Stored resource
         Dict(Power => 0.9), # Input to the power plant, irrelevant in this case
         Dict(Power => 1),   # Output from the Node, in this gase, Power
-        [],                 # Potential additional data
+        Data[],                 # Potential additional data
     )
 
     # Create a power demand node
