@@ -35,6 +35,11 @@ function EMB.create_node(m, n::NonDisRES, 𝒯, 𝒫, modeltype::EnergyModel)
     # Call of the functions for both fixed and variable OPEX constraints introduction
     constraints_opex_fixed(m, n, 𝒯ᴵⁿᵛ, modeltype)
     constraints_opex_var(m, n, 𝒯ᴵⁿᵛ, modeltype)
+
+    # Iterate through all data and set up the constraints corresponding to the data
+    for data ∈ node_data(n)
+        constraints_data(m, n, 𝒯, 𝒫, modeltype, data)
+    end
 end
 
 """
