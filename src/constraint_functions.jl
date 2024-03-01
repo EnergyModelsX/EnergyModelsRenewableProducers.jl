@@ -1,4 +1,28 @@
 #! format: off
+
+"""
+    constraints_capacity(m, n::NonDisRES, 𝒯::TimeStructure, modeltype::EnergyModel)
+
+Function for creating the constraint on the maximum capacity of a `NonDisRES`.
+Also sets the constraint defining curtailment.
+"""
+function EMB.constraints_capacity(m, n::NonDisRES, 𝒯::TimeStructure, modeltype::EnergyModel)
+    @constraint(m, [t ∈ 𝒯],
+        m[:cap_use][n, t] <= m[:cap_inst][n, t]
+    )
+
+    # Non dispatchable renewable energy sources operate at their max
+    # capacity with repsect to the current profile (e.g. wind) at every time.
+    @constraint(
+        m,
+        [t ∈ 𝒯],
+        m[:cap_use][n, t] + m[:curtailment][n, t] == profile(n, t) * m[:cap_inst][n, t]
+    )
+
+    constraints_capacity_installed(m, n, 𝒯, modeltype)
+end
+
+
 """
     EMB.constraints_level_aux(m, n::HydroStorage, 𝒯, 𝒫, modeltype)
 
