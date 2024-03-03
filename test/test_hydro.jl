@@ -95,7 +95,123 @@ function general_node_tests(m, case, n::EMRP.HydroStorage)
     end
 end
 
+function check_node(nodetype::Type{<:EMRP.HydroStorage})
+
+    function check_graph(
+        hydro::Type{<:EMRP.HydroStorage};
+        rate_cap = FixedProfile(2.0),
+        stor_cap = FixedProfile(40),
+        level_init = StrategicProfile([20, 25, 30, 20]),
+        level_inflow = FixedProfile(10),
+        level_min = StrategicProfile([0.1, 0.2, 0.05, 0.1]),
+        opex_var = FixedProfile(10),
+        opex_var_pump = FixedProfile(10),
+        opex_fixed = FixedProfile(10),
+        stor_res = Power,
+        input = Dict(Power => 0.9),
+        output = Dict(Power => 1),
+        )
+
+        if hydro <: HydroStor
+            hydro = HydroStor(
+                "-hydro",
+                rate_cap,
+                stor_cap,
+                level_init,
+                level_inflow,
+                level_min,
+                opex_var,
+                opex_fixed,
+                stor_res,
+                input,
+                output,
+            )
+
+        elseif hydro <: PumpedHydroStor
+            hydro = HydroStor(
+                "-hydro",
+                rate_cap,
+                stor_cap,
+                level_init,
+                level_inflow,
+                level_min,
+                opex_var,
+                opex_var_pump,
+                opex_fixed,
+                stor_res,
+                input,
+                output,
+            )
+        end
+
+        case, modeltype = small_graph()
+
+        # Updating the nodes and the links
+        push!(case[:nodes], hydro)
+        link_from = EMB.Direct(41, case[:nodes][4], case[:nodes][1], EMB.Linear())
+        push!(case[:links], link_from)
+        link_to = EMB.Direct(14, case[:nodes][1], case[:nodes][4], EMB.Linear())
+        push!(case[:links], link_to)
+
+        # Run the model
+        return EMB.run_model(case, modeltype, OPTIMIZER)
+    end
+
+    @testset "Checks" begin
+
+        # Set the global to true to suppress the error message
+        EMB.TEST_ENV = true
+
+        # Test that a wrong capacity is caught by the checks.
+        rate_cap = FixedProfile(-2.0)
+        @test_throws AssertionError check_graph(HydroStor; rate_cap)
+        stor_cap = FixedProfile(-40)
+        @test_throws AssertionError check_graph(HydroStor; stor_cap)
+
+        # Test that a wrong fixed OPEX is caught by the checks.
+        opex_fixed = FixedProfile(-10)
+        @test_throws AssertionError check_graph(HydroStor; opex_fixed)
+
+        # Test that a wrong output dictionary is caught by the checks.
+        output = Dict(Power => 1, CO2 => 0.5)
+        @test_throws AssertionError check_graph(HydroStor; output)
+        output = Dict(Power => 1.5)
+        @test_throws AssertionError check_graph(HydroStor; output)
+        output = Dict(Power => -1.0)
+        @test_throws AssertionError check_graph(HydroStor; output)
+
+        # Test that a wrong input dictionary is caught by the checks.
+        input = Dict(Power => 1.5)
+        @test_throws AssertionError check_graph(HydroStor; input)
+        input = Dict(Power => -0.9)
+        @test_throws AssertionError check_graph(HydroStor; input)
+
+        # Test that a wrong initial level is caught by the checks.
+        level_init = StrategicProfile([50, 25, 45, 20])
+        @test_throws AssertionError check_graph(HydroStor; level_init)
+        level_init = StrategicProfile([40, 25, 1, 20])
+        level_min = FixedProfile(.5)
+        @test_throws AssertionError check_graph(HydroStor; level_init, level_min)
+        level_init = StrategicProfile([40, 25, -5, 20])
+        @test_throws AssertionError check_graph(HydroStor; level_init)
+
+        # Test that a wrong minimum level is caught by the checks.
+        level_min = FixedProfile(-0.5)
+        @test_throws AssertionError check_graph(HydroStor; level_min)
+        level_min = FixedProfile(2)
+        @test_throws AssertionError check_graph(HydroStor; level_min)
+
+        # Set the global again to false
+        EMB.TEST_ENV = false
+    end
+
+end
+
 @testset "HydroStor - regulated hydro power plant" begin
+
+    # Test that the fields of a HydroStor are correctly checked
+    # - check_node(n::HydroStor, 𝒯, modeltype::EnergyModel)
+    check_node(HydroStor)
 
     # Creation of the initial problem and the HydroStor node
     max_storage = FixedProfile(100)
@@ -267,9 +383,13 @@ end
             end
         end
     end
-end # testset HydroStor
+end
 
 @testset "PumpedHydroStor - regulated hydro storage with pumped storage" begin
+
+    # Test that the fields of a HydroStor are correctly checked
+    # - check_node(n::HydroStor, 𝒯, modeltype::EnergyModel)
+    check_node(PumpedHydroStor)
 
     # Creation of the initial problem and the PumpedHydroStor node with a pump.
     products = [Power, CO2]
@@ -290,7 +410,7 @@ end # testset HydroStor
         Dict(Power => 1),
     )
 
-    case, modeltype = small_graph(source, sink)
+    case, modeltype = small_graph(;source, sink)
 
     max_storage = FixedProfile(100)
     initial_reservoir = StrategicProfile([20, 25])
@@ -353,9 +473,9 @@ end # testset HydroStor
             # Check that the other source operates on its maximum if there is a deficit at the sink node,
             # since this should be used to fill the reservoir (if the reservoir is not full enough at the
             # beginning, and the inflow is too low).
-            @assert sum(
+            @test sum(
                 value.(m[:cap_use][source, t]) == value.(m[:cap_inst][source, t]) for t ∈ 𝒯
             ) == length(𝒯)
         end
     end
-end # testset PumpedHydroStor
+end

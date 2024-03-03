@@ -1,6 +1,6 @@
 # Release notes
 
-## Unversioned
+## Version 0.5.4 (2024-03-XX)
 
 ### Examples
 
@@ -9,12 +9,17 @@
 
 ### NonDIsRes node
 
-* Moved the capcity constraints through the profile to the function `constraints_capacity(n::NonDisRES, ...)`, and hence, removed the function `EMB.create_node(n::NonDisRES, ...)`.
+* Moved the capacity constraints through the profile to the function `EMB.constraints_capacity(n::NonDisRES, ...)`, and hence, removed the function `EMB.create_node(n::NonDisRES, ...)`.
+
+### Minor updates
+
+* Added some checks and tests to the checks.
+* Restructured the test folder.
 
 ## Version 0.5.3 (2024-01-30)
 
-* Updated the restrictions on the fields individual types to be consistent.
-* Added option to not include the field `data` for the individual `TransmissionMode`s.
+* Updated the restrictions on the fields of individual types to be consistent.
+* Added option to not include the field `data` for the individual introduced `Node`s.
 
 ## Version 0.5.2 (2024-01-19)
 
