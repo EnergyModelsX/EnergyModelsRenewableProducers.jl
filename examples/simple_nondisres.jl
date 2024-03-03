@@ -1,11 +1,10 @@
 using Pkg
-# Activate the test-environment, where PrettyTables and HiGHS are added as dependencies.
-Pkg.activate(joinpath(@__DIR__, "../test"))
+# Activate the local environment including EnergyModelsRenewableProducers, HiGHS, PrettyTables
+Pkg.activate(@__DIR__)
 # Install the dependencies.
 Pkg.instantiate()
-# Add the package EnergyModelsRenewableProducers to the environment.
-Pkg.develop(path = joinpath(@__DIR__, ".."))
 
+# Import the required packages
 using EnergyModelsBase
 using EnergyModelsRenewableProducers
 using HiGHS
@@ -15,7 +14,15 @@ using TimeStruct
 
 const EMB = EnergyModelsBase
 
-function demo_data()
+"""
+    generate_example_data()
+
+Generate the data for an example consisting of a simple electricity network with a
+non-dispatchable power source, a standard source, as well as a demand.
+It illustrates how the non-dispatchable power source requires a balancing power source.
+"""
+function generate_example_data()
+    @info "Generate case data - Simple `NonDisRES` example"
 
     # Define the different resources and their emission intensity in tCO2/MWh
     # CO2 has to be defined, even if not used, as it is required for the `EnergyModel` type
@@ -28,11 +35,10 @@ function demo_data()
     op_number = 4   # There are in total 4 operational periods
     operational_periods = SimpleTimes(op_number, op_duration)
 
-    # The number of operational periods times the duration of the operational periods, which
-    # can also be extracted using the function `duration` of a `SimpleTimes` structure.
+    # The number of operational periods times the duration of the operational periods.
     # This implies, that a strategic period is 8 times longer than an operational period,
     # resulting in the values below as "/8h".
-    op_per_strat = duration(operational_periods)
+    op_per_strat = op_duration * op_number
 
     # Creation of the time structure and global data
     T = TwoLevel(2, 1, operational_periods; op_per_strat)
@@ -52,7 +58,7 @@ function demo_data()
         Dict(Power => 1),   # Output from the Node, in this gase, Power
     )
     sink = RefSink(
-        "sink",             # Node ID
+        "electricity demand",   # Node id
         FixedProfile(2),    # Demand in MW
         Dict(:surplus => FixedProfile(0), :deficit => FixedProfile(1e6)),
         # Line above: Surplus and deficit penalty for the node in EUR/MWh
@@ -62,7 +68,7 @@ function demo_data()
 
     # Connect the two nodes with each other
     links = [
-        Direct(12, nodes[1], nodes[2], Linear())
+        Direct("source-demand", nodes[1], nodes[2], Linear())
     ]
 
     # Create the case dictionary
@@ -80,14 +86,14 @@ function demo_data()
 
     # Update the case data with the non-dispatchable power source and link
     push!(case[:nodes], wind)
-    link = Direct(31, case[:nodes][3], case[:nodes][2], Linear())
+    link = Direct("wind-demand", case[:nodes][3], case[:nodes][2], Linear())
     push!(case[:links], link)
 
     return case, model
 end
 
-# Create the case and model data and run the model
-case, model = demo_data()
+# Generate the case and model data and run the model
+case, model = generate_example_data()
 optimizer = optimizer_with_attributes(HiGHS.Optimizer, MOI.Silent() => true)
 m = EMB.run_model(case, model, optimizer)
 

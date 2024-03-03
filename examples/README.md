@@ -7,12 +7,15 @@ How to add packages is explained in the *[Quick start](https://energymodelsx.git
 You can run from the Julia REPL the following code:
 
 ```julia
-# Starts the Julia REPL
+# Import EnergyModelsRenewableProducers
 using EnergyModelsRenewableProducers
+
 # Get the path of the examples directory
 exdir = joinpath(pkgdir(EnergyModelsRenewableProducers), "examples")
-# Include the code into the Julia REPL to run the first example of the NonDisRes node
+
+# Include the code into the Julia REPL to run the example of the NonDisRes node
 include(joinpath(exdir, "simple_nondisres.jl"))
-# Include the code into the Julia REPL to run the first example of the Hydropower node
+
+# Include the code into the Julia REPL to run the example of the Hydropower node
 include(joinpath(exdir, "simple_hydro_power.jl"))
 ```
