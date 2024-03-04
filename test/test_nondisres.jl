@@ -1,49 +1,102 @@
 
 # Test set for the non dispatchable renewable energy source type
-@testset "NonDisRES" begin
+@testset "Test NonDisRES" begin
 
-    # Creation of the initial problem and the NonDisRES node
-    case, modeltype = small_graph()
-    wind = EMRP.NonDisRES(
-        "wind",
-        FixedProfile(2),
-        FixedProfile(0.9),
-        FixedProfile(10),
-        FixedProfile(10),
-        Dict(Power => 1),
-    )
+    # Test that the fields of a NonDisRES are correctly checked
+    # - check_node(n::NonDisRES, 𝒯, modeltype::EnergyModel)
+    @testset "Checks" begin
 
-    # Updating the nodes and the links
-    push!(case[:nodes], wind)
-    link = EMB.Direct(41, case[:nodes][4], case[:nodes][1], EMB.Linear())
-    push!(case[:links], link)
+        # Set the global to true to suppress the error message
+        EMB.TEST_ENV = true
 
-    # Run the model
-    m = EMB.run_model(case, modeltype, OPTIMIZER)
+        # Test that a wrong capacity is caught by the checks.
+        wind = EMRP.NonDisRES(
+            "wind",
+            FixedProfile(-2),
+            OperationalProfile([0.9, 0.4, 0.6, 0.8]),
+            FixedProfile(10),
+            FixedProfile(10),
+            Dict(Power => 1),
+        )
+        case, modeltype = small_graph(source=wind, ops=SimpleTimes(4,1))
+        @test_throws AssertionError EMB.run_model(case, modeltype, OPTIMIZER)
 
-    # Extraction of the time structure
-    𝒯 = case[:T]
+        # Test that a wrong fixed OPEX is caught by the checks.
+        wind = EMRP.NonDisRES(
+            "wind",
+            FixedProfile(2),
+            OperationalProfile([0.9, 0.4, 0.6, 0.8]),
+            FixedProfile(10),
+            FixedProfile(-10),
+            Dict(Power => 1),
+        )
+        case, modeltype = small_graph(source=wind, ops=SimpleTimes(4,1))
+        @test_throws AssertionError EMB.run_model(case, modeltype, OPTIMIZER)
 
-    # Run of the general tests
-    general_tests(m)
+        # Test that a wrong output dictionary is caught by the checks.
+        wind = EMRP.NonDisRES(
+            "wind",
+            FixedProfile(2),
+            OperationalProfile([0.9, 0.4, 0.6, 0.8]),
+            FixedProfile(10),
+            FixedProfile(10),
+            Dict(Power => -1),
+        )
+        case, modeltype = small_graph(source=wind, ops=SimpleTimes(4,1))
+        @test_throws AssertionError EMB.run_model(case, modeltype, OPTIMIZER)
 
-    # Check that the installed capacity variable corresponds to the provided values
-    @testset "cap_inst" begin
-        @test sum(value.(m[:cap_inst][wind, t]) == EMB.capacity(wind)[t] for t ∈ 𝒯) ==
-              length(𝒯)
+        # Test that a wrong profile is caught by the checks.
+        wind = EMRP.NonDisRES(
+            "wind",
+            FixedProfile(2),
+            OperationalProfile([-0.9, 0.4, 0.6, 0.8]),
+            FixedProfile(10),
+            FixedProfile(10),
+            Dict(Power => 1),
+        )
+        case, modeltype = small_graph(source=wind, ops=SimpleTimes(4,1))
+        @test_throws AssertionError EMB.run_model(case, modeltype, OPTIMIZER)
+        wind = EMRP.NonDisRES(
+            "wind",
+            FixedProfile(2),
+            OperationalProfile([0.9, 0.4, 1.6, 0.8]),
+            FixedProfile(10),
+            FixedProfile(10),
+            Dict(Power => 1),
+        )
+        case, modeltype = small_graph(source=wind, ops=SimpleTimes(4,1))
+        @test_throws AssertionError EMB.run_model(case, modeltype, OPTIMIZER)
+
+        # Set the global again to false
+        EMB.TEST_ENV = false
     end
 
-    @testset "cap_use bounds" begin
-        # Test that cap_use is bounded by cap_inst.
-        @test sum(
-            value.(m[:cap_use][wind, t]) ≤ value.(m[:cap_inst][wind, t]) + TEST_ATOL for
-            t ∈ 𝒯
-        ) == length(𝒯)
+    @testset ":profile and :curtailment" begin
+        # Creation of the initial problem with the NonDisRES node
+        wind = EMRP.NonDisRES(
+            "wind",
+            FixedProfile(25),
+            OperationalProfile([0.9, 0.4, 0.6, 0.8]),
+            FixedProfile(10),
+            FixedProfile(10),
+            Dict(Power => 1),
+        )
+        case, modeltype = small_graph(source=wind, ops=SimpleTimes(4,1))
 
-        # Test that cap_use is set correctly with respect to the profile.
+        # Run the model
+        m = EMB.run_model(case, modeltype, OPTIMIZER)
+
+        # Extraction of the time structure
+        𝒯 = case[:T]
+
+        # Run of the general tests
+        general_tests(m)
+
+        # Test that cap_use is correctly with respect to the profile.
+        # - EMB.constraints_capacity(m, n::NonDisRES, 𝒯::TimeStructure, modeltype::EnergyModel)
         @test sum(
-            value.(m[:cap_use][wind, t]) ≤
-            EMRP.profile(wind, t) * value.(m[:cap_inst][wind, t] + TEST_ATOL) for t ∈ 𝒯
+            value.(m[:cap_use][wind, t]) + value.(m[:curtailment][wind, t]) ≈
+            EMRP.profile(wind, t) * value.(m[:cap_inst][wind, t]) for t ∈ 𝒯, atol ∈ TEST_ATOL
         ) == length(𝒯)
     end
 end
