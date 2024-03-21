@@ -440,7 +440,7 @@ end
     case[:T] = TwoLevel(2, 1, SimpleTimes(10, 1))
 
     # Run the model
-    m = EMB.run_model(case, modeltype, OPTIMIZER)
+    m = EMB.run_model(case, modeltype, OPTIMIZER; check_timeprofiles=false)
 
     # Extraction of the time structure
     𝒯 = case[:T]

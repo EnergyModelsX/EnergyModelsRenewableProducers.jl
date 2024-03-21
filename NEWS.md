@@ -1,5 +1,9 @@
 # Release notes
 
+## Version 0.5.5 (2024-03-21)
+
+* Minor changes to the checks to be consistent with `EnergyModelsBase` v0.6.7.
+
 ## Version 0.5.4 (2024-03-04)
 
 ### Examples
