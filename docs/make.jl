@@ -18,7 +18,7 @@ cp("NEWS.md", news; force=true)
 
 makedocs(
     modules = [EnergyModelsRenewableProducers],
-    sitename = "EnergyModelsRenewableProducers.jl",
+    sitename = "EnergyModelsRenewableProducers",
     format = Documenter.HTML(
         prettyurls = get(ENV, "CI", "false") == "true",
         edit_link = "main",
@@ -32,6 +32,9 @@ makedocs(
             "Constraint functions"=>"manual/constraint-functions.md",
             "Examples"=>"manual/simple-example.md",
             "Release notes" => "manual/NEWS.md",
+        ],
+        "How to" => Any[
+            "Contribute to EnergyModelsRenewableProducers" => "how-to/contribute.md",
         ],
         "Library" =>
             Any["Public"=>"library/public.md", "Internals"=>"library/internals.md"],

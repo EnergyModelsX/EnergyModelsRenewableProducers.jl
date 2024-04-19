@@ -1,13 +1,13 @@
 # [Optimization variables](@id optimization_variables)
 
-`EnergyModelsRenewableProduces.jl` declares new variables for the introduced `Nodes`.
+`EnergyModelsRenewableProduces` declares new variables for the introduced `Nodes`.
 The different variables are explained below including how they are introduced in different constraints.
-Thes variables are created by the method [`EMB.variables_node`](@ref) which is a method dispatched on from `EnergyModelsBase.jl`.
+Thes variables are created by the method [`EMB.variables_node`](@ref) which is a method dispatched on from `EnergyModelsBase`.
 
 ## [`NonDisRES`](@ref)
 
-`NonDisRES` is a subtype of the `Source` node declared in `EnergyModelsBase.jl`.
-Hence, it has by default the same variables as a `RefSource` node declared in `EnergyModelsBase.jl`.
+`NonDisRES` is a subtype of the `Source` node declared in `EnergyModelsBase`.
+Hence, it has by default the same variables as a `RefSource` node declared in `EnergyModelsBase`.
 
 In addition, the following new optimization variable is added:
 
@@ -24,8 +24,8 @@ The variable is used in the following constraint within [`EMB.create_node(m, n::
 
 ## [`HydroStorage`](@ref)
 
-Both [`PumpedHydroStor`](@ref) and [`HydroStor`](@ref) are in a fist instance subtypes of [`HydroStorage`](@ref), and hence, subtypes of the `Storage` node declared in `EnergyModelsBase.jl`.
-Hence, it has by default the same variables as a `RefStorage` node declared in `EnergyModelsBase.jl`.
+Both [`PumpedHydroStor`](@ref) and [`HydroStor`](@ref) are in a fist instance subtypes of [`HydroStorage`](@ref), and hence, subtypes of the `Storage` node declared in `EnergyModelsBase`.
+Hence, it has by default the same variables as a `RefStorage` node declared in `EnergyModelsBase`.
 
 In addition, the following new optimization variable is added:
 

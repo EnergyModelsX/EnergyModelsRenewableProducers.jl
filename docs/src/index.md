@@ -1,11 +1,11 @@
-# EnergyModelsRenewableProducers.jl
+# EnergyModelsRenewableProducers
 
 ```@docs
 EnergyModelsRenewableProducers
 ```
 
 This Julia package implements two main nodes with corresponding JuMP constraints, extending the package
-[`EnergyModelsBase.jl`](https://energymodelsx.github.io/EnergyModelsBase.jl/)
+[`EnergyModelsBase`](https://energymodelsx.github.io/EnergyModelsBase.jl/)
 with more detailed representation of *renewable energy sources*.
 
 The first node, [`NonDisRES`](@ref), models a non-dispatchable renewable energy source, like wind power, solar power, or run of river hydropower.
@@ -24,6 +24,14 @@ Pages = [
     "manual/optimization-variables.md",
     "manual/constraint-functions.md",
     "manual/simple-example.md"
+]
+```
+
+## How to guides
+
+```@contents
+Pages = [
+    "how-to/contribute.md",
 ]
 ```
 
