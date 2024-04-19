@@ -3,6 +3,7 @@
 ## Unversioned
 
 * Updated a link in the documentation for the examples.
+* Provided a contribution section in the documentation.
 
 ## Version 0.5.5 (2024-03-21)
 
@@ -50,8 +51,7 @@
 
 ### Create a variable :spill for hydro storage node
 
-* This variable enables hydro storage nodes to spill water from the reservoir without
-   producing energy.
+* This variable enables hydro storage nodes to spill water from the reservoir without producing energy.
 
 ## Version 0.4.1 (2023-08-31)
 
@@ -65,10 +65,10 @@
 
 ## Version 0.4.0 (2023-06-06)
 
-### Switch to TimeStruct.jl
+### Switch to TimeStruct
 
-* Switched the time structure representation to [TimeStruct.jl](https://github.com/sintefore/TimeStruct.jl).
-* TimeStruct.jl is implemented with only the basis features that were available in TimesStructures.jl. This implies that neither operational nor strategic uncertainty is included in the model.
+* Switched the time structure representation to [`TimeStruct`](https://github.com/sintefore/TimeStruct.jl).
+* `TimeStruct` is implemented with only the basis features that were available in `TimeStructures`. This implies that neither operational nor strategic uncertainty is included in the model.
 
 Version 0.3.0 (2023-05-30)
 

@@ -1,6 +1,6 @@
 # [Constraint functions](@id constraint_functions)
 
-The [`HydroStorage`](@ref) types dispatch on individual functions from within `EnergyModelsBase.jl` ti extend the functionality
+The [`HydroStorage`](@ref) types dispatch on individual functions from within `EnergyModelsBase` ti extend the functionality
 
 ## Storage level constraints
 
@@ -22,7 +22,7 @@ EMB.constraints_level_sp(m, n::HydroStorage, t_inv, 𝒫, modeltype::EnergyModel
 ```
 
 are similar to the function used for `RefStorage{T} where {T<:ResourceCarrier}`.
-It is however necessary to reintroduce it due to the declaration for `RefStorage` in `EnergyModelsBase.jl`.
+It is however necessary to reintroduce it due to the declaration for `RefStorage` in `EnergyModelsBase`.
 This will most likely be adjusted in later versions, although it will not impact the user directly.
 
 ## Operational expenditure constraints
