@@ -1,9 +1,9 @@
 # Release notes
 
-## Unversioned
+## Version 0.5.6 (2024-05-09)
 
-* Updated a link in the documentation for the examples.
 * Provided a contribution section in the documentation.
+* Fixed a link in the documentation for the examples.
 
 ## Version 0.5.5 (2024-03-21)
 
