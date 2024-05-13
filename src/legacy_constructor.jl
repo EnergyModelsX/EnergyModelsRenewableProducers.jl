@@ -93,20 +93,19 @@ function HydroStor(
     stor_res::ResourceCarrier,
     input::Dict{<:Resource, <:Real},
     output::Dict{<:Resource, <:Real},
-    Data,
 )
 
     return HydroStor{CyclicStrategic}(
         id,
-        StorCap(stor_cap),
-        StorCapOpex(rate_cap, opex_var, opex_fixed),
+        StorCapOpexFixed(stor_cap, opex_fixed),
+        StorCapOpexVar(rate_cap, opex_var),
         level_init,
         level_inflow,
         level_min,
         stor_res,
         input,
         output,
-        Data,
+        Data[],
     )
 end
 function HydroStor(
@@ -123,12 +122,45 @@ function HydroStor(
     stor_res::ResourceCarrier,
     input::Dict{<:Resource, <:Real},
     output::Dict{<:Resource, <:Real},
+    data::Vector{Data},
 )
 
     return HydroStor{CyclicStrategic}(
         id,
-        StorCap(stor_cap),
-        StorCapOpex(rate_cap, opex_var, opex_fixed),
+        StorCapOpexFixed(stor_cap, opex_fixed),
+        StorCapOpexVar(rate_cap, opex_var),
+        level_init,
+        level_inflow,
+        level_min,
+        stor_res,
+        input,
+        output,
+        data,
+    )
+end
+
+function PumpedHydroStor(
+    id,
+    rate_cap::TimeProfile,
+    stor_cap::TimeProfile,
+
+    level_init::TimeProfile,
+    level_inflow::TimeProfile,
+    level_min::TimeProfile,
+
+    opex_var::TimeProfile,
+    opex_var_pump::TimeProfile,
+    opex_fixed::TimeProfile,
+    stor_res::ResourceCarrier,
+    input::Dict{<:Resource, <:Real},
+    output::Dict{<:Resource, <:Real},
+)
+
+    return PumpedHydroStor{CyclicStrategic}(
+        id,
+        StorCapOpexVar(rate_cap, opex_var_pump),
+        StorCapOpexFixed(stor_cap, opex_fixed),
+        StorCapOpexVar(rate_cap, opex_var),
         level_init,
         level_inflow,
         level_min,
@@ -154,19 +186,20 @@ function PumpedHydroStor(
     stor_res::ResourceCarrier,
     input::Dict{<:Resource, <:Real},
     output::Dict{<:Resource, <:Real},
+    data::Vector{Data},
 )
 
     return PumpedHydroStor{CyclicStrategic}(
         id,
         StorCapOpexVar(rate_cap, opex_var_pump),
-        StorCap(stor_cap),
-        StorCapOpex(rate_cap, opex_var, opex_fixed),
+        StorCapOpexFixed(stor_cap, opex_fixed),
+        StorCapOpexVar(rate_cap, opex_var),
         level_init,
         level_inflow,
         level_min,
         stor_res,
         input,
         output,
-        Data[],
+        data,
     )
 end

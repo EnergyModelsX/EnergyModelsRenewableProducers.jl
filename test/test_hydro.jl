@@ -329,6 +329,9 @@ end
         general_tests(m)
         general_node_tests(m, case, hydro1)
 
+        # Test the objective value
+        @test objective_value(m) ≈ -116160.0
+
         # All the tests following er for the function
         # - constraints_level(m, n::HydroStorage, 𝒯, 𝒫, modeltype::EnergyModel)
         for t_inv ∈ 𝒯ᴵⁿᵛ
@@ -403,7 +406,7 @@ end
     sink = EMB.RefSink(
         "-sink",
         FixedProfile(7),
-        Dict(:surplus => FixedProfile(0), :deficit => FixedProfile(1e6)),
+        Dict(:surplus => FixedProfile(0), :deficit => FixedProfile(1e2)),
         Dict(Power => 1),
     )
 
@@ -419,7 +422,7 @@ end
         initial_reservoir,
         FixedProfile(1),
         min_level,
-        FixedProfile(0),
+        FixedProfile(5),
         FixedProfile(30),
         FixedProfile(10),
         Power,
@@ -434,7 +437,7 @@ end
     link_to = EMB.Direct(14, case[:nodes][1], case[:nodes][4], EMB.Linear())
     push!(case[:links], link_to)
 
-    case[:T] = TwoLevel(2, 1, SimpleTimes(10, 1))
+    case[:T] = TwoLevel(2, 1, SimpleTimes(10, 1); op_per_strat=10)
 
     # Run the model
     m = EMB.run_model(case, modeltype, OPTIMIZER; check_timeprofiles=false)
@@ -445,6 +448,9 @@ end
     # Run of the general and node tests
     general_tests(m)
     general_node_tests(m, case, hydro)
+
+    # Test the objective value
+    @test objective_value(m) ≈ -6825.0
 
     @testset "flow_in" begin
         # Check that the zero equality constraint is not set on the flow_in variable
