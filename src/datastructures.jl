@@ -33,7 +33,7 @@ function NonDisRES(
 end
 
 """ An abstract type for hydro storage nodes, with or without pumping. """
-abstract type HydroStorage <: EMB.Storage end
+abstract type HydroStorage{T} <: EMB.Storage{T} end
 
 """ A regulated hydropower storage, modelled as a `Storage` node.
 
@@ -44,8 +44,6 @@ abstract type HydroStorage <: EMB.Storage end
 - **`level_init::TimeProfile`** Initial energy stored in the dam, in units of power.\n
 - **`level_inflow::TimeProfile`** Inflow of power per operational period.\n
 - **`level_min::TimeProfile`** Minimum fraction of the reservoir capacity that can be left.\n
-- **`opex_var::TimeProfile`** Operational cost per GWh produced.\n
-- **`opex_fixed::TimeProfile`** Fixed operational costs.\n
 - **`stor_res::ResourceCarrier`** is the stored `Resource`.\n
 - **`input::Dict{Resource, Real}`** the stored and used resources. The \
 values in the Dict is a ratio describing the energy loss when using the pumps.\n
@@ -53,44 +51,38 @@ values in the Dict is a ratio describing the energy loss when using the pumps.\n
 - **`data::Vector{Data}`** additional data (e.g. for investments). The field \
 `data` is conditional through usage of a constructor.
 """
-struct HydroStor <: HydroStorage
+struct HydroStor{T} <: HydroStorage{T}
     id::Any
-    rate_cap::TimeProfile
-    stor_cap::TimeProfile
+    level::EMB.UnionCapacity
+    discharge::EMB.UnionCapacity
 
     level_init::TimeProfile
     level_inflow::TimeProfile
     level_min::TimeProfile
 
-    opex_var::TimeProfile
-    opex_fixed::TimeProfile
     stor_res::ResourceCarrier
     input::Dict{<:Resource, <:Real}
     output::Dict{<:Resource, <:Real}
     data::Vector{Data}
 end
-function HydroStor(
+function HydroStor{T}(
         id::Any,
-        rate_cap::TimeProfile,
-        stor_cap::TimeProfile,
+        level::EMB.UnionCapacity,
+        discharge::EMB.UnionCapacity,
         level_init::TimeProfile,
         level_inflow::TimeProfile,
         level_min::TimeProfile,
-        opex_var::TimeProfile,
-        opex_fixed::TimeProfile,
         stor_res::ResourceCarrier,
         input::Dict{<:Resource, <:Real},
         output::Dict{<:Resource, <:Real},
-    )
-    return HydroStor(
+    ) where {T<:EMB.StorageBehavior}
+    return HydroStor{T}(
         id,
-        rate_cap,
-        stor_cap,
+        level,
+        discharge,
         level_init,
         level_inflow,
         level_min,
-        opex_var,
-        opex_fixed,
         stor_res,
         input,
         output,
@@ -107,9 +99,6 @@ end
 - **`level_init::TimeProfile`** Initial energy stored in the dam, in units of power.\n
 - **`level_inflow::TimeProfile`** Inflow of power per operational period.\n
 - **`level_min::TimeProfile`** Minimum fraction of the reservoir capacity that can be left.\n
-- **`opex_var::TimeProfile`** Operational cost per GWh produced.\n
-- **`opex_var_pump::TimeProfile`** Operational cost per GWh pumped into the reservoir.\n
-- **`opex_fixed::TimeProfile`** Fixed operational costs.\n
 - **`stor_res::ResourceCarrier`** is the stored `Resource`.\n
 - **`input::Dict{Resource, Real}`** the stored and used resources. The \
 values in the Dict is a ratio describing the energy loss when using the pumps.\n
@@ -117,47 +106,41 @@ values in the Dict is a ratio describing the energy loss when using the pumps.\n
 - **`data::Vector{Data}`** additional data (e.g. for investments). The field \
 `data` is conditional through usage of a constructor.\n
 """
-struct PumpedHydroStor <: HydroStorage
+struct PumpedHydroStor{T} <: HydroStorage{T}
     id::Any
-    rate_cap::TimeProfile
-    stor_cap::TimeProfile
+    charge::EMB.UnionCapacity
+    level::EMB.UnionCapacity
+    discharge::EMB.UnionCapacity
 
     level_init::TimeProfile
     level_inflow::TimeProfile
     level_min::TimeProfile
 
-    opex_var::TimeProfile
-    opex_var_pump::TimeProfile
-    opex_fixed::TimeProfile
     stor_res::ResourceCarrier
     input::Dict{<:Resource, <:Real}
     output::Dict{<:Resource, <:Real}
     data::Vector{Data}
 end
-function PumpedHydroStor(
+function PumpedHydroStor{T}(
         id::Any,
-        rate_cap::TimeProfile,
-        stor_cap::TimeProfile,
+        charge::EMB.UnionCapacity,
+        level::EMB.UnionCapacity,
+        discharge::EMB.UnionCapacity,
         level_init::TimeProfile,
         level_inflow::TimeProfile,
         level_min::TimeProfile,
-        opex_var::TimeProfile,
-        opex_var_pump::TimeProfile,
-        opex_fixed::TimeProfile,
         stor_res::ResourceCarrier,
         input::Dict{<:Resource, <:Real},
         output::Dict{<:Resource, <:Real},
-    )
-    return PumpedHydroStor(
+    ) where {T<:EMB.StorageBehavior}
+    return PumpedHydroStor{T}(
         id,
-        rate_cap,
-        stor_cap,
+        charge,
+        level,
+        discharge,
         level_init,
         level_inflow,
         level_min,
-        opex_var,
-        opex_var_pump,
-        opex_fixed,
         stor_res,
         input,
         output,

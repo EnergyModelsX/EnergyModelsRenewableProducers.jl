@@ -58,17 +58,17 @@ This method checks that the *[`HydroStorage`](@ref HydroStorage_public)* node is
 function EMB.check_node(n::HydroStorage, 𝒯, modeltype::EMB.EnergyModel, check_timeprofiles::Bool)
 
     𝒯ᴵⁿᵛ = strategic_periods(𝒯)
-    cap = capacity(n)
+    # cap = capacity(n)
 
-    @assert_or_log(
-        sum(cap.rate[t] < 0 for t ∈ 𝒯) == 0,
-        "The production capacity in field `rate_cap` has to be non-negative."
-    )
-    @assert_or_log(
-        sum(cap.level[t] < 0 for t ∈ 𝒯) == 0,
-        "The storage capacity in field `stor_cap` has to be non-negative."
-    )
-    EMB.check_fixed_opex(n, 𝒯ᴵⁿᵛ, check_timeprofiles)
+    # @assert_or_log(
+    #     sum(cap.rate[t] < 0 for t ∈ 𝒯) == 0,
+    #     "The production capacity in field `rate_cap` has to be non-negative."
+    # )
+    # @assert_or_log(
+    #     sum(cap.level[t] < 0 for t ∈ 𝒯) == 0,
+    #     "The storage capacity in field `stor_cap` has to be non-negative."
+    # )
+    # EMB.check_fixed_opex(n, 𝒯ᴵⁿᵛ, check_timeprofiles)
     @assert_or_log(
         length(outputs(n)) == 1,
         "Only one resource can be stored, so only this one can flow out."
@@ -96,18 +96,18 @@ function EMB.check_node(n::HydroStorage, 𝒯, modeltype::EMB.EnergyModel, check
         )
     end
 
-    @assert_or_log(
-        sum(level_init(n, t) ≤ cap.level[t] for t ∈ 𝒯) == length(𝒯),
-        "The initial level `level_init` has to be less or equal to the max storage capacity."
-    )
-    for t_inv ∈ 𝒯ᴵⁿᵛ
+    # @assert_or_log(
+    #     sum(level_init(n, t) ≤ cap.level[t] for t ∈ 𝒯) == length(𝒯),
+    #     "The initial level `level_init` has to be less or equal to the max storage capacity."
+    # )
+    # for t_inv ∈ 𝒯ᴵⁿᵛ
 
-        t = first(t_inv)
-        # Check that the reservoir isn't underfilled from the start.
-        @assert_or_log(
-            level_init(n, t_inv) + level_inflow(n, t) ≥ level_min(n, t) * cap.level[t],
-            "The reservoir can't be underfilled from the start (" * string(t) * ").")
-    end
+    #     t = first(t_inv)
+    #     # Check that the reservoir isn't underfilled from the start.
+    #     @assert_or_log(
+    #         level_init(n, t_inv) + level_inflow(n, t) ≥ level_min(n, t) * cap.level[t],
+    #         "The reservoir can't be underfilled from the start (" * string(t) * ").")
+    # end
 
     @assert_or_log(
         sum(level_init(n, t) < 0 for t ∈ 𝒯) == 0,

@@ -12,13 +12,13 @@ end
 # method defined for a general Source node, which is located in EnergyModelsBase.
 
 """
-    EMB.variables_node(m, 𝒩::Vector{HydroStorage}, 𝒯, modeltype::EnergyModel)
+    EMB.variables_node(m, 𝒩::Vector{<:HydroStorage}, 𝒯, modeltype::EnergyModel)
 
 Create the optimization variable `:hydro_spill` for every HydroStorage node. This variable
 enables hydro storage nodes to spill water from the reservoir without producing energy.
 Wihtout this slack variable, parameters with too much inflow would else lead to an
 infeasible model. """
-function EMB.variables_node(m, 𝒩::Vector{HydroStorage}, 𝒯, modeltype::EnergyModel)
+function EMB.variables_node(m, 𝒩::Vector{<:HydroStorage}, 𝒯, modeltype::EnergyModel)
     @variable(m, hydro_spill[𝒩, 𝒯] >= 0)
 end
 
@@ -45,18 +45,18 @@ function EMB.create_node(m, n::HydroStorage, 𝒯, 𝒫, modeltype::EnergyModel)
     @constraint(
         m,
         [t ∈ 𝒯],
-        m[:flow_out][n, t, p_stor] == m[:stor_rate_use][n, t] * outputs(n, p_stor)
+        m[:flow_out][n, t, p_stor] == m[:stor_discharge_use][n, t] * outputs(n, p_stor)
     )
 
     # Can not produce more energy than what is availbable in the reservoir.
-    @constraint(m, [t ∈ 𝒯], m[:stor_rate_use][n, t] <= m[:stor_level][n, t])
+    @constraint(m, [t ∈ 𝒯], m[:stor_discharge_use][n, t] <= m[:stor_level][n, t])
 
     # The minimum contents of the reservoir is bounded below. Not allowed
     # to drain it completely.
     @constraint(
         m,
         [t ∈ 𝒯],
-        m[:stor_level][n, t] ≥ level_min(n, t) * m[:stor_cap_inst][n, t]
+        m[:stor_level][n, t] ≥ level_min(n, t) * m[:stor_level_inst][n, t]
     )
 
     # Iterate through all data and set up the constraints corresponding to the data

@@ -4,20 +4,19 @@ function general_node_tests(m, case, n::EMRP.HydroStorage)
     # Extract time structure and storage node
     𝒯 = case[:T]
     p_stor = EMB.storage_resource(n)
-    cap = EMB.capacity(n)
 
     @testset "stor_level bounds" begin
         # The storage level has to be greater than the required minimum.
         @test sum(
-            EMRP.level_min(n, t) * value.(m[:stor_cap_inst][n, t]) <=
+            EMRP.level_min(n, t) * value.(m[:stor_level_inst][n, t]) <=
             round(value.(m[:stor_level][n, t]), digits = ROUND_DIGITS) for t ∈ 𝒯
         ) == length(𝒯)
 
-        # The stor_level has to be less than stor_cap_inst in all operational periods.
+        # The stor_level has to be less than stor_level_inst in all operational periods.
         @test sum(
-            value.(m[:stor_level][n, t]) <= value.(m[:stor_cap_inst][n, t]) for t ∈ 𝒯
+            value.(m[:stor_level][n, t]) <= value.(m[:stor_level_inst][n, t]) for t ∈ 𝒯
         ) == length(𝒯)
-        # TODO valing Storage node har negativ stor_cap_inst et par steder.
+        # TODO valing Storage node har negativ stor_level_inst et par steder.
         # TODO this is ok when inflow=1. When inflow=10 the stor_level gets too large. Why?
         #  - Do we need some other sink in the system? Not logical to be left with too much power.
 
@@ -26,7 +25,7 @@ function general_node_tests(m, case, n::EMRP.HydroStorage)
         @test sum(
             value.(value.(m[:stor_level_Δ_op][n, t])) ≈
             EMRP.level_inflow(n, t) + inputs(n, p_stor) * value.(m[:flow_in][n, t, p_stor]) -
-            value.(m[:stor_rate_use][n, t]) - value.(m[:hydro_spill][n, t]) for t ∈ 𝒯,
+            value.(m[:stor_discharge_use][n, t]) - value.(m[:hydro_spill][n, t]) for t ∈ 𝒯,
             atol ∈ TEST_ATOL
         ) ≈ length(𝒯) atol = TEST_ATOL
 
@@ -38,12 +37,12 @@ function general_node_tests(m, case, n::EMRP.HydroStorage)
             duration(first(t_inv)) * (
                 EMRP.level_inflow(n, first(t_inv)) +
                 value.(m[:flow_in][n, first(t_inv), p_stor]) -
-                value.(m[:stor_rate_use][n, first(t_inv)]) -
+                value.(m[:stor_discharge_use][n, first(t_inv)]) -
                 value.(m[:hydro_spill][n, first(t_inv)])
             ) for t_inv ∈ strategic_periods(𝒯)
         ) == length(strategic_periods(𝒯))
 
-        # Check that stor_level is correct wrt. previous stor_level, inflow and stor_rate_use.
+        # Check that stor_level is correct wrt. previous stor_level, inflow and stor_discharge_use.
         if 𝒯 isa TwoLevel{T,T,U} where {T,U<:SimpleTimes}
             non_first = 𝒯.len
         else
@@ -55,42 +54,42 @@ function general_node_tests(m, case, n::EMRP.HydroStorage)
             duration(t) * (
                 EMRP.level_inflow(n, t) +
                 inputs(n, p_stor) * value.(m[:flow_in][n, t, p_stor]) -
-                value.(m[:stor_rate_use][n, t]) - value.(m[:hydro_spill][n, t])
+                value.(m[:stor_discharge_use][n, t]) - value.(m[:hydro_spill][n, t])
             ) for t_inv ∈ strategic_periods(𝒯) for
             (t_prev, t) ∈ withprev(t_inv) if !isnothing(t_prev)
         ) == length(𝒯) - non_first
     end
 
-    @testset "stor_cap_inst bounds" begin
-        # Assure that the stor_cap_inst variable is non-negative.
-        @test sum(value.(m[:stor_cap_inst][n, t]) >= 0 for t ∈ 𝒯) == length(𝒯)
+    @testset "stor_level_inst bounds" begin
+        # Assure that the stor_level_inst variable is non-negative.
+        @test sum(value.(m[:stor_level_inst][n, t]) >= 0 for t ∈ 𝒯) == length(𝒯)
 
-        # Check that stor_cap_inst is set to cap.level.
-        @test sum(value.(m[:stor_cap_inst][n, t]) == cap.level[t] for t ∈ 𝒯) == length(𝒯)
+        # Check that stor_level_inst is set to cap.level.
+        @test sum(value.(m[:stor_level_inst][n, t]) == capacity(level(n), t) for t ∈ 𝒯) == length(𝒯)
     end
 
-    @testset "stor_rate_use bounds" begin
+    @testset "stor_discharge_use bounds" begin
         # Cannot produce more than what is stored in the reservoir.
         @test sum(
-            value.(m[:stor_rate_use][n, t]) <= value.(m[:stor_level][n, t]) for t ∈ 𝒯
+            value.(m[:stor_discharge_use][n, t]) <= value.(m[:stor_level][n, t]) for t ∈ 𝒯
         ) == length(𝒯)
 
-        # Check that stor_rate_use is bounded above by stor_rate_inst.
+        # Check that stor_discharge_use is bounded above by stor_discharge_inst.
         @test sum(
-            round(value.(m[:stor_rate_use][n, t]), digits = ROUND_DIGITS) <=
-            value.(m[:stor_rate_inst][n, t]) for t ∈ 𝒯
+            round(value.(m[:stor_discharge_use][n, t]), digits = ROUND_DIGITS) <=
+            value.(m[:stor_discharge_inst][n, t]) for t ∈ 𝒯
         ) == length(𝒯)
     end
 
-    @testset "stor_rate_inst" begin
-        @test sum(value.(m[:stor_rate_inst][n, t]) == cap.rate[t] for t ∈ 𝒯) == length(𝒯)
+    @testset "stor_discharge_inst" begin
+        @test sum(value.(m[:stor_discharge_inst][n, t]) == capacity(discharge(n), t) for t ∈ 𝒯) == length(𝒯)
     end
 
     @testset "flow variables" begin
-        # The flow_out corresponds to the production stor_rate_use.
+        # The flow_out corresponds to the production stor_discharge_use.
         @test sum(
             value.(m[:flow_out][n, t, p_stor]) ==
-            value.(m[:stor_rate_use][n, t]) * outputs(n, Power) for t ∈ 𝒯
+            value.(m[:stor_discharge_use][n, t]) * outputs(n, Power) for t ∈ 𝒯
         ) == length(𝒯)
     end
 end
@@ -356,7 +355,7 @@ end
 
                     @test value.(m[:stor_level][n, t]) -
                           value.(m[:stor_level_Δ_op][n, t]) * duration(t) ≤
-                          value.(m[:stor_cap_inst][n, t]) + TEST_ATOL
+                          value.(m[:stor_level_inst][n, t]) + TEST_ATOL
 
                 elseif isnothing(t_prev)
                     # Test for the correct accounting in the first operational period of the
@@ -378,7 +377,7 @@ end
 
                     @test value.(m[:stor_level][n, t]) -
                           value.(m[:stor_level_Δ_op][n, t]) * duration(t) ≤
-                          value.(m[:stor_cap_inst][n, t]) + TEST_ATOL
+                          value.(m[:stor_level_inst][n, t]) + TEST_ATOL
                 end
             end
         end
@@ -395,9 +394,7 @@ end
     products = [Power, CO2]
     source = EMB.RefSource(
         "-source",
-        OperationalProfile([
-            10 10 10 10 10 0 0 0 0 0
-        ]),
+        OperationalProfile([10, 10, 10, 10, 10, 0, 0, 0, 0, 0]),
         FixedProfile(10),
         FixedProfile(10),
         Dict(Power => 1),
