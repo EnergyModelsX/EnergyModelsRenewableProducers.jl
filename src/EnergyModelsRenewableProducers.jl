@@ -19,6 +19,7 @@ const EMB = EnergyModelsBase
 const TS = TimeStruct
 
 include("datastructures.jl")
+include("added_datastruct.jl")
 include("model.jl")
 include("checks.jl")
 include("constraint_functions.jl")
@@ -28,5 +29,6 @@ include("legacy_constructor.jl")
 
 export NonDisRES
 export HydroStorage, RegHydroStor, HydroStor, PumpedHydroStor
+export Inflow, HydroReservoir, HydroStation, HydroGate
 
 end # module
