@@ -1,6 +1,11 @@
+using Revise
 using Pkg
 # Activate the local environment including EnergyModelsRenewableProducers, HiGHS, PrettyTables
 Pkg.activate(@__DIR__)
+# Resolve environment (in case of changes)
+Pkg.resolve()
+Pkg.develop(path=joinpath(@__DIR__, ".."))
+#Pkg.activate()
 # Install the dependencies.
 Pkg.instantiate()
 
@@ -14,7 +19,6 @@ using TimeStruct
 
 const EMB = EnergyModelsBase
 #include("C:\\Users\\linn\\OneDrive - SINTEF\\Prosjekter\\iDesignRes\\EMX\\EnergyModelsRenewableProducers.jl\\src\\added_datastruct.jl")
-
 
 
 @info "Generate case data - Simple `HydroStor` example"
@@ -124,7 +128,6 @@ hydro_station = HydroStation(
     Dict(Water => 1, Power => 1), 
     Data[],
 )
-
 
     # Create a power demand node
     sink = RefSink(
