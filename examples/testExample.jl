@@ -79,7 +79,8 @@ hydro = HydroStor(
 
 inflow = Inflow(    
     "inflow",           # Node ID
-    FixedProfile(1),    # Inflow in mm3/hour
+    FixedProfile(1000), # Capacity of inflow source (only included tbecause it is required)
+    FixedProfile(0),    # Inflow in mm3/hour
     FixedProfile(0),    # Variable OPEX in EUR/MWh
     FixedProfile(0),    # Fixed OPEX in EUR/MWh
     Dict(Water => 1),   # Output from the Node, in this case, Power
@@ -87,47 +88,68 @@ inflow = Inflow(
     )
 
 hydro_reservoir = HydroReservoir(
-    "hydro_reservoir",
-    100,
-    FixedProfile(10),
-    FixedProfile(0),
-    FixedProfile(100),
-    FixedProfile(0),
-    FixedProfile(0),
-    Water,
-    Dict(0 => 0, 100 => 10),
-    Dict(1 => Dict(0.0 => 0.0)),
-    Dict(Water => 1), 
-    Dict(Water => 1), 
-    Data[],
+    "hydro_reservoir",  # Node ID
+    FixedProfile(10),   # rate_cap, capacity pump/discharge in mm3/timestep
+    FixedProfile(100),  # stor_cap, capacity reservoir in mm3
+    FixedProfile(10),   # level_int, initial water level in mm3
+    #FixedProfile(0),    # level_min, minimum water level in mm3
+    #FixedProfile(100),  # level_max, maximum water level in mm3
+    FixedProfile(0),    # opex_var, variable OPEX in EUR/(mm3/h?)
+    FixedProfile(0),    # opex_fixed, Fixed OPEX in EUR/(mm3/h?)
+    Water,              # stor_res, stored resource 
+    #Dict(0 => 0, 100 => 10),        # vol_head
+    #Dict(1 => Dict(0.0 => 0.0)),    # water_value
+    Dict(Water => 1),               # input
+    Dict(Water => 1),               # output
+    Data[],                         
 )
 
-hydro_gate = HydroGate(
-    "discharge_reservoir",
-    FixedProfile(10),
-    FixedProfile(0),
-    FixedProfile(0),
-    Dict(Water => 1), 
-    Dict(Water => 1), 
+reservoir_disch = HydroGate(
+    "discharge_reservoir",  # Node ID
+    FixedProfile(10),       # cap, in mm3/timestep
+    FixedProfile(0),        # opex_var, variable OPEX in EUR/(mm3/h?)
+    FixedProfile(0),        # opex_fixed, Fixed OPEX in EUR/(mm3/h?)
+    Dict(Water => 1),       # input
+    Dict(Water => 1),       # output
+)
+
+reservoir_spill = HydroGate(
+    "discharge_reservoir",  # Node ID
+    FixedProfile(1000),     # cap, in mm3/timestep
+    FixedProfile(0),        # opex_var, variable OPEX in EUR/(mm3/h?)
+    FixedProfile(0),        # opex_fixed, Fixed OPEX in EUR/(mm3/h?)
+    Dict(Water => 1),       # input
+    Dict(Water => 1),       # output
 )
 
 
 hydro_station = HydroStation(
-    "hydropower_station",
-    FixedProfile(10),
-    FixedProfile(10),
-    Dict(0 => 0, 1 => 1),
-    FixedProfile(0),
-    FixedProfile(0),
-    Dict(0 => 0, 1 => 1),
-    FixedProfile(0),
-    FixedProfile(Inf),
-    FixedProfile(0),
-    FixedProfile(0),
-    Dict(Water => 1), 
-    Dict(Water => 1, Power => 1), 
-    Data[],
+    "hydropower_station",   # Node ID
+    #FixedProfile(10),       # power_cap
+    FixedProfile(10),       # cap
+    #Dict(0 => 0, 1 => 1),   # pq_curve
+    #FixedProfile(0),        # pump_power_cap
+    #FixedProfile(0),        # pump_disch_cap
+    #Dict(0 => 0, 1 => 1),   # pump_pq_curve
+    #FixedProfile(0),        # prod_min
+    #FixedProfile(Inf),      # prod_max
+    FixedProfile(6),        # opex_var
+    FixedProfile(0),        # opex_fixed
+    Dict(Water => 1),       # input
+    Dict(Water => 1, Power => 1),   # output
+    Data[],                 # data
 )
+
+
+   # Create a final water node, ocean
+   ocean = RefSink(
+    "ocean",   # Node id
+    FixedProfile(0),    # No demand for water
+    Dict(:surplus => FixedProfile(0), :deficit => FixedProfile(0)),
+    # Line above: Surplus and deficit penalty for the node in EUR/mm3
+    Dict(Water => 1),   # Resource and corresponding ratio
+)
+
 
     # Create a power demand node
     sink = RefSink(
@@ -139,7 +161,8 @@ hydro_station = HydroStation(
     )
 
     # Create the array of ndoes
-    nodes = [av, wind, hydro, inflow, hydro_reservoir, hydro_gate, hydro_station, sink]
+    nodes = [av, wind, hydro, inflow, hydro_reservoir, reservoir_disch, reservoir_spill, hydro_station, ocean, sink]
+    #nodes = [av, wind, hydro, inflow, hydro_reservoir]
 
     # Connect all nodes with the availability node for the overall energy balance
     links = [
@@ -147,8 +170,10 @@ hydro_station = HydroStation(
         Direct("hy-av", hydro, av),
         Direct("av-hy", av, hydro),
         Direct("inf-hydro_res", inflow, hydro_reservoir),
-        Direct("hydro_res-hydro_gate", hydro_reservoir, hydro_gate),
-        Direct("hydro_gate-hydro_station", hydro_gate, hydro_station),
+        Direct("hydro_res-hydro_gate", hydro_reservoir, reservoir_disch),
+        Direct("hydro_res-hydro_gate", hydro_reservoir, reservoir_spill),
+        Direct("hydro_gate-hydro_station", reservoir_disch, hydro_station),
+        Direct("hydro_gate-hydro_station", reservoir_spill, ocean),
         Direct("hydro_station-av",  hydro_station, av),
         Direct("av-hydro_station", av, hydro_station),
         Direct("av-demand", av, sink),
