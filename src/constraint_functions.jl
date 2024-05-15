@@ -104,24 +104,16 @@ Function for creating the constraint on the maximum capacity of a `Inflow`.
 
 """
 function EMB.constraints_capacity(m, n::Inflow, 𝒯::TimeStructure, modeltype::EnergyModel)
-    @constraint(m, [t ∈ 𝒯],
-        m[:cap_use][n, t] <= m[:cap_inst][n, t]
-    )
+    @constraint(m, [t ∈ 𝒯], m[:cap_use][n, t] <= m[:cap_inst][n, t])
 
     # Non dispatchable renewable energy sources operate at their max
     # capacity with repsect to the current profile (e.g. wind) at every time.
-    @constraint(
-        m,
-        [t ∈ 𝒯],
-        m[:cap_use][n, t] == profile(n, t)
-    )
+    @constraint(m, [t ∈ 𝒯], m[:cap_use][n, t] == profile(n, t))
 
-    constraints_capacity_installed(m, n, 𝒯, modeltype)
+    return constraints_capacity_installed(m, n, 𝒯, modeltype)
 end
 
-
-
- #   Level constraints for new 'Storage' type:
+#   Level constraints for new 'Storage' type:
 
 """
 EMB.constraints_level_aux(m, n::HydroReservoir, 𝒯, 𝒫, modeltype)
@@ -137,18 +129,22 @@ function EMB.constraints_level_aux(m, n::HydroReservoir, 𝒯, 𝒫, modeltype)
     p_stor = storage_resource(n)
 
     # Constraint for the change in the level in a given operational period
-    @constraint(m, [t ∈ 𝒯],
+    @constraint(
+        m,
+        [t ∈ 𝒯],
         m[:stor_level_Δ_op][n, t] ==
-           inputs(n, p_stor) * m[:flow_in][n, t, p_stor] -
-           outputs(n, p_stor) * m[:flow_out][n, t, p_stor]
+            inputs(n, p_stor) * m[:flow_in][n, t, p_stor] -
+        outputs(n, p_stor) * m[:flow_out][n, t, p_stor]
     )
 
     # The initial storage level is given by the specified initial level in the strategic
     # period `t_inv`. This level corresponds to the value before inflow and outflow.
     # This is different to the `RefStorage` node.
-    @constraint(m, [t_inv ∈ strategic_periods(𝒯)],
+    @constraint(
+        m,
+        [t_inv ∈ strategic_periods(𝒯)],
         m[:stor_level][n, first(t_inv)] ==
             level_init(n, first(t_inv)) +
-            m[:stor_level_Δ_op][n, first(t_inv)] * duration(first(t_inv))
+        m[:stor_level_Δ_op][n, first(t_inv)] * duration(first(t_inv))
     )
 end
