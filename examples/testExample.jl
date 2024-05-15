@@ -18,8 +18,7 @@ using PrettyTables
 using TimeStruct
 
 const EMB = EnergyModelsBase
-#include("C:\\Users\\linn\\OneDrive - SINTEF\\Prosjekter\\iDesignRes\\EMX\\EnergyModelsRenewableProducers.jl\\src\\added_datastruct.jl")
-
++
 
 @info "Generate case data - Simple `HydroStor` example"
 
@@ -48,7 +47,7 @@ model = OperationalModel(
     CO2,                            # CO2 instance
 )
 # Create the Availability/bus node for the system
-av = GenAvailability(1, products)
+av = GenAvailability(1, [Power])
 
 # Create a non-dispatchable renewable energy source
 wind = NonDisRES(
@@ -80,7 +79,7 @@ hydro = HydroStor(
 inflow = Inflow(    
     "inflow",           # Node ID
     FixedProfile(1000), # Capacity of inflow source (only included tbecause it is required)
-    FixedProfile(0),    # Inflow in mm3/hour
+    FixedProfile(4),    # Inflow in mm3/hour
     FixedProfile(0),    # Variable OPEX in EUR/MWh
     FixedProfile(0),    # Fixed OPEX in EUR/MWh
     Dict(Water => 1),   # Output from the Node, in this case, Power
@@ -89,7 +88,7 @@ inflow = Inflow(
 
 hydro_reservoir = HydroReservoir(
     "hydro_reservoir",  # Node ID
-    FixedProfile(10),   # rate_cap, capacity pump/discharge in mm3/timestep
+    FixedProfile(100),   # rate_cap, capacity pump/discharge in mm3/timestep (begrenser input til node??)
     FixedProfile(100),  # stor_cap, capacity reservoir in mm3
     FixedProfile(10),   # level_int, initial water level in mm3
     #FixedProfile(0),    # level_min, minimum water level in mm3
@@ -106,7 +105,7 @@ hydro_reservoir = HydroReservoir(
 
 reservoir_disch = HydroGate(
     "discharge_reservoir",  # Node ID
-    FixedProfile(10),       # cap, in mm3/timestep
+    FixedProfile(5),       # cap, in mm3/timestep
     FixedProfile(0),        # opex_var, variable OPEX in EUR/(mm3/h?)
     FixedProfile(0),        # opex_fixed, Fixed OPEX in EUR/(mm3/h?)
     Dict(Water => 1),       # input
@@ -114,7 +113,7 @@ reservoir_disch = HydroGate(
 )
 
 reservoir_spill = HydroGate(
-    "discharge_reservoir",  # Node ID
+    "spill_reservoir",  # Node ID
     FixedProfile(1000),     # cap, in mm3/timestep
     FixedProfile(0),        # opex_var, variable OPEX in EUR/(mm3/h?)
     FixedProfile(0),        # opex_fixed, Fixed OPEX in EUR/(mm3/h?)
@@ -154,7 +153,7 @@ hydro_station = HydroStation(
     # Create a power demand node
     sink = RefSink(
         "electricity demand",   # Node id
-        FixedProfile(2),    # Demand in MW
+        FixedProfile(5),    # Demand in MW
         Dict(:surplus => FixedProfile(0), :deficit => FixedProfile(1e6)),
         # Line above: Surplus and deficit penalty for the node in EUR/MWh
         Dict(Power => 1),   # Energy demand and corresponding ratio
@@ -170,10 +169,11 @@ hydro_station = HydroStation(
         Direct("hy-av", hydro, av),
         Direct("av-hy", av, hydro),
         Direct("inf-hydro_res", inflow, hydro_reservoir),
-        Direct("hydro_res-hydro_gate", hydro_reservoir, reservoir_disch),
-        Direct("hydro_res-hydro_gate", hydro_reservoir, reservoir_spill),
+        Direct("hydro_res-hydro_disch", hydro_reservoir, reservoir_disch),
+        Direct("hydro_res-hydro_spill", hydro_reservoir, reservoir_spill),
         Direct("hydro_gate-hydro_station", reservoir_disch, hydro_station),
-        Direct("hydro_gate-hydro_station", reservoir_spill, ocean),
+        Direct("hydro_gate-ocean", reservoir_spill, ocean),
+        Direct("hydro_station-ocean",  hydro_station, ocean),
         Direct("hydro_station-av",  hydro_station, av),
         Direct("av-hydro_station", av, hydro_station),
         Direct("av-demand", av, sink),
@@ -202,3 +202,6 @@ pretty_table(
         header = [:Node, :TimePeriod, :Production],
     ),
 )
+
+# Run the GUI
+gui = GUI(case; model = m, coarseCoastLines = false)
