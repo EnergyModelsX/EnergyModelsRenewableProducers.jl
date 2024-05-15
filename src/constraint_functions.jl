@@ -309,7 +309,7 @@ function EMB.constraints_level_sp(
 
     # Water balance constraints for the hydro reservoir.
     for (t_prev, t) ∈ withprev(t_inv)
-        if isnothing(t_prev)
+        if isnothing(t_prev) # Binds resevoir filling in first period to last period. 
             @constraint(m,
                 m[:stor_level][n, t] ==
                     m[:stor_level][n, last(t_inv)] +
