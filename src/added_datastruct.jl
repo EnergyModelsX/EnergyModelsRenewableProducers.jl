@@ -5,7 +5,7 @@ struct Inflow <: EMB.Source  # kan evnt bygge på NonDisRES
     profile::TimeProfile    # denne er med i NonDisRES
     opex_var::TimeProfile
     opex_fixed::TimeProfile
-    output::Dict{<:Resource, <:Real}
+    output::Dict{<:Resource,<:Real}
     data::Vector{Data}
 end
 
@@ -15,17 +15,9 @@ function Inflow(
     profile::TimeProfile,
     opex_var::TimeProfile,
     opex_fixed::TimeProfile,
-    output::Dict{<:Resource, <:Real},
-    )
-    return Inflow(    
-        id,
-        cap,
-        profile,
-        opex_var,
-        opex_fixed,
-        output,
-        Data[],
-        )
+    output::Dict{<:Resource,<:Real},
+)
+    return Inflow(id, cap, profile, opex_var, opex_fixed, output, Data[])
 end
 
 struct HydroReservoir <: EMB.Storage # kan evnt bygge på HydroStor
@@ -40,8 +32,8 @@ struct HydroReservoir <: EMB.Storage # kan evnt bygge på HydroStor
     stor_res::ResourceCarrier # Water
     #vol_head::Dict{<:Real, <:Real} # New,  relation between volume and head (Mm3/meter)
     #water_value::Dict{<: Int, <:Dict{<:Real, <:Real}} # linear constraints binding the value of the storage
-    input::Dict{<:Resource, <:Real} # Water
-    output::Dict{<:Resource, <:Real} # Water
+    input::Dict{<:Resource,<:Real} # Water
+    output::Dict{<:Resource,<:Real} # Water
     data::Vector{Data}
 end
 function HydroReservoir(
@@ -56,22 +48,21 @@ function HydroReservoir(
     stor_res::ResourceCarrier,
     #vol_head::Dict{<:Real, <:Real},
     #water_value::Union{<:Real, <:Real},
-    input::Dict{<:Resource, <:Real},
-    output::Dict{<:Resource, <:Real},
+    input::Dict{<:Resource,<:Real},
+    output::Dict{<:Resource,<:Real},
 )
-return HydroReservoir(
-    id,
-    rate_cap,
-    stor_cap,
-    level_init,
-    opex_var,
-    opex_fixed,
-    stor_res,
-    input,
-    output,
-    Data[],
-)
-
+    return HydroReservoir(
+        id,
+        rate_cap,
+        stor_cap,
+        level_init,
+        opex_var,
+        opex_fixed,
+        stor_res,
+        input,
+        output,
+        Data[],
+    )
 end
 
 struct HydroStation <: EMB.NetworkNode # plant or pump or both? 
@@ -88,8 +79,8 @@ struct HydroStation <: EMB.NetworkNode # plant or pump or both?
     #cons_max::TimeProfile # Maximum consumption [MW]
     opex_var::TimeProfile
     opex_fixed::TimeProfile
-    input::Dict{<:Resource, <:Real}
-    output::Dict{<:Resource, <:Real}
+    input::Dict{<:Resource,<:Real}
+    output::Dict{<:Resource,<:Real}
     data::Vector{Data}
 end
 function HydroStation(
@@ -104,27 +95,19 @@ function HydroStation(
     #prod_max::TimeProfile,
     opex_var::TimeProfile,
     opex_fixed::TimeProfile,
-    input::Dict{<:Resource, <:Real},
-    output::Dict{<:Resource, <:Real},
+    input::Dict{<:Resource,<:Real},
+    output::Dict{<:Resource,<:Real},
 )
-return HydroStation(
-    id,        
-    cap,
-    opex_var,
-    opex_fixed,
-    input,
-    output,
-    Data[],
-)
+    return HydroStation(id, cap, opex_var, opex_fixed, input, output, Data[])
 end
 
-struct HydroGate <: EMB.NetworkNode 
+struct HydroGate <: EMB.NetworkNode
     id::Any
     cap::TimeProfile
     opex_var::TimeProfile
     opex_fixed::TimeProfile
-    input::Dict{<:Resource, <:Real}
-    output::Dict{<:Resource, <:Real}
+    input::Dict{<:Resource,<:Real}
+    output::Dict{<:Resource,<:Real}
     data::Vector{Data}
 end
 function HydroGate(
@@ -132,18 +115,10 @@ function HydroGate(
     cap::TimeProfile,
     opex_var::TimeProfile,
     opex_fixed::TimeProfile,
-    input::Dict{<:Resource, <:Real},
-    output::Dict{<:Resource, <:Real},
+    input::Dict{<:Resource,<:Real},
+    output::Dict{<:Resource,<:Real},
 )
-return HydroGate(
-    id,
-    cap,
-    opex_var,
-    opex_fixed,
-    input,
-    output,
-    Data[]
-)
+    return HydroGate(id, cap, opex_var, opex_fixed, input, output, Data[])
 end
 
 function Inflow(
@@ -151,17 +126,9 @@ function Inflow(
     cap::TimeProfile,
     opex_var::TimeProfile,
     opex_fixed::TimeProfile,
-    output::Dict{<:Resource, <:Real},
-    )
-    return Inflow(    
-        id,
-        cap,
-        profile,
-        opex_var,
-        opex_fixed,
-        output,
-        Data[],
-        )
+    output::Dict{<:Resource,<:Real},
+)
+    return Inflow(id, cap, profile, opex_var, opex_fixed, output, Data[])
 end
 
 """
