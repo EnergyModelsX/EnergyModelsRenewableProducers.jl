@@ -69,7 +69,7 @@ struct HydroStation <: EMB.NetworkNode # plant or pump or both?
     id::Any
     #power_cap::TimeProfile # maximum production MW/(time unit)
     cap::TimeProfile # maximum discharge mm3/(time unit)
-    #pq_curve::Dict{<:Real, <:Real} # Production and discharge ratio [MW / m3/s]
+    pq_curve::Dict{<:Resource, <:Vector{<:Real}} # Production and discharge ratio [MW / m3/s]
     #pump_power_cap::TimeProfile #maximum production MW
     #pump_disch_cap::TimeProfile #maximum discharge mm3/time unit
     #pump_pq_curve::Dict{<:Real, <:Real}
@@ -81,12 +81,14 @@ struct HydroStation <: EMB.NetworkNode # plant or pump or both?
     opex_fixed::TimeProfile
     input::Dict{<:Resource,<:Real}
     output::Dict{<:Resource,<:Real}
+    η::Vector{Real}
     data::Vector{Data}
 end
 function HydroStation(
     id::Any,
     #power_cap::TimeProfile,
     cap::TimeProfile,
+    pq_curve::Dict{<:Resource, <:Vector{<:Real}},
     #pq_curve::Dict{<:Real, <:Real},
     #pump_power_cap::TimeProfile,
     #pump_disch_cap::TimeProfile,
@@ -98,7 +100,7 @@ function HydroStation(
     input::Dict{<:Resource,<:Real},
     output::Dict{<:Resource,<:Real},
 )
-    return HydroStation(id, cap, opex_var, opex_fixed, input, output, Data[])
+    return HydroStation(id, cap, pq_curve, opex_var, opex_fixed, input, output, Real[], Data[])
 end
 
 struct HydroGate <: EMB.NetworkNode
@@ -141,6 +143,15 @@ profile(n::Inflow, t) = n.profile[t]
 """
     level_init(n::HydroReservoir, t)
 
-Returns the innitial level of a node `n` of type `HydroReservoir` at operational period `t`
+Returns the initial level of a node `n` of type `HydroReservoir` at operational period `t`
 """
 level_init(n::HydroReservoir, t) = n.level_init[t]
+
+"""
+    level_init(n::HydroStation, t)
+
+Returns the pq_curve of a node `n` of type `HydroStation` 
+"""
+pq_curve(n::HydroStation) = n.pq_curve
+
+pq_curve(n::HydroStation, p::Resource) = n.pq_curve[p]

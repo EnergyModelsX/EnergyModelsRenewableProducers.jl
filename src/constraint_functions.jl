@@ -236,9 +236,6 @@ Function for creating the constraint on the maximum capacity of a `Inflow`.
 """
 function EMB.constraints_capacity(m, n::Inflow, 𝒯::TimeStructure, modeltype::EnergyModel)
     @constraint(m, [t ∈ 𝒯], m[:cap_use][n, t] <= m[:cap_inst][n, t])
-
-    # Non dispatchable renewable energy sources operate at their max
-    # capacity with repsect to the current profile (e.g. wind) at every time.
     @constraint(m, [t ∈ 𝒯], m[:cap_use][n, t] == profile(n, t))
 
     return constraints_capacity_installed(m, n, 𝒯, modeltype)
@@ -299,11 +296,11 @@ function EMB.constraints_level_sp(
     # Water balance constraints for the hydro reservoir.
     for (t_prev, t) ∈ withprev(t_inv)
         if isnothing(t_prev) # Binds resevoir filling in first period to last period. 
-            @constraint(
-                m,
-                m[:stor_level][n, t] ==
-                    m[:stor_level][n, last(t_inv)] + m[:stor_level_Δ_op][n, t] * duration(t)
-            )
+           # @constraint(
+           #     m,
+           #     m[:stor_level][n, t] ==
+           #         m[:stor_level][n, last(t_inv)] + m[:stor_level_Δ_op][n, t] * duration(t)
+           # )
         else
             @constraint(
                 m,
@@ -312,4 +309,86 @@ function EMB.constraints_level_sp(
             )
         end
     end
+end
+
+
+"""
+    constraints_opex_var(m, n::HydroReservoir, 𝒯ᴵⁿᵛ, modeltype::EnergyModel)
+
+Function for creating the constraint on the variable OPEX of a `HydroReservoir`.
+"""
+function EMB.constraints_opex_var(m, n::HydroReservoir, 𝒯ᴵⁿᵛ, modeltype::EnergyModel)
+    p_stor = EMB.storage_resource(n)
+    @constraint(
+        m,
+        [t_inv ∈ 𝒯ᴵⁿᵛ],
+        m[:opex_var][n, t_inv] == 
+            -m[:stor_level][n, last(t_inv)] * opex_var(n, last(t_inv)) * EMB.multiple(t_inv, last(t_inv))
+        )
+end
+
+"""
+    constraints_flow_out(m, n::HydroStation, 𝒯::TimeStructure, modeltype::EnergyModel)
+
+Function for creating the constraint on the outlet flow from a generic `Node`.
+This function serves as fallback option if no other function is specified for a `Node`.
+"""
+
+function constraints_flow_out(m, n::HydroStation, 𝒯::TimeStructure, modeltype::EnergyModel)
+    # Declaration of the required subsets, excluding CO2, if specified
+    𝒫ᵒᵘᵗ = EMB.res_not(outputs(n), co2_instance(modeltype))
+    𝒫ⁱⁿ  = EMB.res_not(inputs(n), co2_instance(modeltype))
+
+    # Constraint for the individual output stream connections 
+    # produksjon = discharge*energiekvivalent
+ 
+
+    new_resource = 𝒫ᵒᵘᵗ[𝒫ᵒᵘᵗ .∉ [𝒫ⁱⁿ]]
+    original_resource = 𝒫ᵒᵘᵗ[𝒫ᵒᵘᵗ .∈ [𝒫ⁱⁿ]]
+
+    @constraint(m, [t ∈ 𝒯, p ∈ original_resource],
+    m[:flow_out][n, t, p] == m[:cap_use][n, t] * outputs(n, p)
+)
+
+#@constraint(m, [t ∈ 𝒯, p ∈ new_resource],
+#m[:flow_out][n, t, p] == m[:cap_use][n, t] * outputs(n, p)
+#)
+   
+    if length(original_resource) == 1 && length(new_resource) == 1
+        disch_levels = pq_curve(n, original_resource[1])
+        power_levels = pq_curve(n, new_resource[1])
+        if length(disch_levels) == length(power_levels) && length(disch_levels) > 1 
+            for i in range(2, length(disch_levels))
+                push!(n.η, (power_levels[i] - power_levels[i-1]) / (disch_levels[i] - disch_levels[i-1]))
+            end
+        else println("incorrect pq_curve values")
+        end
+       println(n.η)
+    else println("Requires one input resource and two output resources.")
+
+    end
+
+    # produksjon = discharge_segment*virkningsgrad_segment
+    Nˢ = range(1,length(n.η))
+    water_seq = pq_curve(n, original_resource[1])
+    println(water_seq)
+
+    @constraint(m, [t ∈ 𝒯, q ∈ Nˢ],
+    m[:discharge_segment][n, t, q] <= water_seq[q+1]*m[:cap_inst][n, t] .- water_seq[q]*m[:cap_inst][n, t]
+    )
+
+    @constraint(m, [t ∈ 𝒯],
+    m[:cap_use][n, t] == sum(m[:discharge_segment][n, t, q] for q ∈ Nˢ)
+    )
+
+    @constraint(m, [t ∈ 𝒯, p ∈ new_resource],
+    m[:flow_out][n, t, p] == sum(m[:discharge_segment][n, t, q] * n.η[q] for q ∈ Nˢ)
+)
+
+
+    # Opprett variabel per segment 
+    
+
+
+
 end
