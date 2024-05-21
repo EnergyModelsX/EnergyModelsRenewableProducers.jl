@@ -17,8 +17,8 @@ using JuMP
 using PrettyTables
 using TimeStruct
 
+
 const EMB = EnergyModelsBase
-+
 
 @info "Generate case data - Simple `HydroStor` example"
 
@@ -89,11 +89,11 @@ inflow = Inflow(
 hydro_reservoir = HydroReservoir(
     "hydro_reservoir",  # Node ID
     FixedProfile(100),   # rate_cap, capacity pump/discharge in mm3/timestep (begrenser input til node??)
-    FixedProfile(100),  # stor_cap, capacity reservoir in mm3
+    FixedProfile(15),  # stor_cap, capacity reservoir in mm3
     FixedProfile(10),   # level_int, initial water level in mm3
     #FixedProfile(0),    # level_min, minimum water level in mm3
     #FixedProfile(100),  # level_max, maximum water level in mm3
-    FixedProfile(0),    # opex_var, variable OPEX in EUR/(mm3/h?)
+    FixedProfile(5),    # opex_var, variable OPEX in EUR/(mm3/h?)
     FixedProfile(0),    # opex_fixed, Fixed OPEX in EUR/(mm3/h?)
     Water,              # stor_res, stored resource 
     #Dict(0 => 0, 100 => 10),        # vol_head
@@ -103,19 +103,19 @@ hydro_reservoir = HydroReservoir(
     Data[],                         
 )
 
-reservoir_disch = HydroGate(
-    "discharge_reservoir",  # Node ID
-    FixedProfile(5),       # cap, in mm3/timestep
-    FixedProfile(0),        # opex_var, variable OPEX in EUR/(mm3/h?)
-    FixedProfile(0),        # opex_fixed, Fixed OPEX in EUR/(mm3/h?)
-    Dict(Water => 1),       # input
-    Dict(Water => 1),       # output
-)
+#reservoir_disch = HydroGate(
+#    "discharge_reservoir",  # Node ID
+#    FixedProfile(5),       # cap, in mm3/timestep
+#    FixedProfile(0),        # opex_var, variable OPEX in EUR/(mm3/h?)
+#    FixedProfile(0),        # opex_fixed, Fixed OPEX in EUR/(mm3/h?)
+#    Dict(Water => 1),       # input
+#    Dict(Water => 1),       # output
+#)
 
 reservoir_spill = HydroGate(
     "spill_reservoir",  # Node ID
     FixedProfile(1000),     # cap, in mm3/timestep
-    FixedProfile(0),        # opex_var, variable OPEX in EUR/(mm3/h?)
+    FixedProfile(0.1),        # opex_var, variable OPEX in EUR/(mm3/h?)
     FixedProfile(0),        # opex_fixed, Fixed OPEX in EUR/(mm3/h?)
     Dict(Water => 1),       # input
     Dict(Water => 1),       # output
@@ -125,7 +125,8 @@ reservoir_spill = HydroGate(
 hydro_station = HydroStation(
     "hydropower_station",   # Node ID
     #FixedProfile(10),       # power_cap
-    FixedProfile(10),       # cap
+    FixedProfile(3),       # cap
+    Dict(Water => [0,0.8, 1], Power => [0,0.9,1]),   # pq_curve, nb, må være konkav!
     #Dict(0 => 0, 1 => 1),   # pq_curve
     #FixedProfile(0),        # pump_power_cap
     #FixedProfile(0),        # pump_disch_cap
@@ -136,8 +137,20 @@ hydro_station = HydroStation(
     FixedProfile(0),        # opex_fixed
     Dict(Water => 1),       # input
     Dict(Water => 1, Power => 1),   # output
-    Data[],                 # data
+    #Real[],
+    #Data[],                 # data
 )
+
+#=hydro_pump = HydroStation(
+    "hydropower_pump",   # Node ID
+    FixedProfile(5),       # cap
+    FixedProfile(6),        # opex_var
+    FixedProfile(0),        # opex_fixed
+    Dict(Water => 1, Power => 1),       # input
+    Dict(Water => 1),   # output
+    Data[],                 # data
+)=#
+
 
 
    # Create a final water node, ocean
@@ -160,7 +173,7 @@ hydro_station = HydroStation(
     )
 
     # Create the array of ndoes
-    nodes = [av, wind, hydro, inflow, hydro_reservoir, reservoir_disch, reservoir_spill, hydro_station, ocean, sink]
+    nodes = [av, wind, hydro, inflow, hydro_reservoir, reservoir_spill, hydro_station, ocean, sink]
     #nodes = [av, wind, hydro, inflow, hydro_reservoir]
 
     # Connect all nodes with the availability node for the overall energy balance
@@ -169,13 +182,14 @@ hydro_station = HydroStation(
         Direct("hy-av", hydro, av),
         Direct("av-hy", av, hydro),
         Direct("inf-hydro_res", inflow, hydro_reservoir),
-        Direct("hydro_res-hydro_disch", hydro_reservoir, reservoir_disch),
+        Direct("hydro_res-hydro_disch", hydro_reservoir, hydro_station),
         Direct("hydro_res-hydro_spill", hydro_reservoir, reservoir_spill),
-        Direct("hydro_gate-hydro_station", reservoir_disch, hydro_station),
         Direct("hydro_gate-ocean", reservoir_spill, ocean),
         Direct("hydro_station-ocean",  hydro_station, ocean),
         Direct("hydro_station-av",  hydro_station, av),
+        #Direct("hydro_pump-hydro_reservoir",  hydro_pump, hydro_reservoir),
         Direct("av-hydro_station", av, hydro_station),
+        #Direct("av-hydro_station", hydro_station, hydro_pump),
         Direct("av-demand", av, sink),
     ]
 
@@ -204,4 +218,5 @@ pretty_table(
 )
 
 # Run the GUI
+using EnergyModelsGUI
 gui = GUI(case; model = m, coarseCoastLines = false)
