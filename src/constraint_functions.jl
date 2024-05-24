@@ -33,7 +33,7 @@ function EMB.constraints_flow_in(m, n::HydroStor, 𝒯::TimeStructure, modeltype
 
     # Fix the inlet flow to a value of 0
     for t ∈ 𝒯, p ∈ 𝒫ⁱⁿ
-        fix(m[:flow_in][n, t, p], 0)
+        fix(m[:flow_in][n, t, p], 0; force=true)
     end
 end
 

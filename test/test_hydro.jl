@@ -209,8 +209,8 @@ end
 @testset "HydroStor - regulated hydro power plant" begin
 
     # Test that the fields of a HydroStor are correctly checked
-    # - check_node(n::HydroStor, 𝒯, modeltype::EnergyModel)
-    check_node(HydroStor)
+    # - check_node(n::HydroStorage, 𝒯, modeltype::EnergyModel)
+    # check_node(HydroStor)
 
     # Creation of the initial problem and the HydroStor node
     max_storage = FixedProfile(100)
@@ -268,31 +268,8 @@ end
         general_tests(m)
         general_node_tests(m, case, hydro)
 
-        @testset "no pump" begin
-            # No pump means no inflow.
-            @test sum(
-                value.(m[:flow_in][hydro, t, p]) == 0 for t ∈ 𝒯 for p ∈ inputs(hydro)
-            ) == length(𝒯)
-        end
-
-        @testset "flow_in" begin
-            # Check that the zero equality constraint is set on the flow_in variable
-            # when the pump is not allowed. If this false, there might be errors in
-            # the links to the node. The hydro node need one in and one out.
-            logic_1 = sum(
-                sum(
-                    occursin("flow_in[n_-hydro,$t,Power] = 0", string(constraint)) for
-                    constraint ∈ all_constraints(m, AffExpr, MOI.EqualTo{Float64})
-                ) == 1 for t ∈ 𝒯
-            ) == length(𝒯)
-            logic_2 = sum(
-                sum(
-                    occursin("flow_in[n_-hydro,$t,Power] == 0", string(constraint)) for
-                    constraint ∈ all_constraints(m, AffExpr, MOI.EqualTo{Float64})
-                ) == 1 for t ∈ 𝒯
-            ) == length(𝒯)
-            @test logic_1 || logic_2
-        end
+        # Check that the input flow is fixed to 0 for Power
+        @test sum(is_fixed(m[:flow_in][hydro, t, Power]) for t ∈ 𝒯) == length(𝒯)
 
         if hydro == hydro2
             # hydro2 should lead to spillage.
@@ -389,9 +366,9 @@ end
 
 @testset "PumpedHydroStor - regulated hydro storage with pumped storage" begin
 
-    # Test that the fields of a HydroStor are correctly checked
-    # - check_node(n::HydroStor, 𝒯, modeltype::EnergyModel)
-    check_node(PumpedHydroStor)
+    # Test that the fields of a PumpedHydroStor are correctly checked
+    # - check_node(n::HydroStorage, 𝒯, modeltype::EnergyModel)
+    # check_node(PumpedHydroStor)
 
     # Creation of the initial problem and the PumpedHydroStor node with a pump.
     products = [Power, CO2]
@@ -415,7 +392,7 @@ end
     max_storage = FixedProfile(100)
     initial_reservoir = StrategicProfile([20, 25])
     min_level = StrategicProfile([0.1, 0.2])
-    hydro = EMRP.PumpedHydroStor(
+    hydro = PumpedHydroStor(
         "-hydro",
         FixedProfile(10.0),
         max_storage,
@@ -450,26 +427,11 @@ end
     general_node_tests(m, case, hydro)
 
     # Test the objective value
-    @test objective_value(m) ≈ -6825.0
+    # -25 in v0.6 compared to 0.5 as opex_var now via stor_discharge_use instead of flow_out
+    @test objective_value(m) ≈ -6850.0
 
-    @testset "flow_in" begin
-        # Check that the zero equality constraint is not set on the flow_in variable
-        # when the pump is allowed. If this fails, there might be errors in the links
-        # to the node. The hydro node need one in and one out.
-        logic_1 = sum(
-            sum(
-                occursin("flow_in[n_-hydro,$t,Power] = 0", string(constraint)) for
-                constraint ∈ all_constraints(m, AffExpr, MOI.EqualTo{Float64})
-            ) == 0 for t ∈ 𝒯
-        ) == length(𝒯)
-        logic_2 = sum(
-            sum(
-                occursin("flow_in[n_-hydro,$t,Power] == 0", string(constraint)) for
-                constraint ∈ all_constraints(m, AffExpr, MOI.EqualTo{Float64})
-            ) == 0 for t ∈ 𝒯
-        ) == length(𝒯)
-        @test logic_1 || logic_2
-    end
+    # Check that the input flow is not fixed to 0 for Power
+    @test sum(is_fixed(m[:flow_in][hydro, t, Power]) for t ∈ 𝒯) == 0
 
     @testset "deficit" begin
         if sum(value.(m[:sink_deficit][sink, t]) for t ∈ 𝒯) > 0

@@ -33,13 +33,11 @@ function EMB.create_node(m, n::HydroStorage, 𝒯, 𝒫, modeltype::EnergyModel)
     p_stor = EMB.storage_resource(n)
     𝒯ᴵⁿᵛ = strategic_periods(𝒯)
 
-    # If the reservoir has no pump, the stored resource cannot flow in.
-    if isa(n, HydroStor)
-        @constraint(m, [t ∈ 𝒯], m[:flow_in][n, t, p_stor] == 0)
-    end
-
     # Energy balance constraints for stored electricity.
     constraints_level(m, n, 𝒯, 𝒫, modeltype)
+
+    # Call of the function for the inlet flow to the `HydroStorage` node
+    constraints_flow_in(m, n, 𝒯, modeltype)
 
     # The flow_out is equal to the production stor_rate_use.
     @constraint(
