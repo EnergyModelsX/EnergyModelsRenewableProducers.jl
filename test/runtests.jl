@@ -13,4 +13,5 @@ const EMRP = EnergyModelsRenewableProducers
     include("test_nondisres.jl")
     include("test_hydro.jl")
     include("test_examples.jl")
+    include("test_constructors.jl")
 end

@@ -1,16 +1,20 @@
-""" A non-dispatchable renewable energy source.
+"""
+    NonDisRES <: EMB.Source
+
+A non-dispatchable renewable energy source. It extends the existing `RefSource` node through
+including a profile that corresponds to thr production. The profile can have variations on
+the strategic level.
 
 # Fields
-- **`id`** is the name/identifyer of the node.\n
-- **`cap::TimeProfile`** is the installed capacity.\n
-- **`profile::TimeProfile`** is the power production in each operational period as a ratio \
-of the installed capacity at that time.\n
-- **`opex_var::TimeProfile`** is the variational operational costs per energy unit produced.\n
-- **`opex_fixed::TimeProfile`** is the fixed operational costs.\n
-- **`output::Dict{Resource, Real}`** are the generated `Resource`s, normally Power.\n
-- **`data::Vector{Data}`** is the additional data (e.g. for investments). The field \
-`data` is conditional through usage of a constructor.
-
+- **`id`** is the name/identifyer of the node.
+- **`cap::TimeProfile`** is the installed capacity.
+- **`profile::TimeProfile`** is the power production in each operational period as a ratio
+  of the installed capacity at that time.
+- **`opex_var::TimeProfile`** is the variable operating expense per energy unit produced.
+- **`opex_fixed::TimeProfile`** is the fixed operating expense.
+- **`output::Dict{Resource, Real}`** are the generated `Resource`s, normally Power.
+- **`data::Vector{Data}`** is the additional data (e.g. for investments). The field `data`
+  is conditional through usage of a constructor.
 """
 struct NonDisRES <: EMB.Source
     id::Any
@@ -35,21 +39,29 @@ end
 """ An abstract type for hydro storage nodes, with or without pumping. """
 abstract type HydroStorage{T} <: EMB.Storage{T} end
 
-""" A regulated hydropower storage, modelled as a `Storage` node.
+"""
+    HydroStor{T} <: HydroStorage{T}
+
+A regulated hydropower storage, modelled as a `Storage` node. A regulated hydro storage node
+requires a capacity for the `discharge` and does not have a required inflow from the model,
+except for water inflow from outside the model, although it requires a field `input`.
 
 ## Fields
-- **`id`** is the name/identifyer of the node.\n
-- **`rate_cap::TimeProfile`**: installed capacity.\n
-- **`stor_cap::TimeProfile`** Initial installed storage capacity in the dam.\n
-- **`level_init::TimeProfile`** Initial energy stored in the dam, in units of power.\n
-- **`level_inflow::TimeProfile`** Inflow of power per operational period.\n
-- **`level_min::TimeProfile`** Minimum fraction of the reservoir capacity that can be left.\n
-- **`stor_res::ResourceCarrier`** is the stored `Resource`.\n
-- **`input::Dict{Resource, Real}`** the stored and used resources. The \
-values in the Dict is a ratio describing the energy loss when using the pumps.\n
-- **`output::Dict{Resource, Real}`** can only contain one entry, the stored resource.\n
-- **`data::Vector{Data}`** additional data (e.g. for investments). The field \
-`data` is conditional through usage of a constructor.
+- **`id`** is the name/identifyer of the node.
+- **`level::EMB.UnionCapacity`** are the level parameters of the `HydroStor` node.
+  Depending on the chosen type, the charge parameters can include variable OPEX and/or fixed OPEX.
+- **`discharge::EMB.UnionCapacity`** are the discharging parameters of the `HydroStor` node.
+  Depending on the chosen type, the discharge parameters can include variable OPEX, fixed OPEX,
+  and/or a capacity.
+- **`level_init::TimeProfile`** Initial energy stored in the dam, in units of power.
+- **`level_inflow::TimeProfile`** Inflow of power per operational period.
+- **`level_min::TimeProfile`** Minimum fraction of the reservoir capacity that can be left.
+- **`stor_res::ResourceCarrier`** is the stored `Resource`.
+- **`input::Dict{Resource, Real}`** the input `Resource`s. In the case of a `HydroStor`, this
+  can be provided as an empty dictionary `Dict{Resource, Real}()`.
+- **`output::Dict{Resource, Real}`** can only contain one entry, the stored resource.
+- **`data::Vector{Data}`** additional data (e.g. for investments). The field `data` is
+  conditional through usage of a constructor.
 """
 struct HydroStor{T} <: HydroStorage{T}
     id::Any
@@ -69,9 +81,62 @@ function HydroStor{T}(
         id::Any,
         level::EMB.UnionCapacity,
         discharge::EMB.UnionCapacity,
+
         level_init::TimeProfile,
         level_inflow::TimeProfile,
         level_min::TimeProfile,
+
+        stor_res::ResourceCarrier,
+        output::Dict{<:Resource, <:Real},
+        data::Vector{Data},
+    ) where {T<:EMB.StorageBehavior}
+    return HydroStor{T}(
+        id,
+        level,
+        discharge,
+        level_init,
+        level_inflow,
+        level_min,
+        stor_res,
+        Dict{Resource,Real}(stor_res => 1),
+        output,
+        data,
+    )
+end
+function HydroStor{T}(
+        id::Any,
+        level::EMB.UnionCapacity,
+        discharge::EMB.UnionCapacity,
+
+        level_init::TimeProfile,
+        level_inflow::TimeProfile,
+        level_min::TimeProfile,
+
+        stor_res::ResourceCarrier,
+        output::Dict{<:Resource, <:Real},
+    ) where {T<:EMB.StorageBehavior}
+    return HydroStor{T}(
+        id,
+        level,
+        discharge,
+        level_init,
+        level_inflow,
+        level_min,
+        stor_res,
+        Dict{Resource,Real}(stor_res => 1),
+        output,
+        Data[],
+    )
+end
+function HydroStor{T}(
+        id::Any,
+        level::EMB.UnionCapacity,
+        discharge::EMB.UnionCapacity,
+
+        level_init::TimeProfile,
+        level_inflow::TimeProfile,
+        level_min::TimeProfile,
+
         stor_res::ResourceCarrier,
         input::Dict{<:Resource, <:Real},
         output::Dict{<:Resource, <:Real},
@@ -90,21 +155,36 @@ function HydroStor{T}(
     )
 end
 
-""" A regulated hydropower storage with pumping capabilities, modelled as a `Storage` node.
+"""
+    PumpedHydroStor{T} <: HydroStorage{T}
+
+A pumped hydropower storage, modelled as a `Storage` node. A pumped hydro storage node
+allows for storing energy through pumping water into the reservoir. The current
+implementation is a simplified node in which no lower reservoir is required. Instead, it is
+assumed that the reservoir has an infinite size.
+
+A pumped hydro storage node requires a capacity for both `charge` and `discharge` to
+account for the potential to store energy in the form of potential energy.
 
 ## Fields
-- **`id`** is the name/identifyer of the node.\n
-- **`rate_cap::TimeProfile`**: installed capacity.\n
-- **`stor_cap::TimeProfile`** Initial installed storage capacity in the dam.\n
-- **`level_init::TimeProfile`** Initial energy stored in the dam, in units of power.\n
-- **`level_inflow::TimeProfile`** Inflow of power per operational period.\n
-- **`level_min::TimeProfile`** Minimum fraction of the reservoir capacity that can be left.\n
-- **`stor_res::ResourceCarrier`** is the stored `Resource`.\n
-- **`input::Dict{Resource, Real}`** the stored and used resources. The \
-values in the Dict is a ratio describing the energy loss when using the pumps.\n
-- **`output::Dict{Resource, Real}`** can only contain one entry, the stored resource.\n
-- **`data::Vector{Data}`** additional data (e.g. for investments). The field \
-`data` is conditional through usage of a constructor.\n
+- **`id`** is the name/identifyer of the node.
+- **`charge::EMB.UnionCapacity`** are the charging parameters of the `PumpedHydroStor` node.
+  Depending on the chosen type, the charge parameters can include variable OPEX, fixed OPEX,
+  and/or a capacity.
+- **`level::EMB.UnionCapacity`** are the level parameters of the `HydroStor` node.
+  Depending on the chosen type, the charge parameters can include variable OPEX and/or fixed OPEX.
+- **`discharge::EMB.UnionCapacity`** are the discharging parameters of the `HydroStor` node.
+  Depending on the chosen type, the discharge parameters can include variable OPEX, fixed OPEX,
+  and/or a capacity.
+- **`level_init::TimeProfile`** Initial energy stored in the dam, in units of power.
+- **`level_inflow::TimeProfile`** Inflow of power per operational period.
+- **`level_min::TimeProfile`** Minimum fraction of the reservoir capacity that can be left.
+- **`stor_res::ResourceCarrier`** is the stored `Resource`.
+- **`input::Dict{Resource, Real}`** the input `Resource`s. In the case of a `HydroStor`, this
+  can be provided as an empty dictionary `Dict{Resource, Real}()`.
+- **`output::Dict{Resource, Real}`** can only contain one entry, the stored resource.
+- **`data::Vector{Data}`** additional data (e.g. for investments). The field `data` is
+  conditional through usage of a constructor.
 """
 struct PumpedHydroStor{T} <: HydroStorage{T}
     id::Any
