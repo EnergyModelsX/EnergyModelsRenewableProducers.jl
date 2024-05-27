@@ -112,35 +112,31 @@ function check_node(nodetype::Type{<:EMRP.HydroStorage})
         )
 
         if hydro <: HydroStor
-            hydro = HydroStor(
+            hydro = HydroStor{CyclicStrategic}(
                 "-hydro",
-                rate_cap,
-                stor_cap,
+                StorCapOpexFixed(stor_cap, opex_fixed),
+                StorCapOpexVar(rate_cap, opex_var),
                 level_init,
                 level_inflow,
                 level_min,
-                opex_var,
-                opex_fixed,
                 stor_res,
                 input,
                 output,
             )
 
         elseif hydro <: PumpedHydroStor
-            hydro = HydroStor(
+            hydro = PumpedHydroStor{CyclicStrategic}(
                 "-hydro",
-                rate_cap,
-                stor_cap,
+                StorCapOpexVar(rate_cap, opex_var_pump),
+                StorCapOpexFixed(stor_cap, opex_fixed),
+                StorCapOpexVar(rate_cap, opex_var),
                 level_init,
                 level_inflow,
                 level_min,
-                opex_var,
-                opex_var_pump,
-                opex_fixed,
                 stor_res,
                 input,
                 output,
-            )
+                )
         end
 
         case, modeltype = small_graph()
@@ -160,45 +156,46 @@ function check_node(nodetype::Type{<:EMRP.HydroStorage})
 
         # Set the global to true to suppress the error message
         EMB.TEST_ENV = true
+        check_graph(nodetype)
 
         # Test that a wrong capacity is caught by the checks.
         rate_cap = FixedProfile(-2.0)
-        @test_throws AssertionError check_graph(HydroStor; rate_cap)
+        @test_throws AssertionError check_graph(nodetype; rate_cap)
         stor_cap = FixedProfile(-40)
-        @test_throws AssertionError check_graph(HydroStor; stor_cap)
+        @test_throws AssertionError check_graph(nodetype; stor_cap)
 
         # Test that a wrong fixed OPEX is caught by the checks.
         opex_fixed = FixedProfile(-10)
-        @test_throws AssertionError check_graph(HydroStor; opex_fixed)
+        @test_throws AssertionError check_graph(nodetype; opex_fixed)
 
         # Test that a wrong output dictionary is caught by the checks.
         output = Dict(Power => 1, CO2 => 0.5)
-        @test_throws AssertionError check_graph(HydroStor; output)
+        @test_throws AssertionError check_graph(nodetype; output)
         output = Dict(Power => 1.5)
-        @test_throws AssertionError check_graph(HydroStor; output)
+        @test_throws AssertionError check_graph(nodetype; output)
         output = Dict(Power => -1.0)
-        @test_throws AssertionError check_graph(HydroStor; output)
+        @test_throws AssertionError check_graph(nodetype; output)
 
         # Test that a wrong input dictionary is caught by the checks.
         input = Dict(Power => 1.5)
-        @test_throws AssertionError check_graph(HydroStor; input)
+        @test_throws AssertionError check_graph(nodetype; input)
         input = Dict(Power => -0.9)
-        @test_throws AssertionError check_graph(HydroStor; input)
+        @test_throws AssertionError check_graph(nodetype; input)
 
         # Test that a wrong initial level is caught by the checks.
         level_init = StrategicProfile([50, 25, 45, 20])
-        @test_throws AssertionError check_graph(HydroStor; level_init)
+        @test_throws AssertionError check_graph(nodetype; level_init)
         level_init = StrategicProfile([40, 25, 1, 20])
         level_min = FixedProfile(.5)
-        @test_throws AssertionError check_graph(HydroStor; level_init, level_min)
+        @test_throws AssertionError check_graph(nodetype; level_init, level_min)
         level_init = StrategicProfile([40, 25, -5, 20])
-        @test_throws AssertionError check_graph(HydroStor; level_init)
+        @test_throws AssertionError check_graph(nodetype; level_init)
 
         # Test that a wrong minimum level is caught by the checks.
         level_min = FixedProfile(-0.5)
-        @test_throws AssertionError check_graph(HydroStor; level_min)
+        @test_throws AssertionError check_graph(nodetype; level_min)
         level_min = FixedProfile(2)
-        @test_throws AssertionError check_graph(HydroStor; level_min)
+        @test_throws AssertionError check_graph(nodetype; level_min)
 
         # Set the global again to false
         EMB.TEST_ENV = false
@@ -218,15 +215,13 @@ end
     min_level = StrategicProfile([0.1, 0.2, 0.05, 0.1])
 
     # Regular nice hydro storage node.
-    hydro1 = HydroStor(
+    hydro1 = HydroStor{CyclicStrategic}(
         "-hydro",
-        FixedProfile(2.0),
-        max_storage,
+        StorCapOpexFixed(max_storage, FixedProfile(10)),
+        StorCapOpexVar(FixedProfile(2.0), FixedProfile(10)),
         initial_reservoir,
         FixedProfile(1),
         min_level,
-        FixedProfile(10),
-        FixedProfile(10),
         Power,
         Dict(Power => 0.9),
         Dict(Power => 1),
@@ -234,15 +229,13 @@ end
 
     # Gives infeasible model without spill-variable (because without spill, the inflow is
     # much greater than what the Rate_cap can handle, given the Stor_cap of the storage).
-    hydro2 = HydroStor(
+    hydro2 = HydroStor{CyclicStrategic}(
         "-hydro",
-        FixedProfile(2.0),
-        FixedProfile(40),
+        StorCapOpexFixed(FixedProfile(40), FixedProfile(10)),
+        StorCapOpexVar(FixedProfile(2.0), FixedProfile(10)),
         initial_reservoir,
         FixedProfile(10),
         min_level,
-        FixedProfile(10),
-        FixedProfile(10),
         Power,
         Dict(Power => 0.9),
         Dict(Power => 1),
@@ -392,16 +385,14 @@ end
     max_storage = FixedProfile(100)
     initial_reservoir = StrategicProfile([20, 25])
     min_level = StrategicProfile([0.1, 0.2])
-    hydro = PumpedHydroStor(
+    hydro = PumpedHydroStor{CyclicStrategic}(
         "-hydro",
-        FixedProfile(10.0),
-        max_storage,
+        StorCapOpexVar(FixedProfile(10.0), FixedProfile(30)),
+        StorCapOpexFixed(max_storage, FixedProfile(10)),
+        StorCapOpexVar(FixedProfile(10.0), FixedProfile(5)),
         initial_reservoir,
         FixedProfile(1),
         min_level,
-        FixedProfile(5),
-        FixedProfile(30),
-        FixedProfile(10),
         Power,
         Dict(Power => 1),
         Dict(Power => 0.9),

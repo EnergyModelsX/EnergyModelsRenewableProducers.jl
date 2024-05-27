@@ -62,15 +62,19 @@ function generate_example_data()
     )
 
     # Create a regulated hydro power plant without storage capacity
-    hydro = HydroStor(
+    hydro = HydroStor{CyclicStrategic}(
         "hydropower",       # Node ID
-        FixedProfile(2.0),  # Rate capacity in MW
-        FixedProfile(90),   # Storage capacity in MWh
+        StorCapOpexFixed(FixedProfile(90), FixedProfile(3)),
+        # Line above for the storage level:
+        #   Argument 1: Storage capacity in MWh
+        #   Argument 2: Fixed OPEX in EUR/8h
+        StorCapOpexVar(FixedProfile(2.0), FixedProfile(8)),
+        # Line above for the discharge rate:
+        #   Argument 1: Rate capacity in MW
+        #   Argument 2: Variable OPEX in EUR/MWh
         FixedProfile(10),   # Initial storage level in MWh
         FixedProfile(1),    # Inflow to the Node in MW
         FixedProfile(0.0),  # Minimum storage level as fraction
-        FixedProfile(8),    # Variable OPEX in EUR/MWh
-        FixedProfile(3),    # Fixed OPEX in EUR/8h
         Power,              # Stored resource
         Dict(Power => 0.9), # Input to the power plant, irrelevant in this case
         Dict(Power => 1),   # Output from the Node, in this gase, Power
