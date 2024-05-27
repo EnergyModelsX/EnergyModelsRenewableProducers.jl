@@ -53,12 +53,13 @@ except for water inflow from outside the model, although it requires a field `in
 - **`discharge::EMB.UnionCapacity`** are the discharging parameters of the `HydroStor` node.
   Depending on the chosen type, the discharge parameters can include variable OPEX, fixed OPEX,
   and/or a capacity.
-- **`level_init::TimeProfile`** Initial energy stored in the dam, in units of power.
-- **`level_inflow::TimeProfile`** Inflow of power per operational period.
-- **`level_min::TimeProfile`** Minimum fraction of the reservoir capacity that can be left.
+- **`level_init::TimeProfile`** is the initial stored energy in the dam.
+- **`level_inflow::TimeProfile`** is the inflow of power per operational period.
+- **`level_min::TimeProfile`** is the minimum fraction of the reservoir capacity that
+  has to remain in the `HydroStorage` node.
 - **`stor_res::ResourceCarrier`** is the stored `Resource`.
-- **`input::Dict{Resource, Real}`** the input `Resource`s. In the case of a `HydroStor`, this
-  can be provided as an empty dictionary `Dict{Resource, Real}()`.
+- **`input::Dict{Resource, Real}`** are the input `Resource`s. In the case of a `HydroStor`,
+  this field can be left out.
 - **`output::Dict{Resource, Real}`** can only contain one entry, the stored resource.
 - **`data::Vector{Data}`** additional data (e.g. for investments). The field `data` is
   conditional through usage of a constructor.
@@ -176,12 +177,12 @@ account for the potential to store energy in the form of potential energy.
 - **`discharge::EMB.UnionCapacity`** are the discharging parameters of the `HydroStor` node.
   Depending on the chosen type, the discharge parameters can include variable OPEX, fixed OPEX,
   and/or a capacity.
-- **`level_init::TimeProfile`** Initial energy stored in the dam, in units of power.
-- **`level_inflow::TimeProfile`** Inflow of power per operational period.
-- **`level_min::TimeProfile`** Minimum fraction of the reservoir capacity that can be left.
+- **`level_init::TimeProfile`** is the initial stored energy in the dam.
+- **`level_inflow::TimeProfile`** is the inflow of power per operational period.
+- **`level_min::TimeProfile`** is the minimum fraction of the reservoir capacity that
+  has to remain in the `HydroStorage` node.
 - **`stor_res::ResourceCarrier`** is the stored `Resource`.
-- **`input::Dict{Resource, Real}`** the input `Resource`s. In the case of a `HydroStor`, this
-  can be provided as an empty dictionary `Dict{Resource, Real}()`.
+- **`input::Dict{Resource, Real}`** are the input `Resource`s.
 - **`output::Dict{Resource, Real}`** can only contain one entry, the stored resource.
 - **`data::Vector{Data}`** additional data (e.g. for investments). The field `data` is
   conditional through usage of a constructor.

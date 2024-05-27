@@ -57,7 +57,7 @@ end
     EMB.constraints_level_aux(m, n::HydroStorage, 𝒯, 𝒫, modeltype)
 
 Function for creating the Δ constraint for the level of a `HydroStorage` node as well as
-the specificaiton of the initial level in a strategic period.
+the specification of the initial level in a strategic period.
 
 The change in storage level in the reservoir at operational periods `t` is the inflow through
 `level_inflow` plus the input `flow_in` minus the production `stor_rate_use` and the

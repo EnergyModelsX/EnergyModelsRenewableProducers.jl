@@ -25,6 +25,7 @@ Pages = [
     "manual/constraint-functions.md",
     "manual/simple-example.md"
 ]
+Depth = 1
 ```
 
 ## How to guides
@@ -32,7 +33,9 @@ Pages = [
 ```@contents
 Pages = [
     "how-to/contribute.md",
+    "how-to/update-models.md",
 ]
+Depth = 1
 ```
 
 ## Library outline
@@ -41,5 +44,6 @@ Pages = [
 Pages = [
     "library/public.md"
     "library/internals.md"
-    ]
+]
+Depth = 1
 ```

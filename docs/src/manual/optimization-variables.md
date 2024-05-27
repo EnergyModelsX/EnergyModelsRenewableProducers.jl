@@ -35,7 +35,7 @@ The spillage is introduced to allow for an overflow from a reservoir if the infl
 
 The variable is used in the following constraint [`EMB.constraints_level_aux`](@ref),
 
-  ``\texttt{stor\_level\_}\Delta\texttt{\_op}[n, t] = \texttt{level\_inflow}(n, t) + \texttt{inputs}(n, p_{\texttt{Power}}) \cdot \texttt{flow\_in}[n, t] + \texttt{stor\_rate\_use}[n, t] - \texttt{hydro\_spill}[n, t]``
+  ``\texttt{stor\_level\_}\Delta\texttt{\_op}[n, t] = \texttt{level\_inflow}(n, t) + \texttt{inputs}(n, p_{\texttt{Power}}) \cdot \texttt{flow\_in}[n, t] + \texttt{stor\_discharge\_use}[n, t] - \texttt{hydro\_spill}[n, t]``
 
 for the stored resource ``p_{\texttt{Power}}``.
 
