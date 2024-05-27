@@ -210,7 +210,7 @@ end
 
     # Test that the fields of a HydroStor are correctly checked
     # - check_node(n::HydroStorage, 𝒯, modeltype::EnergyModel)
-    # check_node(HydroStor)
+    check_node(HydroStor)
 
     # Creation of the initial problem and the HydroStor node
     max_storage = FixedProfile(100)
@@ -368,7 +368,7 @@ end
 
     # Test that the fields of a PumpedHydroStor are correctly checked
     # - check_node(n::HydroStorage, 𝒯, modeltype::EnergyModel)
-    # check_node(PumpedHydroStor)
+    check_node(PumpedHydroStor)
 
     # Creation of the initial problem and the PumpedHydroStor node with a pump.
     products = [Power, CO2]
