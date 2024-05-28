@@ -27,9 +27,10 @@ A hydropower plant is much more flexible than, *e.g.*, a wind farm since the wat
 Energy can be produced (almost) whenever it is needed.
 Some hydropower plants also have pumps installed.
 These are used to pump water into the reservoir when excess and cheap energy is available in the network.
+`EnergyModelsRenewableProducers` introduces hence two different types representing a regulated hydropower plant ([`HydroStor`](@ref)) and a pumped regulated hydropower plant ([`PumpedHydroStor`](@ref)) without a lower reservoir.
+Both types have a `level` and `discharge` capacity while a `PumpedHydroStor` also includes a `charge` capacity.
 
-The field `rate_cap` describes the installed production capacity of the (aggregated) hydropower plant.
-The variable `level_init` represents the initial energy available in the reservoir in the beginning of each investment period, while `stor_cap` is the installed storage capacity in the reservoir.
+The variable `level_init` represents the initial energy available in the reservoir in the beginning of each investment period.
 The variable `level_inflow` describes the inflow into the reservoir (measured in energy units), while `level_min` is the allowed minimum storage level in the dam, given as a ratio of the installed storage capacity of the reservoir at
 every operational period.
 The required minimum level is enforced by NVE and varies over the year.
@@ -38,16 +39,6 @@ The resources stored in the hydro storage is set as `stor_res`, similar to a reg
 The five last parameters are used in the same way as in `EMB.Storage`.
 In the implementation of [`PumpedHydroStor`](@ref), the values set in `input` represents a loss of energy when using the pumps.
 A value of `1` means no energy loss, while a value of `0` represents 100% energy loss of that inflow variable.
-[`PumpedHydroStor`](@ref) has in addition the field `opex_var_pump::TimeProfile`.
-This field corresponds to the variable operational expenditures when pumping water into the storage reservoir.
-
-Since we also want to be able to model hydropower plant nodes *without* pumps, we include the boolean `has_pump` in the type describing hydropower.
-For combining the behavior of a hydropower plant with and without a pump, we can disable the inflow of energy by setting the constraint
-
-  ``\texttt{flow\_in}[n, t, p_{\texttt{Power}}] = 0,``
-
-for the stored resource ``p_{\texttt{Power}}`` for the node ``n`` `::HydroStor`.
-To access this variable, we therefore have to let the type `HydroStorage` be a subtype of `EMB.Storage`.
 
 The fields of the different types are listed below:
 
@@ -55,5 +46,17 @@ The fields of the different types are listed below:
 HydroStorage
 HydroStor
 PumpedHydroStor
+```
+
+In recent version increases, we changed the individual fields of the `HydroStorage` nodes as well as their types.
+Hence, we still incorporate legacy constructors that can be utilized when having a model in previous versions.
+However, we removed one legacy constructor as it is no longer required.
+Calling the constructor will provide you now with an error.
+
+This legacy constructor is:
+
+```@docs
 RegHydroStor
 ```
+
+See the section on *[how to update models](@ref update-models)* for further information regarding how you can translate your existing model to the new model.

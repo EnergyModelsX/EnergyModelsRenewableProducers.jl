@@ -42,11 +42,15 @@ end
 This method checks that the *[`HydroStorage`](@ref HydroStorage_public)* node is valid.
 
 ## Checks
- - The value of the field `rate_cap` is required to be non-negative.
- - The value of the field `stor_cap` is required to be non-negative.
- - The value of the field `fixed_opex` is required to be non-negative and
-   accessible through a `StrategicPeriod` as outlined in the function
-   `check_fixed_opex(n, 𝒯ᴵⁿᵛ, check_timeprofiles)`.
+- The `TimeProfile` of the field `capacity` in the type in the field `charge` is required
+  to be non-negative if the chosen composite type has the field `capacity`.
+- The `TimeProfile` of the field `capacity` in the type in the field `level` is required
+  to be non-negative`.
+- The `TimeProfile` of the field `capacity` in the type in the field `discharge` is required
+  to be non-negative if the chosen composite type has the field `capacity`.
+- The `TimeProfile` of the field `fixed_opex` is required to be non-negative and
+  accessible through a `StrategicPeriod` as outlined in the function
+  `check_fixed_opex(n, 𝒯ᴵⁿᵛ, check_timeprofiles)` for the chosen composite type .
  - The field `output` can only include a single `Resource`.
  - The value of the field `output` is required to be smaller or equal to 1.
  - The value of the field `input` is required to be in the range ``[0, 1]``.
@@ -58,17 +62,36 @@ This method checks that the *[`HydroStorage`](@ref HydroStorage_public)* node is
 function EMB.check_node(n::HydroStorage, 𝒯, modeltype::EMB.EnergyModel, check_timeprofiles::Bool)
 
     𝒯ᴵⁿᵛ = strategic_periods(𝒯)
-    cap = capacity(n)
+    par_charge = charge(n)
+    par_level = level(n)
+    par_discharge = discharge(n)
 
+    if isa(par_charge, EMB.UnionCapacity)
+        @assert_or_log(
+            sum(capacity(par_charge, t) ≥ 0 for t ∈ 𝒯) == length(𝒯),
+            "The charge capacity must be non-negative."
+        )
+    end
+    if isa(par_charge, EMB.UnionOpexFixed)
+        EMB.check_fixed_opex(par_charge, 𝒯ᴵⁿᵛ, check_timeprofiles)
+    end
     @assert_or_log(
-        sum(cap.rate[t] < 0 for t ∈ 𝒯) == 0,
-        "The production capacity in field `rate_cap` has to be non-negative."
+        sum(capacity(par_level, t) ≥ 0 for t ∈ 𝒯) == length(𝒯),
+        "The level capacity must be non-negative."
     )
-    @assert_or_log(
-        sum(cap.level[t] < 0 for t ∈ 𝒯) == 0,
-        "The storage capacity in field `stor_cap` has to be non-negative."
-    )
-    EMB.check_fixed_opex(n, 𝒯ᴵⁿᵛ, check_timeprofiles)
+    if isa(par_level, EMB.UnionOpexFixed)
+        EMB.check_fixed_opex(par_level, 𝒯ᴵⁿᵛ, check_timeprofiles)
+    end
+    if isa(par_discharge, EMB.UnionCapacity)
+        @assert_or_log(
+            sum(capacity(par_discharge, t) ≥ 0 for t ∈ 𝒯) == length(𝒯),
+            "The charge capacity must be non-negative."
+        )
+    end
+    if isa(par_discharge, EMB.UnionOpexFixed)
+        EMB.check_fixed_opex(par_discharge, 𝒯ᴵⁿᵛ, check_timeprofiles)
+    end
+
     @assert_or_log(
         length(outputs(n)) == 1,
         "Only one resource can be stored, so only this one can flow out."
@@ -97,15 +120,14 @@ function EMB.check_node(n::HydroStorage, 𝒯, modeltype::EMB.EnergyModel, check
     end
 
     @assert_or_log(
-        sum(level_init(n, t) ≤ cap.level[t] for t ∈ 𝒯) == length(𝒯),
+        sum(level_init(n, t) ≤ capacity(par_level, t) for t ∈ 𝒯) == length(𝒯),
         "The initial level `level_init` has to be less or equal to the max storage capacity."
     )
     for t_inv ∈ 𝒯ᴵⁿᵛ
-
         t = first(t_inv)
         # Check that the reservoir isn't underfilled from the start.
         @assert_or_log(
-            level_init(n, t_inv) + level_inflow(n, t) ≥ level_min(n, t) * cap.level[t],
+            level_init(n, t_inv) + level_inflow(n, t) ≥ level_min(n, t) * capacity(par_level, t),
             "The reservoir can't be underfilled from the start (" * string(t) * ").")
     end
 

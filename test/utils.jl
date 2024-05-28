@@ -13,7 +13,7 @@ function small_graph(; source = nothing, sink = nothing, ops = SimpleTimes(24, 2
     if isnothing(source)
         source = RefSource(
             2,
-            FixedProfile(1),
+            FixedProfile(20),
             FixedProfile(30),
             FixedProfile(10),
             Dict(Power => 1),

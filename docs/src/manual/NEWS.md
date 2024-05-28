@@ -1,9 +1,15 @@
 # Release notes
 
-## Unversioned
+## Version 0.6.0 (2024-05-28)
 
-* Updated a link in the documentation for the examples.
+* Adjusted to changes introduced in `EnergyModelsBase` v0.7.
+* Remove legacy constructor for `RegHydroStor` and provide a warning for it.
+* Added constructors for `HydroStor` not requiring any longer specifying an input dictionary.
+
+## Version 0.5.6 (2024-05-09)
+
 * Provided a contribution section in the documentation.
+* Fixed a link in the documentation for the examples.
 
 ## Version 0.5.5 (2024-03-21)
 
