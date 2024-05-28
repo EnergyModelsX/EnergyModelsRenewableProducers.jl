@@ -1,39 +1,44 @@
 # [Constraint functions](@id constraint_functions)
 
-The [`HydroStorage`](@ref) types dispatch on individual functions from within `EnergyModelsBase` ti extend the functionality
+## `NonDisRES` (non-dispatchable renewable energy source)
 
-## Storage level constraints
+The introduction of the type [`NonDisRES`](@ref NonDisRES_public) does not require a new `create_node` function.
+Instead, it is sufficient to dispatch on the function
 
-All [`HydroStorage`](@ref) subtypes utilize the same function, `constraints_level(m, n::Storage, 𝒯, 𝒫, modeltype::EnergyModel)`, for calling the two relevant subfunctions.
+```julia
+EMB.constraints_capacity(m, n::NonDisRES, 𝒯::TimeStructure, modeltype::EnergyModel)
+```
 
-The function
+to introduce the new energy balance using the field `profile` and the variable ``\texttt{curtailment}``.
+In this case, we also have to call the function
+
+```julia
+constraints_capacity_installed(m, n, 𝒯, modeltype)
+```
+
+to allow for investments when coupled with `EnergyModelsInvestments`.
+We do however not need to create new methods for said function.
+
+## `HydroStorage` (regulated hydro storage with or without pump)
+
+The [`HydroStorage`](@ref HydroStorage_public) types utilize the same `create_node` function for introducing new concepts.
+In addition, they dispatch on individual functions from within `EnergyModelsBase` to extend the functionality.
+
+The functions
+
+```julia
+EMB.constraints_flow_in(m, n::HydroStor, 𝒯::TimeStructure, modeltype::EnergyModel)
+EMB.constraints_flow_in(m, n::PumpedHydroStor, 𝒯::TimeStructure, modeltype::EnergyModel)
+```
+
+allow for a different behavior of the `HydroStorage` node through fixing the variable ``\texttt{flow\\_in}`` in the case of a [`HydroStor`](@ref) node to 0 and limiting it in the case of a [`PumpedHydroStor`](@ref) to installed charge capacity through the variable ``\texttt{stor\\_charge\\_use}``.
+
+All `HydroStorage` subtypes utilize the introduced level balances from `EnergyModelsBase`.
+MOdification to the level balance is achieved through overloading
 
 ```julia
 EMB.constraints_level_aux(m, n::HydroStorage, 𝒯, 𝒫, modeltype::EnergyModel)
 ```
 
-is extended to account for both the provision of an initial level at the start of each strategic period as well as modifying the constraint for the variable ``\texttt{stor\_level\_}\Delta\texttt{\_op}`` to account for the introduction of the new variable ``\texttt{hydro\_spill}``.
-The former is required for [`HydroStorage`](@ref) subtypes asthe initial level is frequently a function of the season (excluding small scale pumped hydro storage) while the latter is required to include spillage.
-
-The functions
-
-```julia
-EMB.constraints_level_sp(m, n::HydroStorage, t_inv, 𝒫, modeltype::EnergyModel)
-```
-
-are similar to the function used for `RefStorage{T} where {T<:ResourceCarrier}`.
-It is however necessary to reintroduce it due to the declaration for `RefStorage` in `EnergyModelsBase`.
-This will most likely be adjusted in later versions, although it will not impact the user directly.
-
-## Operational expenditure constraints
-
-Variable operational expenditure (OPEX) constraints are slightly different defined in the case of [`HydroStor`](@ref) and [`PumpedHydroStor`](@ref) nodes.
-Hence, dispatch is required on the individual constraints:
-
-```julia
-EMB.constraints_opex_var(m, n::HydroStor, 𝒯::TimeStructure, modeltype::EnergyModel)
-EMB.constraints_opex_var(m, n::PumpedHydroStor, 𝒯::TimeStructure, modeltype::EnergyModel)
-```
-
-Within a [`HydroStor`](@ref) node, the variable OPEX is defined *via* the outflow from the hydropower plant, contrary to the definition of a `RefStorage` node in which the variable OPEX is defined *via* the inflow.
-A [`PumpedHydroStor`](@ref) has contributions by both the inflow (through the field `opex_var_pump`) and the outflow (through the field `opex_var`).
+to account for both the provision of an initial level at the start of each strategic period as well as modifying the constraint for the variable ``\texttt{stor\_level\_}\Delta\texttt{\_op}`` to account for the introduction of the new variable ``\texttt{hydro\_spill}``.
+The former is required for [`HydroStorage`](@ref) subtypes as the initial level is frequently a function of the season (excluding small scale pumped hydro storage) while the latter is required to include spillage.

@@ -47,3 +47,16 @@ HydroStorage
 HydroStor
 PumpedHydroStor
 ```
+
+In recent version increases, we changed the individual fields of the `HydroStorage` nodes as well as their types.
+Hence, we still incorporate legacy constructors that can be utilized when having a model in previous versions.
+However, we removed one legacy constructor as it is no longer required.
+Calling the constructor will provide you now with an error.
+
+This legacy constructor is:
+
+```@docs
+RegHydroStor
+```
+
+See the section on *[how to update models](@ref update-models)* for further information regarding how you can translate your existing model to the new model.

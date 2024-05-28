@@ -1,4 +1,4 @@
-# Update your model to the latest versions
+# [Update your model to the latest versions](@id update-models)
 
 `EnergyModelsRenewableProducers` is still in a pre-release version.
 Hence, there are frequently breaking changes occuring, although we plan to keep backwards compatibility.
@@ -18,8 +18,6 @@ Version 0.7 of `EnergyModelsBase` introduced both *storage behaviours* resulting
 
 `HydroStor` was significantly reworked due to the changes in `EnergyModelsBase`
 The total rework is provided below.
-
-If you are previously using the functions [`capacity`](@ref), [`opex_var`](@ref), and [`opex_fixed`](@ref) directly on the nodal type, you have to adjust as well your call of the function as they now require the call on the `StorageParameter` type.
 
 ```julia
 # The previous nodal description for a `HydroStor` node was given by:
@@ -57,10 +55,8 @@ HydroStor{CyclicStrategic}(
 
 ### [`PumpedHydroStor`](@ref)
 
-`HydroStor` was significantly reworked due to the changers in `EnergyModelsBase`
+`PumpedHydroStor` was significantly reworked due to the changers in `EnergyModelsBase`
 The total rework is provided below.
-
-If you are previously using the functions [`capacity`](@ref), [`opex_var`](@ref), and [`opex_fixed`](@ref) directly on the nodal type, you have to adjust as well your call of the function as they now require the call on the `StorageParameter` type.
 
 ```julia
 # The previous nodal description for a `PumpedHydroStor` node was given by:
@@ -102,7 +98,7 @@ PumpedHydroStor{CyclicStrategic}(
 
 ### Key changes for nodal descriptions
 
-Version 0.4.1 introduced two new types that replaced the original `RegHydroStor` node with two types called [`PumpedHydroStor`](@ref) and [`HydroStor](@ref).
+Version 0.4.1 introduced two new types that replaced the original `RegHydroStor` node with two types called [`PumpedHydroStor`](@ref) and [`HydroStor`](@ref).
 The changes allowed for the introduction of a variable OPEX for pumping.
 In the translation below, it is assumed that the variable OPEX for pumping is 0.
 

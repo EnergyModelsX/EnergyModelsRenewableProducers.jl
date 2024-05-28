@@ -27,18 +27,20 @@ makedocs(
     pages = [
         "Home" => "index.md",
         "Manual" => Any[
-            "Quick Start"=>"manual/quick-start.md",
-            "Optimization variables"=>"manual/optimization-variables.md",
-            "Constraint functions"=>"manual/constraint-functions.md",
-            "Examples"=>"manual/simple-example.md",
+            "Quick Start" => "manual/quick-start.md",
+            "Optimization variables" => "manual/optimization-variables.md",
+            "Constraint functions" => "manual/constraint-functions.md",
+            "Examples" => "manual/simple-example.md",
             "Release notes" => "manual/NEWS.md",
         ],
         "How to" => Any[
             "Update models" => "how-to/update-models.md",
             "Contribute to EnergyModelsRenewableProducers" => "how-to/contribute.md",
         ],
-        "Library" =>
-            Any["Public"=>"library/public.md", "Internals"=>"library/internals.md"],
+        "Library" => Any[
+            "Public" => "library/public.md",
+            "Internals" => "library/internals.md",
+        ],
     ],
 )
 
