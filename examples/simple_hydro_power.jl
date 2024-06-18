@@ -1,6 +1,8 @@
 using Pkg
 # Activate the local environment including EnergyModelsRenewableProducers, HiGHS, PrettyTables
 Pkg.activate(@__DIR__)
+# Use dev version if run as part of tests
+haskey(ENV, "EMX_TEST") && Pkg.develop(path=joinpath(@__DIR__,".."))
 # Install the dependencies.
 Pkg.instantiate()
 
@@ -113,19 +115,21 @@ optimizer = optimizer_with_attributes(HiGHS.Optimizer, MOI.Silent() => true)
 m = EMB.run_model(case, model, optimizer)
 
 # Display some results
-@info "Storage level of the hydro power plant"
-pretty_table(
-    JuMP.Containers.rowtable(
-        value,
-        m[:stor_level];
-        header = [:Node, :TimePeriod, :Level],
-    ),
-)
-@info "Power production of the two power sources"
-pretty_table(
-    JuMP.Containers.rowtable(
-        value,
-        m[:flow_out][case[:nodes][2:3], :, case[:products][2]];
-        header = [:Node, :TimePeriod, :Production],
-    ),
-)
+if !haskey(ENV, "EMX_TEST")
+    @info "Storage level of the hydro power plant"
+    pretty_table(
+        JuMP.Containers.rowtable(
+            value,
+            m[:stor_level];
+            header = [:Node, :TimePeriod, :Level],
+        ),
+    )
+    @info "Power production of the two power sources"
+    pretty_table(
+        JuMP.Containers.rowtable(
+            value,
+            m[:flow_out][case[:nodes][2:3], :, case[:products][2]];
+            header = [:Node, :TimePeriod, :Production],
+        ),
+    )
+end
