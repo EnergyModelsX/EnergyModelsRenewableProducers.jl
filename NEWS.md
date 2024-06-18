@@ -1,5 +1,9 @@
 # Release notes
 
+## Unversioned
+
+* Use dev version of EMRP for examples when running as part of tests, similar to [PR #33 of EMB](https://github.com/EnergyModelsX/EnergyModelsBase.jl/pull/33).
+
 ## Version 0.6.0 (2024-05-28)
 
 * Adjusted to changes introduced in `EnergyModelsBase` v0.7.
