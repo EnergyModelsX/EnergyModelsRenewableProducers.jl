@@ -1,8 +1,20 @@
+""" Inflow to a hydropower system.
 
-struct Inflow <: EMB.Source  # kan evnt bygge på NonDisRES
+# Fields
+- **`id`** is the name/identifyer of the node.\n
+- **`cap::TimeProfile`** is the maximum capacity.\n
+- **`profile::TimeProfile`** is the inflow in each operational period .\n
+- **`opex_var::TimeProfile`** is the variational operational costs per unit water provided.\n
+- **`opex_fixed::TimeProfile`** is the fixed operational costs.\n
+- **`output::Dict{Resource, Real}`** are the provided `Resource`s, normally Water.\n
+- **`data::Vector{Data}`** is the additional data (e.g. for investments). The field \
+`data` is conditional through usage of a constructor.
+
+"""
+struct Inflow <: EMB.Source  
     id::Any
-    cap::TimeProfile # Inflow [m3/s --> eller Mm3/h]
-    profile::TimeProfile    # denne er med i NonDisRES
+    cap::TimeProfile # Vurder om denne skal representere årlig snitt. tilsig
+    profile::TimeProfile    # Inflow [m3/s --> eller Mm3/h] , vurder om denne bør endres til å være en andel av årlig tilsig (utfordeling av cap?)
     opex_var::TimeProfile
     opex_fixed::TimeProfile
     output::Dict{<:Resource,<:Real}
@@ -20,12 +32,29 @@ function Inflow(
     return Inflow(id, cap, profile, opex_var, opex_fixed, output, Data[])
 end
 
+
+""" A regulated hydropower reservoir, modelled as a `Storage` node.
+
+## Fields
+- **`id`** is the name/identifyer of the node.\n
+- **`rate_cap::TimeProfile`**: is the installed rate capacity, that is e.g. power or mass flow..\n
+- **`stor_cap::TimeProfile`** Initial installed storage capacity in the dam.\n
+- **`level_init::TimeProfile`** Initial water stored in the reservoir, in units of Mm3.\n
+- **`opex_var::TimeProfile`** Operational cost per GWh produced.\n
+- **`opex_fixed::TimeProfile`** Fixed operational costs. Currently used to value the reservoir filling at the end of the planning period.\n
+- **`stor_res::ResourceCarrier`** is the stored `Resource`.\n
+- **`input::Dict{Resource, Real}`** the stored and used resources.\n
+- **`output::Dict{Resource, Real}`** can only contain one entry, the stored resource.\n
+- **`data::Vector{Data}`** additional data (e.g. for investments). The field \
+`data` is conditional through usage of a constructor.
+"""
+
 struct HydroReservoir <: EMB.Storage # kan evnt bygge på HydroStor
     id::Any
-    rate_cap::TimeProfile # inflow/outflow cap
+    rate_cap::TimeProfile # inflow/outflow cap --- NB: forstå hva dette egnetlig er og om det må være med videre!!
     stor_cap::TimeProfile # can be read from the vol_head profile...
-    level_init::TimeProfile # 
-    #level_min::TimeProfile # Lowest permitted regulated water level
+    level_init::TimeProfile# 
+    level_min::TimeProfile # Lowest permitted regulated water level
     #level_max::TimeProfile # Highest permitted regulated water level
     opex_var::TimeProfile # Variable operational costs
     opex_fixed::TimeProfile # Fixed operational costs
@@ -41,7 +70,7 @@ function HydroReservoir(
     rate_cap::TimeProfile,
     stor_cap::TimeProfile,
     level_init::TimeProfile,
-    #level_min::TimeProfile,
+    level_min::TimeProfile,
     #level_max::TimeProfile,
     opex_var::TimeProfile,
     opex_fixed::TimeProfile,
@@ -56,6 +85,7 @@ function HydroReservoir(
         rate_cap,
         stor_cap,
         level_init,
+        level_min,
         opex_var,
         opex_fixed,
         stor_res,
@@ -65,11 +95,33 @@ function HydroReservoir(
     )
 end
 
-struct HydroStation <: EMB.NetworkNode # plant or pump or both? 
+
+# TODO define power cap ?
+# TODO check if opex var is dependent on discharge or power produced, update to cost/energy  
+# TODO make pump module
+# TODO add minimum release? eller skal dette settes opp med bruk av HydroGate?
+
+""" A regular hydropower plant, modelled as a `NetworkNode` node.
+
+## Fields
+- **`id`** is the name/identifier of the node.\n
+- **`cap::TimeProfile`** is the installed discharge capacity.\n
+- **`pq_curve::Dict{<:Resource, <:Vector{<:Real}}` describes the relationship between power and discharge (water).\
+requires one input resource (usually Water) and two output resources (usually Water and Power) to be defined \
+where the input resource also is an output resource. \n
+- **`opex_var::TimeProfile`** is the variational operational costs per energy unit produced.\n
+- **`opex_fixed::TimeProfile`** is the fixed operational costs.\n
+- **`input::Dict{<:Resource, <:Real}`** are the input `Resource`s with conversion value `Real`.\n
+- **`output::Dict{<:Resource, <:Real}`** are the generated `Resource`s with conversion value `Real`.\n
+- **`data::Vector{Data}`** is the additional data (e.g. for investments). The field \
+`data` is conditional through usage of a constructor.
+"""
+
+struct HydroGenerator <: EMB.NetworkNode # plant or pump or both? 
     id::Any
     #power_cap::TimeProfile # maximum production MW/(time unit)
     cap::TimeProfile # maximum discharge mm3/(time unit)
-    pq_curve::Dict{<:Resource, <:Vector{<:Real}} # Production and discharge ratio [MW / m3/s]
+    pq_curve::Union{Dict{<:Resource, <:Vector{<:Real}}, Nothing}# Production and discharge ratio [MW / m3/s]
     #pump_power_cap::TimeProfile #maximum production MW
     #pump_disch_cap::TimeProfile #maximum discharge mm3/time unit
     #pump_pq_curve::Dict{<:Real, <:Real}
@@ -81,14 +133,13 @@ struct HydroStation <: EMB.NetworkNode # plant or pump or both?
     opex_fixed::TimeProfile
     input::Dict{<:Resource,<:Real}
     output::Dict{<:Resource,<:Real}
-    η::Vector{Real}
+    η::Vector{Real} # PQ_curve: production and discharge ratio [MW / m3/s]
     data::Vector{Data}
 end
-function HydroStation(
+function HydroGenerator(
     id::Any,
     #power_cap::TimeProfile,
     cap::TimeProfile,
-    pq_curve::Dict{<:Resource, <:Vector{<:Real}},
     #pq_curve::Dict{<:Real, <:Real},
     #pump_power_cap::TimeProfile,
     #pump_disch_cap::TimeProfile,
@@ -98,10 +149,28 @@ function HydroStation(
     opex_var::TimeProfile,
     opex_fixed::TimeProfile,
     input::Dict{<:Resource,<:Real},
-    output::Dict{<:Resource,<:Real},
+    output::Dict{<:Resource,<:Real};
+    pq_curve = nothing,
+    η = Real[],
 )
-    return HydroStation(id, cap, pq_curve, opex_var, opex_fixed, input, output, Real[], Data[])
+
+    return HydroGenerator(id, cap, pq_curve, opex_var, opex_fixed, input, output, η, Data[])
 end
+
+""" A Hydro Gate, modelled as a `NetworkNode` node. Can be used to model outlets/inlets and \
+minimum/maximum requirements for water flow. 
+
+## Fields
+- **`id`** is the name/identifier of the node.\n
+- **`cap::TimeProfile`** is the installed discharge capacity.\n
+- **`opex_var::TimeProfile`** is the variational operational costs per energy unit produced.\n
+- **`opex_fixed::TimeProfile`** is the fixed operational costs.\n
+- **`input::Dict{<:Resource, <:Real}`** are the input `Resource`s with conversion value `Real`.\n
+- **`output::Dict{<:Resource, <:Real}`** are the generated `Resource`s with conversion value `Real`.\n
+- **`data::Vector{Data}`** is the additional data (e.g. for investments). The field \
+`data` is conditional through usage of a constructor.
+"""
+#TODO add option for maximum and minimum requirement
 
 struct HydroGate <: EMB.NetworkNode
     id::Any
@@ -123,6 +192,7 @@ function HydroGate(
     return HydroGate(id, cap, opex_var, opex_fixed, input, output, Data[])
 end
 
+# Not needed?
 function Inflow(
     id::Any,
     cap::TimeProfile,
@@ -148,10 +218,43 @@ Returns the initial level of a node `n` of type `HydroReservoir` at operational 
 level_init(n::HydroReservoir, t) = n.level_init[t]
 
 """
-    level_init(n::HydroStation, t)
+    level_min(n::HydroReservoir, t)
 
-Returns the pq_curve of a node `n` of type `HydroStation` 
+Returns the minimum level of a node `n` of type `HydroReservoir` at operational period `t`
 """
-pq_curve(n::HydroStation) = n.pq_curve
+level_min(n::HydroReservoir, t) = n.level_min[t]
 
-pq_curve(n::HydroStation, p::Resource) = n.pq_curve[p]
+"""
+    pq_curve(n::HydroGenerator)
+
+Returns the resources in the PQ-curve of a node `n` of type `HydroGenerator` 
+"""
+function pq_curve(n::HydroGenerator)
+    if !isnothing(n.pq_curve)
+        return collect(keys(n.pq_curve))
+    else
+        return nothing
+    end
+end
+
+"""
+    pq_curve(n::HydroGenerator, p)
+
+Returns the values in the pq_curve for resurce p of a node `n` of type `HydroGenerator` 
+"""
+
+function pq_curve(n::HydroGenerator, p::Resource) 
+    
+    if !isnothing(n.pq_curve)
+        return  n.pq_curve[p]
+    else
+        return nothing
+    end
+
+end
+"""
+    efficiency(n::HydroGenerator)
+
+Returns vector of the efficiency segments a node `n` of type `HydroGenerator` 
+"""
+efficiency(n::HydroGenerator) = n.η

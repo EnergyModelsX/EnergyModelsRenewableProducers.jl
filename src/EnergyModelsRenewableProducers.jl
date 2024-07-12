@@ -29,6 +29,6 @@ include("legacy_constructor.jl")
 
 export NonDisRES
 export HydroStorage, RegHydroStor, HydroStor, PumpedHydroStor
-export Inflow, HydroReservoir, HydroStation, HydroGate
+export Inflow, HydroReservoir, HydroGenerator, HydroGate
 
 end # module
