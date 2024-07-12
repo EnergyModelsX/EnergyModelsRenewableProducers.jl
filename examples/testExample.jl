@@ -56,20 +56,20 @@ wind = NonDisRES(
     OperationalProfile([0.9, 0.4, 0.1, 0.8]), # Profile
     FixedProfile(5),    # Variable OPEX in EUR/MW
     FixedProfile(10),   # Fixed OPEX in EUR/8h
-    Dict(Power => 1),   # Output from the Node, in this gase, Power
+    Dict(Power => 1),   # Output from the Node, in this case, Power
 )
 
 
 # Create a regulated hydro power plant without storage capacity
 hydro = HydroStor(
     "hydropower",       # Node ID
-    FixedProfile(2.0),  # Rate capacity in MW
+    FixedProfile(0),  # Rate capacity in MW
     FixedProfile(90),   # Storage capacity in MWh
     FixedProfile(10),   # Initial storage level in MWh
     FixedProfile(1),    # Inflow to the Node in MW
     FixedProfile(0.0),  # Minimum storage level as fraction
-    FixedProfile(8),    # Variable OPEX in EUR/MWh
-    FixedProfile(3),    # Fixed OPEX in EUR/8h
+    FixedProfile(20),    # Variable OPEX in EUR/MWh
+    FixedProfile(15),    # Fixed OPEX in EUR/8h
     Power,              # Stored resource
     Dict(Power => 0.9), # Input to the power plant, irrelevant in this case
     Dict(Power => 1),   # Output from the Node, in this gase, Power
@@ -79,7 +79,7 @@ hydro = HydroStor(
 inflow = Inflow(    
     "inflow",           # Node ID
     FixedProfile(1000), # Capacity of inflow source (only included tbecause it is required)
-    FixedProfile(4),    # Inflow in mm3/hour
+    FixedProfile(3),    # Inflow in mm3/hour
     FixedProfile(0),    # Variable OPEX in EUR/MWh
     FixedProfile(0),    # Fixed OPEX in EUR/MWh
     Dict(Water => 1),   # Output from the Node, in this case, Power
@@ -90,10 +90,10 @@ hydro_reservoir = HydroReservoir(
     "hydro_reservoir",  # Node ID
     FixedProfile(100),   # rate_cap, capacity pump/discharge in mm3/timestep (begrenser input til node??)
     FixedProfile(15),  # stor_cap, capacity reservoir in mm3
-    FixedProfile(10),   # level_int, initial water level in mm3
-    #FixedProfile(0),    # level_min, minimum water level in mm3
+    FixedProfile(0),   # level_int, initial water level in mm3
+    FixedProfile(0),    # level_min, minimum water level in mm3
     #FixedProfile(100),  # level_max, maximum water level in mm3
-    FixedProfile(5),    # opex_var, variable OPEX in EUR/(mm3/h?)
+    FixedProfile(2),    # opex_var, variable OPEX in EUR/(mm3/h?)
     FixedProfile(0),    # opex_fixed, Fixed OPEX in EUR/(mm3/h?)
     Water,              # stor_res, stored resource 
     #Dict(0 => 0, 100 => 10),        # vol_head
@@ -122,11 +122,10 @@ reservoir_spill = HydroGate(
 )
 
 
-hydro_station = HydroStation(
+hydro_station = HydroGenerator(
     "hydropower_station",   # Node ID
     #FixedProfile(10),       # power_cap
-    FixedProfile(3),       # cap
-    Dict(Water => [0,0.8, 1], Power => [0,0.9,1]),   # pq_curve, nb, må være konkav!
+    FixedProfile(5),       # cap
     #Dict(0 => 0, 1 => 1),   # pq_curve
     #FixedProfile(0),        # pump_power_cap
     #FixedProfile(0),        # pump_disch_cap
@@ -136,12 +135,13 @@ hydro_station = HydroStation(
     FixedProfile(6),        # opex_var
     FixedProfile(0),        # opex_fixed
     Dict(Water => 1),       # input
-    Dict(Water => 1, Power => 1),   # output
-    #Real[],
-    #Data[],                 # data
+    Dict(Water => 1, Power => 1);   # output
+    #Data[],                 # data;
+    #pq_curve = Dict(Water => [0,0.8, 1], Power => [0,0.9,1]),   # pq_curve, nb, må være konkav!
+    η = [],
 )
 
-#=hydro_pump = HydroStation(
+#=hydro_pump = HydroGenerator(
     "hydropower_pump",   # Node ID
     FixedProfile(5),       # cap
     FixedProfile(6),        # opex_var
@@ -212,11 +212,11 @@ pretty_table(
 pretty_table(
     JuMP.Containers.rowtable(
         value,
-        m[:flow_out][case[:nodes][2:3], :, case[:products][2]];
+        m[:flow_out][case[:nodes][2:3], :, case[:products][2]]; 
         header = [:Node, :TimePeriod, :Production],
     ),
 )
 
 # Run the GUI
-using EnergyModelsGUI
-gui = GUI(case; model = m, coarseCoastLines = false)
+#using EnergyModelsGUI
+#gui = GUI(case; model = m, coarseCoastLines = false)

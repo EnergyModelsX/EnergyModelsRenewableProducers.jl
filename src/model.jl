@@ -62,27 +62,31 @@ function EMB.create_node(m, n::HydroStorage, 𝒯, 𝒫, modeltype::EnergyModel)
 end
 
 """
-    EMB.variables_node(m, 𝒩::Vector{HydroStation}, 𝒯, modeltype::EnergyModel)
+    EMB.variables_node(m, 𝒩::Vector{HydroGenerator}, 𝒯, modeltype::EnergyModel)
 
-Create the optimization variable `:discharge_segment` for every HydroStation node. This variable
+Create the optimization variable `:discharge_segment` for every HydroGenerator node. This variable
 enables the use of a concave PQ-curve. The sum of the utilisation of the discharge_sements has to
 equal the cap_use. """
-function EMB.variables_node(m, 𝒩::Vector{HydroStation}, 𝒯, modeltype::EnergyModel)
+function EMB.variables_node(m, 𝒩::Vector{HydroGenerator}, 𝒯, modeltype::EnergyModel)
 
     𝒫ᵒᵘᵗ = EMB.res_not(outputs(first(𝒩)), co2_instance(modeltype))
     𝒫ⁱⁿ  = EMB.res_not(inputs(first(𝒩)), co2_instance(modeltype))
     original_resource = 𝒫ᵒᵘᵗ[𝒫ᵒᵘᵗ .∈ [𝒫ⁱⁿ]]
     
-    @variable(m, discharge_segment[n ∈ 𝒩, 𝒯, 1:length(pq_curve(n, original_resource[1]))-1] >= 0)
+    for n in 𝒩
+        if !isnothing(pq_curve(n, original_resource[1]))
+            @variable(m, discharge_segment[n, 𝒯, 1:length(pq_curve(n, original_resource[1]))-1] >= 0)
+        end
+    end
 end
 
 """
-    create_node(m, n::HydroStation, 𝒯, 𝒫, modeltype::EnergyModel)
+    create_node(m, n::HydroGenerator, 𝒯, 𝒫, modeltype::EnergyModel)
 
-Set all constraints for a `HydroStation`.
+Set all constraints for a `HydroGenerator`.
 
 """
-function EMB.create_node(m, n::HydroStation, 𝒯, 𝒫, modeltype::EnergyModel)
+function EMB.create_node(m, n::HydroGenerator, 𝒯, 𝒫, modeltype::EnergyModel)
 
     # Declaration of the required subsets
     𝒯ᴵⁿᵛ = strategic_periods(𝒯)

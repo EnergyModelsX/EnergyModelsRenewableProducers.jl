@@ -109,7 +109,6 @@ function EMB.constraints_capacity(m, n::Inflow, 𝒯::TimeStructure, modeltype::
     return constraints_capacity_installed(m, n, 𝒯, modeltype)
 end
 
-#   Level constraints for new 'Storage' type:
 
 """
 EMB.constraints_level_aux(m, n::HydroReservoir, 𝒯, 𝒫, modeltype)
@@ -162,35 +161,45 @@ function EMB.constraints_opex_var(m, n::HydroReservoir, 𝒯ᴵⁿᵛ, modeltype
 end
 
 """
-    constraints_flow_out(m, n::HydroStation, 𝒯::TimeStructure, modeltype::EnergyModel)
+    constraints_flow_out(m, n::HydroGenerator, 𝒯::TimeStructure, modeltype::EnergyModel)
 
-Function for creating the constraint on the outlet flow from a generic `Node`.
-This function serves as fallback option if no other function is specified for a `Node`.
+Function for creating the constraint on the outlet flow from a HydroGenerator Node.
 """
 
-function constraints_flow_out(m, n::HydroStation, 𝒯::TimeStructure, modeltype::EnergyModel)
+function constraints_flow_out(m, n::HydroGenerator, 𝒯::TimeStructure, modeltype::EnergyModel)
     # Declaration of the required subsets, excluding CO2, if specified
     𝒫ᵒᵘᵗ = EMB.res_not(outputs(n), co2_instance(modeltype))
     𝒫ⁱⁿ  = EMB.res_not(inputs(n), co2_instance(modeltype))
 
     # Constraint for the individual output stream connections
-    # produksjon = discharge*energiekvivalent
+    # produksjon = discharge*energy equivalent
+    # NB: If PQ-curve is being used, the energy equivalent must be >= best efficiency
+    # TODO: overwrite energy equivalent if PQ-curve given
+    # TODO: update energy equivalent if only one value in PQ-curve
 
 
-    new_resource = 𝒫ᵒᵘᵗ[𝒫ᵒᵘᵗ .∉ [𝒫ⁱⁿ]]
-    original_resource = 𝒫ᵒᵘᵗ[𝒫ᵒᵘᵗ .∈ [𝒫ⁱⁿ]]
+    new_resource = 𝒫ᵒᵘᵗ[𝒫ᵒᵘᵗ .∉ [𝒫ⁱⁿ]] # Power
+    original_resource = 𝒫ᵒᵘᵗ[𝒫ᵒᵘᵗ .∈ [𝒫ⁱⁿ]] # Water
+    # Since the type of resource is defined by the user it is not convenient to set conditions
+    # based on the type (namin conventions or spelling can vary, e.g. water/hydro or power/electricity).
 
     @constraint(m, [t ∈ 𝒯, p ∈ original_resource],
     m[:flow_out][n, t, p] == m[:cap_use][n, t] * outputs(n, p)
 )
 
-#@constraint(m, [t ∈ 𝒯, p ∈ new_resource],
-#m[:flow_out][n, t, p] == m[:cap_use][n, t] * outputs(n, p)
-#)
+    #TODO make cleaner as function
+    #if !isnothing(pq_curve) & isnothing(η)
+    #    η = calculate_efficiency()
+    #end
 
-    if length(original_resource) == 1 && length(new_resource) == 1
+    #@constraint(m, [t ∈ 𝒯, p ∈ new_resource],
+    #m[:flow_out][n, t, p] <= m[:cap_use][n, t] * outputs(n, p)
+    #)
+
+    if !isnothing(pq_curve(n)) && length(original_resource) == 1 && length(new_resource) == 1
         disch_levels = pq_curve(n, original_resource[1])
         power_levels = pq_curve(n, new_resource[1])
+        #n.η = Real[]
         if length(disch_levels) == length(power_levels) && length(disch_levels) > 1
             for i in range(2, length(disch_levels))
                 push!(n.η, (power_levels[i] - power_levels[i-1]) / (disch_levels[i] - disch_levels[i-1]))
