@@ -79,7 +79,7 @@ function generate_example_data()
         FixedProfile(0.0),  # Minimum storage level as fraction
         Power,              # Stored resource
         Dict(Power => 0.9), # Input to the power plant, irrelevant in this case
-        Dict(Power => 1),   # Output from the Node, in this gase, Power
+        Dict(Power => 1),   # Output from the Node, in this case, Power
         Data[],             # Potential additional data
     )
 
