@@ -1,4 +1,32 @@
-# [Public interface](@id sec_lib_public)
+# [Public interface](@id lib-pub)
+
+## [Module](@id lib-pub-module)
+
+```@docs
+EnergyModelsRenewableProducers
+```
+
+## [Node types](@id lib-pub-node)
+
+### [Abstract types](@id lib-pub-node-abstract)
+
+```@docs
+HydroStorage
+```
+
+### [Concrete types](@id lib-pub-node-concrete)
+
+```@docs
+NonDisRES
+HydroStor
+PumpedHydroStor
+```
+
+### [Legacy constructors](@id lib-pub-node-legacy)
+
+```@docs
+RegHydroStor
+```
 
 ## [`NonDisRES` (non-dispatchable renewable energy source)](@id NonDisRES_public)
 
@@ -16,10 +44,6 @@ The [`NonDisRES`](@ref) node is modelled very similar to a regular `EMB.Source}`
     If not needed, the production does not need to run at full capacity. The amount of energy *not* produced is computed using the non-negative [optimization variable](@ref optimization_variables) ``\texttt{curtailment}`` (declared for [`NonDisRES`](@ref) nodes only).
 
 The fields of the different types are listed below:
-
-```@docs
-NonDisRES
-```
 
 ## [`HydroStorage` (regulated hydro storage with or without pump)](@id HydroStorage_public)
 
@@ -42,21 +66,7 @@ A value of `1` means no energy loss, while a value of `0` represents 100% energy
 
 The fields of the different types are listed below:
 
-```@docs
-HydroStorage
-HydroStor
-PumpedHydroStor
-```
-
 In recent version increases, we changed the individual fields of the `HydroStorage` nodes as well as their types.
 Hence, we still incorporate legacy constructors that can be utilized when having a model in previous versions.
 However, we removed one legacy constructor as it is no longer required.
 Calling the constructor will provide you now with an error.
-
-This legacy constructor is:
-
-```@docs
-RegHydroStor
-```
-
-See the section on *[how to update models](@ref update-models)* for further information regarding how you can translate your existing model to the new model.
