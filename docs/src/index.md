@@ -21,9 +21,8 @@ The new introduced node types are also documented in the *[public library](@ref 
 ```@contents
 Pages = [
     "manual/quick-start.md",
-    "manual/optimization-variables.md",
-    "manual/constraint-functions.md",
-    "manual/simple-example.md"
+    "manual/simple-example.md",
+    "manual/NEWS.md",
 ]
 Depth = 1
 ```

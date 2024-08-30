@@ -60,7 +60,7 @@ function generate_example_data()
         OperationalProfile([0.9, 0.4, 0.1, 0.8]), # Profile
         FixedProfile(5),    # Variable OPEX in EUR/MW
         FixedProfile(10),   # Fixed OPEX in EUR/8h
-        Dict(Power => 1),   # Output from the Node, in this gase, Power
+        Dict(Power => 1),   # Output from the Node, in this case, Power
     )
 
     # Create a regulated hydro power plant without storage capacity
@@ -79,7 +79,7 @@ function generate_example_data()
         FixedProfile(0.0),  # Minimum storage level as fraction
         Power,              # Stored resource
         Dict(Power => 0.9), # Input to the power plant, irrelevant in this case
-        Dict(Power => 1),   # Output from the Node, in this gase, Power
+        Dict(Power => 1),   # Output from the Node, in this case, Power
         Data[],             # Potential additional data
     )
 

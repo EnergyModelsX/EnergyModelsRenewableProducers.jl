@@ -25,7 +25,7 @@ end
 """
     constraints_flow_in(m, n::HydroStor, 𝒯::TimeStructure, modeltype::EnergyModel)
 
-When `n::HydroStor`, the the variable `:flow_in` is fixed to 0 for all potential inputs.
+When `n::HydroStor`, the variable `:flow_in` is fixed to 0 for all potential inputs.
 """
 function EMB.constraints_flow_in(m, n::HydroStor, 𝒯::TimeStructure, modeltype::EnergyModel)
     # Declaration of the required subsets
@@ -40,8 +40,8 @@ end
 """
     constraints_flow_in(m, n, 𝒯::TimeStructure, modeltype::EnergyModel)
 
-When `n::PumpedHydroStor`, the the variable `:flow_in` is used contrary to standard nodes,
-that is the variable `:flow_in` is multiplied with the `inputs` value.
+When `n::PumpedHydroStor`, the variable `:flow_in` is multiplied with the `inputs` value
+to calculate the variable `:stor_charge_use`.
 """
 function EMB.constraints_flow_in(m, n::PumpedHydroStor, 𝒯::TimeStructure, modeltype::EnergyModel)
     # Declaration of the required subsets
@@ -60,8 +60,8 @@ Function for creating the Δ constraint for the level of a `HydroStorage` node a
 the specification of the initial level in a strategic period.
 
 The change in storage level in the reservoir at operational periods `t` is the inflow through
-`level_inflow` plus the input `flow_in` minus the production `stor_rate_use` and the
-spillage of water due to overflow `hydro_spill`.
+`:level_inflow` plus the input `:stor_charge_use` minus the production `:stor_discharge_use`
+and the spillage of water due to overflow `:hydro_spill`.
 """
 function EMB.constraints_level_aux(m, n::HydroStorage, 𝒯, 𝒫, modeltype::EnergyModel)
     # Declaration of the required subsets
@@ -70,7 +70,7 @@ function EMB.constraints_level_aux(m, n::HydroStorage, 𝒯, 𝒫, modeltype::En
     # Constraint for the change in the level in a given operational period
     @constraint(m, [t ∈ 𝒯],
         m[:stor_level_Δ_op][n, t] ==
-            level_inflow(n, t) + inputs(n, p_stor) * m[:flow_in][n, t, p_stor] -
+            level_inflow(n, t) + m[:stor_charge_use][n, t] -
             m[:stor_discharge_use][n, t] - m[:hydro_spill][n, t]
     )
 

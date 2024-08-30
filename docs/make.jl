@@ -1,4 +1,5 @@
 using Documenter
+using DocumenterInterLinks
 
 using EnergyModelsBase
 using EnergyModelsRenewableProducers
@@ -16,9 +17,14 @@ DocMeta.setdocmeta!(
 news = "docs/src/manual/NEWS.md"
 cp("NEWS.md", news; force=true)
 
+links = InterLinks(
+    "TimeStruct" => "https://sintefore.github.io/TimeStruct.jl/stable/",
+    "EnergyModelsBase" => "https://energymodelsx.github.io/EnergyModelsBase.jl/stable/",
+)
+
 makedocs(
-    modules = [EnergyModelsRenewableProducers],
     sitename = "EnergyModelsRenewableProducers",
+    modules = [EnergyModelsRenewableProducers],
     format = Documenter.HTML(
         prettyurls = get(ENV, "CI", "false") == "true",
         edit_link = "main",
@@ -28,8 +34,6 @@ makedocs(
         "Home" => "index.md",
         "Manual" => Any[
             "Quick Start" => "manual/quick-start.md",
-            "Optimization variables" => "manual/optimization-variables.md",
-            "Constraint functions" => "manual/constraint-functions.md",
             "Examples" => "manual/simple-example.md",
             "Release notes" => "manual/NEWS.md",
         ],
@@ -39,9 +43,13 @@ makedocs(
         ],
         "Library" => Any[
             "Public" => "library/public.md",
-            "Internals" => "library/internals.md",
+            "Internals" => String[
+                "library/internals/methods-fields.md",
+                "library/internals/methods-EMB.md",
+            ],
         ],
     ],
+    plugins=[links],
 )
 
 deploydocs(;

@@ -57,7 +57,7 @@ function generate_example_data()
         FixedProfile(2),    # Capacity in MW
         FixedProfile(30),   # Variable OPEX in EUR/MW
         FixedProfile(10),   # Fixed OPEX in EUR/8h
-        Dict(Power => 1),   # Output from the Node, in this gase, Power
+        Dict(Power => 1),   # Output from the Node, in this case, Power
     )
     sink = RefSink(
         "electricity demand",   # Node id
@@ -83,7 +83,7 @@ function generate_example_data()
         OperationalProfile([0.9, 0.4, 0.1, 0.8]), # Profile of the NonDisRES node
         FixedProfile(10),   # Variable OPEX in EUR/MW
         FixedProfile(10),   # Fixed OPEX in EUR/8h
-        Dict(Power => 1),   # Output from the Node, in this gase, Power
+        Dict(Power => 1),   # Output from the Node, in this case, Power
     )
 
     # Update the case data with the non-dispatchable power source and link
