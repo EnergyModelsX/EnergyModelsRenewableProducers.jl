@@ -1,6 +1,7 @@
 using Documenter
 using DocumenterInterLinks
 
+using TimeStruct
 using EnergyModelsBase
 using EnergyModelsRenewableProducers
 
@@ -29,6 +30,7 @@ makedocs(
         prettyurls = get(ENV, "CI", "false") == "true",
         edit_link = "main",
         assets = String[],
+        ansicolor = true,
     ),
     pages = [
         "Home" => "index.md",
@@ -36,6 +38,10 @@ makedocs(
             "Quick Start" => "manual/quick-start.md",
             "Examples" => "manual/simple-example.md",
             "Release notes" => "manual/NEWS.md",
+        ],
+        "Nodes" => Any[
+            "Non-dispatchable RES" => "nodes/nondisres.md",
+            "Hydropower" => "nodes/hydropower.md",
         ],
         "How to" => Any[
             "Update models" => "how-to/update-models.md",
@@ -45,7 +51,7 @@ makedocs(
             "Public" => "library/public.md",
             "Internals" => String[
                 "library/internals/methods-fields.md",
-                "library/internals/methods-EMB.md",
+                "library/internals/methods-EMB.md"
             ],
         ],
     ],

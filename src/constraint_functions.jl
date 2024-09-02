@@ -8,7 +8,7 @@ Also sets the constraint defining curtailment.
 """
 function EMB.constraints_capacity(m, n::NonDisRES, 𝒯::TimeStructure, modeltype::EnergyModel)
     @constraint(m, [t ∈ 𝒯],
-        m[:cap_use][n, t] <= m[:cap_inst][n, t]
+        m[:cap_use][n, t] ≤ m[:cap_inst][n, t]
     )
 
     # Non dispatchable renewable energy sources operate at their max
@@ -32,13 +32,16 @@ function EMB.constraints_flow_in(m, n::HydroStor, 𝒯::TimeStructure, modeltype
     𝒫ⁱⁿ  = inputs(n)
 
     # Fix the inlet flow to a value of 0
-    for t ∈ 𝒯, p ∈ 𝒫ⁱⁿ
-        fix(m[:flow_in][n, t, p], 0; force=true)
+    for t ∈ 𝒯
+        fix(m[:stor_charge_use][n, t], 0; force=true)
+        for p ∈ 𝒫ⁱⁿ
+            fix(m[:flow_in][n, t, p], 0; force=true)
+        end
     end
 end
 
 """
-    constraints_flow_in(m, n, 𝒯::TimeStructure, modeltype::EnergyModel)
+    constraints_flow_in(m, n::PumpedHydroStor, 𝒯::TimeStructure, modeltype::EnergyModel)
 
 When `n::PumpedHydroStor`, the variable `:flow_in` is multiplied with the `inputs` value
 to calculate the variable `:stor_charge_use`.
@@ -81,6 +84,12 @@ function EMB.constraints_level_aux(m, n::HydroStorage, 𝒯, 𝒫, modeltype::En
         m[:stor_level][n, first(t_inv)] ==
             level_init(n, first(t_inv)) +
             m[:stor_level_Δ_op][n, first(t_inv)] * duration(first(t_inv))
+    )
+
+    # The minimum contents of the reservoir is bounded below. Not allowed
+    # to drain it completely.
+    @constraint(m, [t ∈ 𝒯],
+        m[:stor_level][n, t] ≥ level_min(n, t) * m[:stor_level_inst][n, t]
     )
 end
 

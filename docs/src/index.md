@@ -33,6 +33,16 @@ Pages = [
 Depth = 1
 ```
 
+## Description of the nodes
+
+```@contents
+Pages = [
+    "nodes/nondisres.md",
+    "nodes/hydropower.md",
+]
+Depth = 1
+```
+
 ## How to guides
 
 ```@contents
@@ -47,7 +57,7 @@ Depth = 1
 
 ```@contents
 Pages = [
-    "library/public.md"
+    "library/public.md",
     "library/internals/methods-fields.md",
     "library/internals/methods-EMB.md",
 ]
