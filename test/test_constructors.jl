@@ -49,6 +49,7 @@
         for field ∈ fieldnames(HydroStor{CyclicStrategic})
             @test getproperty(hydro_old, field) == getproperty(hydro_new, field)
         end
+        @test false
     end
     @testset "Hydrostor node with data" begin
         hydro_old = HydroStor(

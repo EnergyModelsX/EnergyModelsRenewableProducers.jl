@@ -17,14 +17,14 @@ using TimeStruct
 const EMB = EnergyModelsBase
 
 """
-    generate_example_data()
+    generate_hydro_example_data()
 
 Generate the data for an example consisting of a simple electricity network with a
 non-dispatchable power source, a regulated hydro power plant, as well as a demand.
 It illustrates how the hydro power plant can balance the intermittent renewable power
 generation.
 """
-function generate_example_data()
+function generate_hydro_example_data()
     @info "Generate case data - Simple `HydroStor` example"
 
     # Define the different resources and their emission intensity in tCO2/MWh
@@ -110,26 +110,24 @@ function generate_example_data()
 end
 
 # Generate the case and model data and run the model
-case, model = generate_example_data()
+case, model = generate_hydro_example_data()
 optimizer = optimizer_with_attributes(HiGHS.Optimizer, MOI.Silent() => true)
 m = EMB.run_model(case, model, optimizer)
 
 # Display some results
-if !haskey(ENV, "EMX_TEST")
-    @info "Storage level of the hydro power plant"
-    pretty_table(
-        JuMP.Containers.rowtable(
-            value,
-            m[:stor_level];
-            header = [:Node, :TimePeriod, :Level],
-        ),
-    )
-    @info "Power production of the two power sources"
-    pretty_table(
-        JuMP.Containers.rowtable(
-            value,
-            m[:flow_out][case[:nodes][2:3], :, case[:products][2]];
-            header = [:Node, :TimePeriod, :Production],
-        ),
-    )
-end
+@info "Storage level of the hydro power plant"
+pretty_table(
+    JuMP.Containers.rowtable(
+        value,
+        m[:stor_level];
+        header = [:Node, :TimePeriod, :Level],
+    ),
+)
+@info "Power production of the two power sources"
+pretty_table(
+    JuMP.Containers.rowtable(
+        value,
+        m[:flow_out][case[:nodes][2:3], :, case[:products][2]];
+        header = [:Node, :TimePeriod, :Production],
+    ),
+)
