@@ -14,7 +14,7 @@ const EMRP = EnergyModelsRenewableProducers
         include("test_nondisres.jl")
     end
 
-    @testset "RP - Capture retrofit" begin
+    @testset "RP - Hydropower" begin
         include("test_hydro.jl")
     end
 

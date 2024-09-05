@@ -7,8 +7,8 @@ ENV["EMX_TEST"] = true # Set flag for example scripts to check if they are run a
         @testset "Example $file" begin
             redirect_stdio(stdout=devnull, stderr=devnull) do
                 include(joinpath(exdir, file))
+                @test termination_status(m) == MOI.OPTIMAL
             end
-            @test termination_status(m) == MOI.OPTIMAL
         end
     end
     Pkg.activate(@__DIR__)
