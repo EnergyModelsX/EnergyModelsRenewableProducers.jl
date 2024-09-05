@@ -9,6 +9,7 @@ ENV["EMX_TEST"] = true # Set flag for example scripts to check if they are run a
                 include(joinpath(exdir, file))
             end
             @test termination_status(m) == MOI.OPTIMAL
+            m = Model() # Reset m before next example file
         end
     end
     Pkg.activate(@__DIR__)

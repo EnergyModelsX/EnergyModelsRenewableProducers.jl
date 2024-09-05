@@ -243,7 +243,7 @@ end
     level_init(n::HydroStorage)
     level_init(n::HydroStorage, t)
 
-Returns the innitial level of a node `n` of type `HydroStorage` either as `TimeProfile` or at
+Returns the initial level of a node `n` of type `HydroStorage` either as `TimeProfile` or at
 operational period `t`.
 """
 level_init(n::HydroStorage) = n.level_init

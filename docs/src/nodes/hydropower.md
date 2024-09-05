@@ -135,7 +135,7 @@ Hydropower storages nodes utilize in general the standard constraints described 
 
 !!! warning "stor_charge_xxx"
     The constraints for ``\texttt{stor\_charge\_use}`` are only implemented for [`PumpedHydroStor`](@ref) nodes.
-    This includes as well the contribution to the variables ``\texttt{opex\_fixed}`` and ``\texttt{opex\_var}``.
+    This also includes the contribution to the variables ``\texttt{opex\_fixed}`` and ``\texttt{opex\_var}``.
 
 These standard constraints are:
 
@@ -195,7 +195,7 @@ These standard constraints are:
 
   !!! tip "The function `EMB.multiple`"
       The function [``EMB.multiple(t_{inv}, t)``](@extref EnergyModelsBase.multiple) calculates the scaling factor between operational and strategic periods.
-      It also takes into accoun potential operational scenarios and their probability as well as representative periods.
+      It also takes into account potential operational scenarios and their probability as well as representative periods.
 
 - `constraints_data`:\
   This function is only called for specified data of the CO₂ storage node, see above.
