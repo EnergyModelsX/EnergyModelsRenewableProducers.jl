@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Update models · EnergyModelsRenewableProducers</title><meta name="title" content="Update models · EnergyModelsRenewableProducers"/><meta property="og:title" content="Update models · EnergyModelsRenewableProducers"/><meta property="twitter:title" content="Update models · EnergyModelsRenewableProducers"/><meta name="description" content="Documentation for EnergyModelsRenewableProducers."/><meta property="og:description" content="Documentation for EnergyModelsRenewableProducers."/><meta property="twitter:description" content="Documentation for EnergyModelsRenewableProducers."/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">EnergyModelsRenewableProducers</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><span class="tocitem">Manual</span><ul><li><a class="tocitem" href="../../manual/quick-start/">Quick Start</a></li><li><a class="tocitem" href="../../manual/simple-example/">Examples</a></li><li><a class="tocitem" href="../../manual/NEWS/">Release notes</a></li></ul></li><li><span class="tocitem">Nodes</span><ul><li><a class="tocitem" href="../../nodes/nondisres/">Non-dispatchable RES</a></li><li><a class="tocitem" href="../../nodes/hydropower/">Hydropower</a></li></ul></li><li><span class="tocitem">How to</span><ul><li class="is-active"><a class="tocitem" href>Update models</a><ul class="internal"><li><a class="tocitem" href="#Adjustments-from-0.4.2"><span>Adjustments from 0.4.2</span></a></li><li><a class="tocitem" href="#Adjustments-from-0.4.0-to-0.6.x"><span>Adjustments from 0.4.0 to 0.6.x</span></a></li></ul></li><li><a class="tocitem" href="../contribute/">Contribute to EnergyModelsRenewableProducers</a></li></ul></li><li><span class="tocitem">Library</span><ul><li><a class="tocitem" href="../../library/public/">Public</a></li><li><input class="collapse-toggle" id="menuitem-5-2" type="checkbox"/><label class="tocitem" for="menuitem-5-2"><span class="docs-label">Internals</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../library/internals/methods-fields/">Methods - Accessing fields</a></li><li><a class="tocitem" href="../../library/internals/methods-EMB/">Methods - <code>EnergyModelsBase</code></a></li></ul></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">How to</a></li><li class="is-active"><a href>Update models</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Update models</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/EnergyModelsX/EnergyModelsRenewableProducers.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/EnergyModelsX/EnergyModelsRenewableProducers.jl/blob/main/docs/src/how-to/update-models.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="update-models"><a class="docs-heading-anchor" href="#update-models">Update your model to the latest versions</a><a id="update-models-1"></a><a class="docs-heading-anchor-permalink" href="#update-models" title="Permalink"></a></h1><p><code>EnergyModelsRenewableProducers</code> is still in a pre-release version. Hence, there are frequently breaking changes occuring, although we plan to keep backwards compatibility. This document is designed to provide users with information regarding how they have to adjust their models to keep compatibility to the latest changes. We will as well implement information regarding the adjustment of extension packages, although this is more difficult due to the vast majority of potential changes.</p><h2 id="Adjustments-from-0.4.2"><a class="docs-heading-anchor" href="#Adjustments-from-0.4.2">Adjustments from 0.4.2</a><a id="Adjustments-from-0.4.2-1"></a><a class="docs-heading-anchor-permalink" href="#Adjustments-from-0.4.2" title="Permalink"></a></h2><h3 id="Key-changes-for-nodal-descriptions"><a class="docs-heading-anchor" href="#Key-changes-for-nodal-descriptions">Key changes for nodal descriptions</a><a id="Key-changes-for-nodal-descriptions-1"></a><a class="docs-heading-anchor-permalink" href="#Key-changes-for-nodal-descriptions" title="Permalink"></a></h3><p>Version 0.7 of <code>EnergyModelsBase</code> introduced both <em>storage behaviours</em> resulting in a rework of the individual approach for calculating the level balance as well as the potential to have charge and discharge capacities through <em>storage parameters</em>.</p><div class="admonition is-info"><header class="admonition-header">Note</header><div class="admonition-body"><p>The legacy constructors for calls of the composite type of version 0.5 will be included at least until version 0.7.</p></div></div><h3 id="[HydroStor](@ref)"><a class="docs-heading-anchor" href="#[HydroStor](@ref)"><a href="../../library/public/#EnergyModelsRenewableProducers.HydroStor"><code>HydroStor</code></a></a><a id="[HydroStor](@ref)-1"></a><a class="docs-heading-anchor-permalink" href="#[HydroStor](@ref)" title="Permalink"></a></h3><p><code>HydroStor</code> was significantly reworked due to the changes in <code>EnergyModelsBase</code> The total rework is provided below.</p><pre><code class="language-julia hljs"># The previous nodal description for a `HydroStor` node was given by:
+HydroStor(
+    id,
+    rate_cap::TimeProfile,
+    stor_cap::TimeProfile,
+
+    level_init::TimeProfile,
+    level_inflow::TimeProfile,
+    level_min::TimeProfile,
+
+    opex_var::TimeProfile,
+    opex_fixed::TimeProfile,
+    stor_res::ResourceCarrier,
+    input::Dict{&lt;:Resource, &lt;:Real},
+    output::Dict{&lt;:Resource, &lt;:Real},
+    data::Vector{Data},
+)
+
+# This translates to the following new version
+HydroStor{CyclicStrategic}(
+    id,
+    StorCapOpexFixed(stor_cap, opex_fixed),
+    StorCapOpexVar(rate_cap, opex_var),
+    level_init,
+    level_inflow,
+    level_min,
+    stor_res,
+    input,
+    output,
+    data,
+)</code></pre><h3 id="[PumpedHydroStor](@ref)"><a class="docs-heading-anchor" href="#[PumpedHydroStor](@ref)"><a href="../../library/internals/methods-fields/#PumpedHydroStor"><code>PumpedHydroStor</code></a></a><a id="[PumpedHydroStor](@ref)-1"></a><a class="docs-heading-anchor-permalink" href="#[PumpedHydroStor](@ref)" title="Permalink"></a></h3><p><code>PumpedHydroStor</code> was significantly reworked due to the changers in <code>EnergyModelsBase</code> The total rework is provided below.</p><pre><code class="language-julia hljs"># The previous nodal description for a `PumpedHydroStor` node was given by:
+PumpedHydroStor(
+    id,
+    rate_cap::TimeProfile,
+    stor_cap::TimeProfile,
+
+    level_init::TimeProfile,
+    level_inflow::TimeProfile,
+    level_min::TimeProfile,
+
+    opex_var::TimeProfile,
+    opex_var_pump::TimeProfile,
+    opex_fixed::TimeProfile,
+    stor_res::ResourceCarrier,
+    input::Dict{&lt;:Resource, &lt;:Real},
+    output::Dict{&lt;:Resource, &lt;:Real},
+    data::Vector{Data},
+)
+
+# This translates to the following new version
+PumpedHydroStor{CyclicStrategic}(
+    id,
+    StorCapOpexVar(rate_cap, opex_var_pump),
+    StorCapOpexFixed(stor_cap, opex_fixed),
+    StorCapOpexVar(rate_cap, opex_var),
+    level_init,
+    level_inflow,
+    level_min,
+    stor_res,
+    input,
+    output,
+    data,
+)</code></pre><h2 id="Adjustments-from-0.4.0-to-0.6.x"><a class="docs-heading-anchor" href="#Adjustments-from-0.4.0-to-0.6.x">Adjustments from 0.4.0 to 0.6.x</a><a id="Adjustments-from-0.4.0-to-0.6.x-1"></a><a class="docs-heading-anchor-permalink" href="#Adjustments-from-0.4.0-to-0.6.x" title="Permalink"></a></h2><h3 id="Key-changes-for-nodal-descriptions-2"><a class="docs-heading-anchor" href="#Key-changes-for-nodal-descriptions-2">Key changes for nodal descriptions</a><a class="docs-heading-anchor-permalink" href="#Key-changes-for-nodal-descriptions-2" title="Permalink"></a></h3><p>Version 0.4.1 introduced two new types that replaced the original <code>RegHydroStor</code> node with two types called <a href="../../library/internals/methods-fields/#PumpedHydroStor"><code>PumpedHydroStor</code></a> and <a href="../../library/public/#EnergyModelsRenewableProducers.HydroStor"><code>HydroStor</code></a>. The changes allowed for the introduction of a variable OPEX for pumping. In the translation below, it is assumed that the variable OPEX for pumping is 0.</p><pre><code class="language-julia hljs"># The previous nodal description was given by:
+RegHydroStor(
+    id::Any,
+    rate_cap::TimeProfile,
+    stor_cap::TimeProfile,
+    has_pump::Bool,
+    level_init::TimeProfile,
+    level_inflow::TimeProfile,
+    level_min::TimeProfile,
+    opex_var::TimeProfile,
+    opex_fixed::TimeProfile,
+    stor_res::ResourceCarrier,
+    input,
+    output,
+    Data,
+)
+
+# This translates to the following new version if has_pump == true
+PumpedHydroStor(
+    id,
+    StorCapOpexVar(rate_cap, FixedProfile(0)),
+    StorCapOpexFixed(stor_cap, opex_fixed),
+    StorCapOpexVar(rate_cap, opex_var),
+    level_init,
+    level_inflow,
+    level_min,
+    stor_res,
+    input,
+    output,
+    Data,
+)
+# and the following version if has_pump == false
+HydroStor(
+    id,
+    StorCapOpexFixed(stor_cap, opex_fixed),
+    StorCapOpexVar(rate_cap, opex_var),
+    level_init,
+    level_inflow,
+    level_min,
+    stor_res,
+    input,
+    output,
+    Data,
+)</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../nodes/hydropower/">« Hydropower</a><a class="docs-footer-nextpage" href="../contribute/">Contribute to EnergyModelsRenewableProducers »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.7.0 on <span class="colophon-date" title="Thursday 5 September 2024 15:23">Thursday 5 September 2024</span>. Using Julia version 1.10.5.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
