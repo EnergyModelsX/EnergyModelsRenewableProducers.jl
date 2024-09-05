@@ -1,7 +1,7 @@
 """
     EMB.check_node(n::NonDisRES, 𝒯, modeltype::EMB.EnergyModel, check_timeprofiles::Bool)
 
-This method checks that the *[`NonDisRES`](@ref NonDisRES_public)* node is valid.
+This method checks that the *[`NonDisRES`](@ref)* node is valid.
 
 ## Checks
  - The field `cap` is required to be non-negative (similar to the `Source` check).
@@ -39,7 +39,7 @@ end
 """
     EMB.check_node(n::HydroStorage, 𝒯, modeltype::EMB.EnergyModel, check_timeprofiles::Bool)
 
-This method checks that the *[`HydroStorage`](@ref HydroStorage_public)* node is valid.
+This method checks that the *[`HydroStorage`](@ref)* node is valid.
 
 ## Checks
 - The `TimeProfile` of the field `capacity` in the type in the field `charge` is required

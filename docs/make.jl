@@ -1,5 +1,7 @@
 using Documenter
+using DocumenterInterLinks
 
+using TimeStruct
 using EnergyModelsBase
 using EnergyModelsRenewableProducers
 
@@ -16,22 +18,30 @@ DocMeta.setdocmeta!(
 news = "docs/src/manual/NEWS.md"
 cp("NEWS.md", news; force=true)
 
+links = InterLinks(
+    "TimeStruct" => "https://sintefore.github.io/TimeStruct.jl/stable/",
+    "EnergyModelsBase" => "https://energymodelsx.github.io/EnergyModelsBase.jl/stable/",
+)
+
 makedocs(
-    modules = [EnergyModelsRenewableProducers],
     sitename = "EnergyModelsRenewableProducers",
+    modules = [EnergyModelsRenewableProducers],
     format = Documenter.HTML(
         prettyurls = get(ENV, "CI", "false") == "true",
         edit_link = "main",
         assets = String[],
+        ansicolor = true,
     ),
     pages = [
         "Home" => "index.md",
         "Manual" => Any[
             "Quick Start" => "manual/quick-start.md",
-            "Optimization variables" => "manual/optimization-variables.md",
-            "Constraint functions" => "manual/constraint-functions.md",
             "Examples" => "manual/simple-example.md",
             "Release notes" => "manual/NEWS.md",
+        ],
+        "Nodes" => Any[
+            "Non-dispatchable RES" => "nodes/nondisres.md",
+            "Hydropower" => "nodes/hydropower.md",
         ],
         "How to" => Any[
             "Update models" => "how-to/update-models.md",
@@ -39,9 +49,13 @@ makedocs(
         ],
         "Library" => Any[
             "Public" => "library/public.md",
-            "Internals" => "library/internals.md",
+            "Internals" => String[
+                "library/internals/methods-fields.md",
+                "library/internals/methods-EMB.md"
+            ],
         ],
     ],
+    plugins=[links],
 )
 
 deploydocs(;

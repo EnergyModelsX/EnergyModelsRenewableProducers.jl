@@ -5,11 +5,8 @@
 Create the optimization variable `:curtailment` for every NonDisRES node. This method is called
 from `EnergyModelsBase.jl`."""
 function EMB.variables_node(m, 𝒩ⁿᵈʳ::Vector{NonDisRES}, 𝒯, modeltype::EnergyModel)
-    @variable(m, curtailment[𝒩ⁿᵈʳ, 𝒯] >= 0)
+    @variable(m, curtailment[𝒩ⁿᵈʳ, 𝒯] ≥ 0)
 end
-
-# NB: note that the create_node method that will run for a node n::NonDisRES, is the
-# method defined for a general Source node, which is located in EnergyModelsBase.
 
 """
     EMB.variables_node(m, 𝒩::Vector{<:HydroStorage}, 𝒯, modeltype::EnergyModel)
@@ -19,7 +16,7 @@ enables hydro storage nodes to spill water from the reservoir without producing 
 Wihtout this slack variable, parameters with too much inflow would else lead to an
 infeasible model. """
 function EMB.variables_node(m, 𝒩::Vector{<:HydroStorage}, 𝒯, modeltype::EnergyModel)
-    @variable(m, hydro_spill[𝒩, 𝒯] >= 0)
+    @variable(m, hydro_spill[𝒩, 𝒯] ≥ 0)
 end
 
 """
@@ -47,15 +44,7 @@ function EMB.create_node(m, n::HydroStorage, 𝒯, 𝒫, modeltype::EnergyModel)
     )
 
     # Can not produce more energy than what is availbable in the reservoir.
-    @constraint(m, [t ∈ 𝒯], m[:stor_discharge_use][n, t] <= m[:stor_level][n, t])
-
-    # The minimum contents of the reservoir is bounded below. Not allowed
-    # to drain it completely.
-    @constraint(
-        m,
-        [t ∈ 𝒯],
-        m[:stor_level][n, t] ≥ level_min(n, t) * m[:stor_level_inst][n, t]
-    )
+    @constraint(m, [t ∈ 𝒯], m[:stor_discharge_use][n, t] ≤ m[:stor_level][n, t])
 
     # Iterate through all data and set up the constraints corresponding to the data
     for data ∈ node_data(n)

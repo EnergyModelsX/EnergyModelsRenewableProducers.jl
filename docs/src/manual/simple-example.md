@@ -1,4 +1,4 @@
-# Examples
+# [Examples](@id man-exampl)
 
 For the content of the example, see the *[examples](https://github.com/EnergyModelsX/EnergyModelsRenewableProducers.jl/tree/main/examples)* directory in the project repository.
 
@@ -22,6 +22,6 @@ julia> include(joinpath(exdir, "simple_hydro_power.jl"))
 The examples can then be run from the terminal with
 
 ```shell script
-~/../EnergyModelsRenewableProducers.jl/examples $ julia simple_nondisres.jl
-~/../EnergyModelsRenewableProducers.jl/examples $ julia simple_hydro_power.jl
+/path/to/EnergyModelsRenewableProducers.jl/examples $ julia simple_nondisres.jl
+/path/to/EnergyModelsRenewableProducers.jl/examples $ julia simple_hydro_power.jl
 ```

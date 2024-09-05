@@ -408,7 +408,12 @@ end
     case[:T] = TwoLevel(2, 1, SimpleTimes(10, 1); op_per_strat=10)
 
     # Run the model
-    m = EMB.run_model(case, modeltype, OPTIMIZER; check_timeprofiles=false)
+    modeltype = OperationalModel(
+        Dict(CO2 => StrategicProfile([450, 400])),
+        Dict(CO2 => FixedProfile(0)),
+        CO2,
+    )
+    m = EMB.run_model(case, modeltype, OPTIMIZER)
 
     # Extraction of the time structure
     𝒯 = case[:T]

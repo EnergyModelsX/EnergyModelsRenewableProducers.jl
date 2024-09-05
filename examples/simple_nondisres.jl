@@ -17,13 +17,13 @@ using TimeStruct
 const EMB = EnergyModelsBase
 
 """
-    generate_example_data()
+    generate_nondisres_example_data()
 
 Generate the data for an example consisting of a simple electricity network with a
 non-dispatchable power source, a standard source, as well as a demand.
 It illustrates how the non-dispatchable power source requires a balancing power source.
 """
-function generate_example_data()
+function generate_nondisres_example_data()
     @info "Generate case data - Simple `NonDisRES` example"
 
     # Define the different resources and their emission intensity in tCO2/MWh
@@ -57,7 +57,7 @@ function generate_example_data()
         FixedProfile(2),    # Capacity in MW
         FixedProfile(30),   # Variable OPEX in EUR/MW
         FixedProfile(10),   # Fixed OPEX in EUR/8h
-        Dict(Power => 1),   # Output from the Node, in this gase, Power
+        Dict(Power => 1),   # Output from the Node, in this case, Power
     )
     sink = RefSink(
         "electricity demand",   # Node id
@@ -83,7 +83,7 @@ function generate_example_data()
         OperationalProfile([0.9, 0.4, 0.1, 0.8]), # Profile of the NonDisRES node
         FixedProfile(10),   # Variable OPEX in EUR/MW
         FixedProfile(10),   # Fixed OPEX in EUR/8h
-        Dict(Power => 1),   # Output from the Node, in this gase, Power
+        Dict(Power => 1),   # Output from the Node, in this case, Power
     )
 
     # Update the case data with the non-dispatchable power source and link
@@ -95,26 +95,24 @@ function generate_example_data()
 end
 
 # Generate the case and model data and run the model
-case, model = generate_example_data()
+case, model = generate_nondisres_example_data()
 optimizer = optimizer_with_attributes(HiGHS.Optimizer, MOI.Silent() => true)
 m = EMB.run_model(case, model, optimizer)
 
 # Display some results
-if !haskey(ENV, "EMX_TEST")
-    @info "Curtailment of the wind power source"
-    pretty_table(
-        JuMP.Containers.rowtable(
-            value,
-            m[:curtailment];
-            header = [:Node, :TimePeriod, :Curtailment],
-        ),
-    )
-    @info "Capacity usage of the power source"
-    pretty_table(
-        JuMP.Containers.rowtable(
-            value,
-            m[:cap_use][case[:nodes][1],:];
-            header = [:TimePeriod, :Usage],
-        ),
-    )
-end
+@info "Curtailment of the wind power source"
+pretty_table(
+    JuMP.Containers.rowtable(
+        value,
+        m[:curtailment];
+        header = [:Node, :TimePeriod, :Curtailment],
+    ),
+)
+@info "Capacity usage of the power source"
+pretty_table(
+    JuMP.Containers.rowtable(
+        value,
+        m[:cap_use][case[:nodes][1],:];
+        header = [:TimePeriod, :Usage],
+    ),
+)
