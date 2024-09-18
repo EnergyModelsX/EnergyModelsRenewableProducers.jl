@@ -227,3 +227,180 @@ function EMB.constraints_opex_var(m, n::PumpedHydroStor, 𝒯ᴵⁿᵛ, modeltyp
         )
     )
 end
+
+
+
+
+"""
+    constraints_capacity(m, n::Inflow, 𝒯::TimeStructure, modeltype::EnergyModel)
+
+Function for creating the constraint on the maximum capacity of a `Inflow`.
+
+"""
+function EMB.constraints_capacity(m, n::Inflow, 𝒯::TimeStructure, modeltype::EnergyModel)
+    @constraint(m, [t ∈ 𝒯], m[:cap_use][n, t] <= m[:cap_inst][n, t])
+    @constraint(m, [t ∈ 𝒯], m[:cap_use][n, t] == profile(n, t))
+
+    return constraints_capacity_installed(m, n, 𝒯, modeltype)
+end
+
+
+"""
+EMB.constraints_level_aux(m, n::HydroReservoir, 𝒯, 𝒫, modeltype)
+
+Function for creating the Δ constraint for the level of a `HydroReservoir` node as well as
+the specificaiton of the initial level in a strategic period.
+
+The change in storage level in the reservoir at operational periods `t` is the flow into the reservoir through
+the input `flow_in` minus the flow out of the reservoir through the output `flow_out`.
+"""
+function EMB.constraints_level_aux(m, n::HydroReservoir, 𝒯, 𝒫, modeltype)
+    # Declaration of the required subsets
+    p_stor = storage_resource(n)
+
+    # Constraint for the change in the level in a given operational period
+    @constraint(
+        m,
+        [t ∈ 𝒯],
+        m[:stor_level_Δ_op][n, t] ==
+            inputs(n, p_stor) * m[:flow_in][n, t, p_stor] -
+        outputs(n, p_stor) * m[:flow_out][n, t, p_stor]
+    )
+
+    # The initial storage level is given by the specified initial level in the strategic
+    # period `t_inv`. This level corresponds to the value before inflow and outflow.
+    # This is different to the `RefStorage` node.
+    @constraint(
+        m,
+        [t_inv ∈ strategic_periods(𝒯)],
+        m[:stor_level][n, first(t_inv)] ==
+            level_init(n, first(t_inv)) +
+        m[:stor_level_Δ_op][n, first(t_inv)] * duration(first(t_inv))
+    )
+end
+
+"""
+    EMB.constraints_level_sp(
+        m,
+        n::HydroReservoir,
+        t_inv::TS.StrategicPeriod{T, U},
+        𝒫,
+        modeltype
+        ) where {T, U<:SimpleTimes}
+
+Function for creating the level constraint for a `HydroReservoir` node when the
+TimeStructure is given as `SimpleTimes`.
+"""
+function EMB.constraints_level_sp(
+    m, n::HydroReservoir, t_inv::TS.StrategicPeriod{T,U}, 𝒫, modeltype
+) where {T,U<:SimpleTimes}
+
+    # Water balance constraints for the hydro reservoir.
+    for (t_prev, t) ∈ withprev(t_inv)
+        if isnothing(t_prev) # Binds resevoir filling in first period to last period. 
+           # @constraint(
+           #     m,
+           #     m[:stor_level][n, t] ==
+           #         m[:stor_level][n, last(t_inv)] + m[:stor_level_Δ_op][n, t] * duration(t)
+           # )
+        else
+            @constraint(
+                m,
+                m[:stor_level][n, t] ==
+                    m[:stor_level][n, t_prev] + m[:stor_level_Δ_op][n, t] * duration(t)
+            )
+        end
+    end
+end
+
+
+"""
+    constraints_opex_var(m, n::HydroReservoir, 𝒯ᴵⁿᵛ, modeltype::EnergyModel)
+
+Function for creating the constraint on the variable OPEX of a `HydroReservoir`.
+"""
+function EMB.constraints_opex_var(m, n::HydroReservoir, 𝒯ᴵⁿᵛ, modeltype::EnergyModel)
+    p_stor = EMB.storage_resource(n)
+    @constraint(
+        m,
+        [t_inv ∈ 𝒯ᴵⁿᵛ],
+        m[:opex_var][n, t_inv] == 
+            -m[:stor_level][n, last(t_inv)] * opex_var(n, last(t_inv)) * EMB.multiple(t_inv, last(t_inv))
+        )
+end
+
+"""
+    constraints_flow_out(m, n::HydroGenerator, 𝒯::TimeStructure, modeltype::EnergyModel)
+
+Function for creating the constraint on the outlet flow from a HydroGenerator Node.
+"""
+
+function constraints_flow_out(m, n::HydroGenerator, 𝒯::TimeStructure, modeltype::EnergyModel)
+    # Declaration of the required subsets, excluding CO2, if specified
+    𝒫ᵒᵘᵗ = EMB.res_not(outputs(n), co2_instance(modeltype))
+    𝒫ⁱⁿ  = EMB.res_not(inputs(n), co2_instance(modeltype))
+
+    # Constraint for the individual output stream connections 
+    # produksjon = discharge*energy equivalent 
+    # NB: If PQ-curve is being used, the energy equivalent must be >= best efficiency
+    # TODO: overwrite energy equivalent if PQ-curve given
+    # TODO: update energy equivalent if only one value in PQ-curve
+ 
+
+    new_resource = 𝒫ᵒᵘᵗ[𝒫ᵒᵘᵗ .∉ [𝒫ⁱⁿ]] # Power
+    original_resource = 𝒫ᵒᵘᵗ[𝒫ᵒᵘᵗ .∈ [𝒫ⁱⁿ]] # Water
+    # Since the type of resource is defined by the user it is not convenient to set conditions 
+    # based on the type (namin conventions or spelling can vary, e.g. water/hydro or power/electricity). 
+
+    @constraint(m, [t ∈ 𝒯, p ∈ original_resource],
+    m[:flow_out][n, t, p] == m[:cap_use][n, t] * outputs(n, p)
+)
+    
+    #TODO make cleaner as function  
+    #if !isnothing(pq_curve) & isnothing(η)
+    #    η = calculate_efficiency()
+    #end
+
+    #@constraint(m, [t ∈ 𝒯, p ∈ new_resource],
+    #m[:flow_out][n, t, p] <= m[:cap_use][n, t] * outputs(n, p)
+    #)  
+
+    if !isnothing(pq_curve(n)) && length(original_resource) == 1 && length(new_resource) == 1
+        disch_levels = pq_curve(n, original_resource[1])
+        power_levels = pq_curve(n, new_resource[1])
+        #n.η = Real[]
+        if length(disch_levels) == length(power_levels) && length(disch_levels) > 1 
+            for i in range(2, length(disch_levels))
+                push!(n.η, (power_levels[i] - power_levels[i-1]) / (disch_levels[i] - disch_levels[i-1]))
+            end
+        else println("incorrect pq_curve values")
+        end
+       println(n.η)
+    else println("Requires one input resource and two output resources.")
+
+    end
+
+    # produksjon = discharge_segment*virkningsgrad_segment
+    Nˢ = range(1,length(n.η))
+    water_seq = pq_curve(n, original_resource[1])
+    println(water_seq)
+
+    @constraint(m, [t ∈ 𝒯, q ∈ Nˢ],
+    m[:discharge_segment][n, t, q] <= water_seq[q+1]*m[:cap_inst][n, t] .- water_seq[q]*m[:cap_inst][n, t]
+    )
+
+    @constraint(m, [t ∈ 𝒯],
+    m[:cap_use][n, t] == sum(m[:discharge_segment][n, t, q] for q ∈ Nˢ)
+    )
+
+    @constraint(m, [t ∈ 𝒯, p ∈ new_resource],
+    m[:flow_out][n, t, p] == sum(m[:discharge_segment][n, t, q] * n.η[q] for q ∈ Nˢ)
+)
+
+
+    # Opprett variabel per segment 
+    
+
+
+
+end
