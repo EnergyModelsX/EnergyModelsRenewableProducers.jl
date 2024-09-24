@@ -49,7 +49,7 @@ end
 `data` is conditional through usage of a constructor.
 """
 
-struct HydroReservoir <: EMB.Storage # kan evnt bygge på HydroStor
+struct HydroReservoir{T} <: EMB.Storage{T} # kan evnt bygge på HydroStor
     id::Any
     rate_cap::TimeProfile # inflow/outflow cap --- NB: forstå hva dette egnetlig er og om det må være med videre!!
     stor_cap::TimeProfile # can be read from the vol_head profile...
