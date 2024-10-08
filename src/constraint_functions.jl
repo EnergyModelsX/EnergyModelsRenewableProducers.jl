@@ -98,15 +98,18 @@ build_hydro_reservoir_vol_constraints(m, c::AbstractMinMaxConstraint, 𝒯)
 
 Create minimum/maximum volume constraints for the `HydroReservoir` node. The
 restriction is specified as a composite type of the abstract type `AbstractMinMaxConstraint`.
-Penalty variables are included unless penalty value is `Inf``.
+Penalty variables are included unless penalty value is not set or `Inf``.
 """
 function build_hydro_reservoir_vol_constraints(m, n::HydroReservoir, c::MinConstraint, 𝒯)
     for t ∈ 𝒯
         if is_active(c, t)
+            println("Capacity: " * string(EMB.capacity(EMB.level(n), t)))
+            println("Constraint value: " * string(value(c, t)))
             if has_penalty(c, t)
-                @constraint(m, m[:stor_level][n, t] + m[:vol_penalty_up][n, t] ≥ value(c, t))
+                @constraint(m, m[:stor_level][n, t] + m[:vol_penalty_up][n, t] ≥
+                    EMB.capacity(EMB.level(n), t) * value(c, t))
             else
-                @constraint(m, m[:stor_level][n, t] ≥ value(c, t))
+                @constraint(m, m[:stor_level][n, t] ≥ EMB.capacity(EMB.level(n), t) * value(c, t))
             end
         end
     end
@@ -115,9 +118,10 @@ function build_hydro_reservoir_vol_constraints(m, n::HydroReservoir, c::MaxConst
     for t ∈ 𝒯
         if is_active(c, t)
             if has_penalty(c, t)
-                @constraint(m, m[:stor_level][n, t] - m[:vol_penalty_down][n, t] ≤ value(c, t))
+                @constraint(m, m[:stor_level][n, t] - m[:vol_penalty_down][n, t] ≤
+                    EMB.capacity(EMB.level(n), t) * value(c, t))
             else
-                @constraint(m, m[:stor_level][n, t] ≤ value(c, t))
+                @constraint(m, m[:stor_level][n, t] ≤ EMB.capacity(EMB.level(n), t) * value(c, t))
             end
         end
     end
@@ -126,9 +130,11 @@ function build_hydro_reservoir_vol_constraints(m, n::HydroReservoir, c::Schedule
     for t ∈ 𝒯
         if is_active(c, t)
             if has_penalty(c, t)
-                @constraint(m, m[:stor_level][n, t] + m[:vol_penalty_up][n, t] - m[:vol_penalty_down][n, t] == value(c, t))
+                @constraint(m, m[:stor_level][n, t] +
+                    m[:vol_penalty_up][n, t] - m[:vol_penalty_down][n, t] ==
+                    EMB.capacity(EMB.level(n), t) * value(c, t))
             else
-                JuMP.fix(m[:stor_level][n, t], value(c, t))
+                JuMP.fix(m[:stor_level][n, t], EMB.capacity(EMB.level(n), t) * value(c, t))
             end
         end
     end
