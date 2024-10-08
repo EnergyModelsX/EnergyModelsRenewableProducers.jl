@@ -103,21 +103,33 @@ Penalty variables are included unless penalty value is `Inf``.
 function build_hydro_reservoir_vol_constraints(m, n::HydroReservoir, c::MinConstraint, 𝒯)
     for t ∈ 𝒯
         if is_active(c, t)
-            @constraint(m, m[:stor_level][n, t] ≥ value(c, t))
+            if has_penalty(c, t)
+                @constraint(m, m[:stor_level][n, t] + m[:vol_penalty_up][n, t] ≥ value(c, t))
+            else
+                @constraint(m, m[:stor_level][n, t] ≥ value(c, t))
+            end
         end
     end
 end
 function build_hydro_reservoir_vol_constraints(m, n::HydroReservoir, c::MaxConstraint, 𝒯)
     for t ∈ 𝒯
         if is_active(c, t)
-            @constraint(m, m[:stor_level][n, t] ≤ value(c, t))
+            if has_penalty(c, t)
+                @constraint(m, m[:stor_level][n, t] - m[:vol_penalty_down][n, t] ≤ value(c, t))
+            else
+                @constraint(m, m[:stor_level][n, t] ≤ value(c, t))
+            end
         end
     end
 end
 function build_hydro_reservoir_vol_constraints(m, n::HydroReservoir, c::ScheduleConstraint, 𝒯)
     for t ∈ 𝒯
         if is_active(c, t)
-            JuMP.fix(m[:stor_level][n, t], value(c, t))
+            if has_penalty(c, t)
+                @constraint(m, m[:stor_level][n, t] + m[:vol_penalty_up][n, t] - m[:vol_penalty_down][n, t] == value(c, t))
+            else
+                JuMP.fix(m[:stor_level][n, t], value(c, t))
+            end
         end
     end
 end
@@ -164,26 +176,44 @@ function EMB.constraints_level_aux(m, n::HydroReservoir{T} where T<:EMB.StorageB
         build_hydro_reservoir_vol_constraints(m, n, c, 𝒯)
     end
 end
+"""
+EMB.constraints_opex_var(m, n::HydroReservoir{T}, 𝒯ᴵⁿᵛ, modeltype::EnergyModel)
+
+Function for creating the constraint on the variable OPEX of a `HydroReservoir`.
+This function relates the penalty costs for violating constraints to the objective.
+"""
+function EMB.constraints_opex_var(m, n::HydroReservoir, 𝒯ᴵⁿᵛ, modeltype::EnergyModel)
+    constraints = filter(is_constraint_data, node_data(n))
+    constraints_up = filter(has_penalty_up, constraints) # Max and schedule
+    constraints_down = filter(has_penalty_down, constraints) # Min and schedule
+
+    @constraint(m, [t_inv ∈ 𝒯ᴵⁿᵛ],
+        m[:opex_var][n, t_inv] ==
+        sum(
+            sum(
+                m[:vol_penalty_up][n, t] * penalty(c, t)
+                for c in constraints_up if has_penalty(c, t)
+            ) +
+            sum(
+                m[:vol_penalty_down][n, t] * penalty(c, t)
+                for c in constraints_down if has_penalty(c, t)
+            )
+        * multiple(t_inv, t) for t in t_inv)
+    )
+end
 
 function build_hydro_gate_constraints(m, n::HydroGate, c::MinConstraint, 𝒯::TimeStructure, p::ResourceCarrier)
-    for t ∈ 𝒯
-        if is_active(c, t)
-            @constraint(m, m[:flow_out][n, t, p] ≥ value(c, t))
-        end
-    end
+    𝒯ᵃ = [t for t ∈ 𝒯 if is_active(c, t)]
+    @constraint(m, [t ∈ 𝒯ᵃ], m[:flow_out][n, t, p] ≥ value(c, t))
 end
 function build_hydro_gate_constraints(m, n::HydroGate, c::MaxConstraint, 𝒯::TimeStructure, p::ResourceCarrier)
-    for t ∈ 𝒯
-        if is_active(c, t)
-            @constraint(m, m[:flow_out][n, t, p] ≤ value(c, t))
-        end
-    end
+    𝒯ᵃ = [t for t ∈ 𝒯 if is_active(c, t)]
+    @constraint(m, [t ∈ 𝒯ᵃ], m[:flow_out][n, t, p] ≤ value(c, t))
 end
 function build_hydro_gate_constraints(m, n::HydroGate, c::ScheduleConstraint, 𝒯::TimeStructure, p::ResourceCarrier)
-    for t ∈ 𝒯
-        if is_active(c, t)
-            JuMP.fix(m[:flow_out][n, t, p], value(c, t); force=true)
-        end
+    𝒯ᵃ = [t for t ∈ 𝒯 if is_active(c, t)]
+    for t ∈ 𝒯ᵃ
+        JuMP.fix(m[:flow_out][n, t, p], value(c, t); force=true)
     end
 end
 
@@ -206,11 +236,6 @@ function EMB.constraints_flow_out(m, n::HydroGate, 𝒯::TimeStructure, modeltyp
     constraints = filter(is_constraint_data, node_data(n))
     for c in constraints
         build_hydro_gate_constraints(m, n, c, 𝒯, p)
-        # for t ∈ 𝒯
-        #     if is_active(c, t)
-        #         JuMP.fix(m[:flow_out][n, t, p], value(c, t); force=true)
-        #     end
-        # end
     end
 end
 

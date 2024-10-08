@@ -61,6 +61,37 @@ function EMB.create_node(m, n::HydroStorage, 𝒯, 𝒫, modeltype::EnergyModel)
     constraints_opex_var(m, n, 𝒯ᴵⁿᵛ, modeltype)
 end
 
+# function vol_constraint_slack_variables(m, n, c::AbstractMinMaxConstraint, 𝒯)
+# function vol_constraint_slack_variables(m, n, c::MinConstraint, 𝒯)
+#     @variable(m, [t ∈ 𝒯], vol_penalty_down[n, t] ≥ 0)
+# end
+# function vol_constraint_slack_variables(m, n, c::MaxConstraint, 𝒯)
+#     @variable(m, vol_penalty_up[𝒯] ≥ 0)
+# end
+# function vol_constraint_slack_variables(m, n, c::ScheduleConstraint, 𝒯)
+#     @variable(m, vol_penalty_up[𝒯] ≥ 0)
+#     @variable(m, vol_penalty_down[𝒯] ≥ 0)
+# end
+
+"""
+    EMB.variables_node(m, 𝒩::Vector{<:HydroReservoir}, 𝒯, modeltype::EnergyModel)
+
+Create the optimization variable `:vol_slack` for every HydroStorage node. This variable
+enables hydro reservoir nodes to take penalty if volume constraint is violated.
+Wihtout this slack variable, to strict volume restrictions may lead to an infeasible model.
+"""
+function EMB.variables_node(m, 𝒩::Vector{<:HydroReservoir}, 𝒯, modeltype::EnergyModel)
+    # Get subset of T that has penalty up Tsub = pen_up(constrs::Arr, T::set)
+    @variable(m, vol_penalty_up[
+        n ∈ 𝒩,
+        t ∈ get_penalty_up_time(filter(is_constraint_data, node_data(n)), 𝒯)
+    ] ≥ 0)
+    @variable(m, vol_penalty_down[
+        n ∈ 𝒩,
+        t ∈ get_penalty_down_time(filter(is_constraint_data, node_data(n)), 𝒯)
+    ] ≥ 0)
+end
+
 """
     EMB.variables_node(m, 𝒩::Vector{HydroGenerator}, 𝒯, modeltype::EnergyModel)
 
@@ -72,7 +103,7 @@ function EMB.variables_node(m, 𝒩::Vector{HydroGenerator}, 𝒯, modeltype::En
     𝒫ᵒᵘᵗ = EMB.res_not(outputs(first(𝒩)), co2_instance(modeltype))
     𝒫ⁱⁿ  = EMB.res_not(inputs(first(𝒩)), co2_instance(modeltype))
     original_resource = 𝒫ᵒᵘᵗ[𝒫ᵒᵘᵗ .∈ [𝒫ⁱⁿ]]
-    
+
     for n in 𝒩
         if !isnothing(pq_curve(n, original_resource[1]))
             @variable(m, discharge_segment[n, 𝒯, 1:length(pq_curve(n, original_resource[1]))-1] >= 0)

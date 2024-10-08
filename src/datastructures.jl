@@ -299,9 +299,21 @@ struct ScheduleConstraint <: AbstractMinMaxConstraint
     flag::TS.TimeProfile{Bool}
     penalty::TS.TimeProfile{<:Number}
 end
-is_constraint_data(data) = (typeof(data) <: AbstractMinMaxConstraint)
+is_constraint_data(data::Data) = (typeof(data) <: AbstractMinMaxConstraint)
 is_active(s::AbstractMinMaxConstraint, t) = s.flag[t]
 value(s::AbstractMinMaxConstraint, t) = s.value[t]
+has_penalty(s::AbstractMinMaxConstraint, t) = !isinf(s.penalty[t])
+has_penalty_up(data::AbstractMinMaxConstraint) = (typeof(data) <: Union{MinConstraint, ScheduleConstraint})
+has_penalty_up(data::AbstractMinMaxConstraint, t) = has_penalty_up(data) & has_penalty(data, t)
+has_penalty_down(data::AbstractMinMaxConstraint) = (typeof(data) <: Union{MaxConstraint, ScheduleConstraint})
+has_penalty_down(data::AbstractMinMaxConstraint, t) = has_penalty_down(data) & has_penalty(data, t)
+function get_penalty_up_time(data::Vector{<:Data}, 𝒯)
+    return [t for t in 𝒯 if any(has_penalty_up(c, t) for c in data)]
+end
+function get_penalty_down_time(data::Vector{<:Data}, 𝒯)
+    return [t for t in 𝒯 if any(has_penalty_down(c, t) for c in data)]
+end
+
 penalty(s::AbstractMinMaxConstraint, t) = s.penalty[t]
 
 """ A regulated hydropower reservoir, modelled as a `Storage` node.
