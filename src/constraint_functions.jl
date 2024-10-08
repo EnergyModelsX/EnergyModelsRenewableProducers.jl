@@ -93,71 +93,125 @@ function EMB.constraints_level_aux(m, n::HydroStorage, 𝒯, 𝒫, modeltype::En
     )
 end
 
-#! format: on
-
-
 """
-    constraints_capacity(m, n::Inflow, 𝒯::TimeStructure, modeltype::EnergyModel)
+build_hydro_reservoir_vol_constraints(m, c::AbstractMinMaxConstraint, 𝒯)
 
-Function for creating the constraint on the maximum capacity of a `Inflow`.
-
+Create minimum/maximum volume constraints for the `HydroReservoir` node. The
+restriction is specified as a composite type of the abstract type `AbstractMinMaxConstraint`.
+Penalty variables are included unless penalty value is `Inf``.
 """
-function EMB.constraints_capacity(m, n::Inflow, 𝒯::TimeStructure, modeltype::EnergyModel)
-    @constraint(m, [t ∈ 𝒯], m[:cap_use][n, t] <= m[:cap_inst][n, t])
-    @constraint(m, [t ∈ 𝒯], m[:cap_use][n, t] == profile(n, t))
-
-    return constraints_capacity_installed(m, n, 𝒯, modeltype)
+function build_hydro_reservoir_vol_constraints(m, n::HydroReservoir, c::MinConstraint, 𝒯)
+    for t ∈ 𝒯
+        if is_active(c, t)
+            @constraint(m, m[:stor_level][n, t] ≥ value(c, t))
+        end
+    end
+end
+function build_hydro_reservoir_vol_constraints(m, n::HydroReservoir, c::MaxConstraint, 𝒯)
+    for t ∈ 𝒯
+        if is_active(c, t)
+            @constraint(m, m[:stor_level][n, t] ≤ value(c, t))
+        end
+    end
+end
+function build_hydro_reservoir_vol_constraints(m, n::HydroReservoir, c::ScheduleConstraint, 𝒯)
+    for t ∈ 𝒯
+        if is_active(c, t)
+            JuMP.fix(m[:stor_level][n, t], value(c, t))
+        end
+    end
 end
 
 
 """
-EMB.constraints_level_aux(m, n::HydroReservoir, 𝒯, 𝒫, modeltype)
+EMB.constraints_level_aux(m, n::HydroReservoir, 𝒯, 𝒫, modeltype::EnergyModel)
 
-Function for creating the Δ constraint for the level of a `HydroReservoir` node as well as
-the specificaiton of the initial level in a strategic period.
+Create the Δ constraint for the level of the `HydroReservoir` node as well as the
+specificaiton of the initial level in a strategic period.
 
-The change in storage level in the reservoir at operational periods `t` is the flow into the reservoir through
-the input `flow_in` minus the flow out of the reservoir through the output `flow_out`.
+The change in storage level in the reservoir at operational periods `t` is the flow into
+the reservoir through the input `flow_in` and inflow minus the flow out of the reservoir
+through the output `flow_out`.
 """
-function EMB.constraints_level_aux(m, n::HydroReservoir, 𝒯, 𝒫, modeltype)
+function EMB.constraints_level_aux(m, n::HydroReservoir{T} where T<:EMB.StorageBehavior,
+    𝒯, 𝒫, modeltype::EnergyModel)
     # Declaration of the required subsets
     p_stor = storage_resource(n)
 
     # Constraint for the change in the level in a given operational period
     @constraint(
-        m,
-        [t ∈ 𝒯],
+        m, [t ∈ 𝒯],
         m[:stor_level_Δ_op][n, t] ==
-            inputs(n, p_stor) * m[:flow_in][n, t, p_stor] -
-        outputs(n, p_stor) * m[:flow_out][n, t, p_stor]
+            n.vol_inflow[t] +
+            m[:stor_charge_use][n, t] - m[:stor_discharge_use][n, t]
     )
 
     # The initial storage level is given by the specified initial level in the strategic
     # period `t_inv`. This level corresponds to the value before inflow and outflow.
     # This is different to the `RefStorage` node.
+    # TODO receeding horizon will introduce InitStorageData <: Data such that InitStorageData(init_level)
     @constraint(
         m,
         [t_inv ∈ strategic_periods(𝒯)],
         m[:stor_level][n, first(t_inv)] ==
-            level_init(n, first(t_inv)) +
-        m[:stor_level_Δ_op][n, first(t_inv)] * duration(first(t_inv))
+            vol_init(n, first(t_inv)) +
+            m[:stor_level_Δ_op][n, first(t_inv)] * duration(first(t_inv))
     )
+
+    # The minimum and maximum contents of the reservoir is bounded below and above.
+    constraint_data = filter(is_constraint_data, node_data(n))
+    for c in constraint_data
+        build_hydro_reservoir_vol_constraints(m, n, c, 𝒯)
+    end
 end
 
+function build_hydro_gate_constraints(m, n::HydroGate, c::MinConstraint, 𝒯::TimeStructure, p::ResourceCarrier)
+    for t ∈ 𝒯
+        if is_active(c, t)
+            @constraint(m, m[:flow_out][n, t, p] ≥ value(c, t))
+        end
+    end
+end
+function build_hydro_gate_constraints(m, n::HydroGate, c::MaxConstraint, 𝒯::TimeStructure, p::ResourceCarrier)
+    for t ∈ 𝒯
+        if is_active(c, t)
+            @constraint(m, m[:flow_out][n, t, p] ≤ value(c, t))
+        end
+    end
+end
+function build_hydro_gate_constraints(m, n::HydroGate, c::ScheduleConstraint, 𝒯::TimeStructure, p::ResourceCarrier)
+    for t ∈ 𝒯
+        if is_active(c, t)
+            JuMP.fix(m[:flow_out][n, t, p], value(c, t); force=true)
+        end
+    end
+end
 
 """
-    constraints_opex_var(m, n::HydroReservoir, 𝒯ᴵⁿᵛ, modeltype::EnergyModel)
+    constraints_flow_out(m, n::HydroGate, 𝒯::TimeStructure, modeltype::EnergyModel)
 
-Function for creating the constraint on the variable OPEX of a `HydroReservoir`.
+Function for creating the constraint on the outlet flow from a `HydroGate`.
+This function implements the schedule and min/max constraints if present.
 """
-function EMB.constraints_opex_var(m, n::HydroReservoir, 𝒯ᴵⁿᵛ, modeltype::EnergyModel)
-    p_stor = EMB.storage_resource(n)
-    @constraint(
-        m,
-        [t_inv ∈ 𝒯ᴵⁿᵛ],
-        m[:opex_var][n, t_inv] ==
-            -m[:stor_level][n, last(t_inv)] * opex_var(n, last(t_inv)) * EMB.multiple(t_inv, last(t_inv))
-        )
+function EMB.constraints_flow_out(m, n::HydroGate, 𝒯::TimeStructure, modeltype::EnergyModel)
+    # Declaration of the required subsets, excluding CO2, if specified
+    𝒫ᵒᵘᵗ = EMB.res_not(outputs(n), co2_instance(modeltype))
+    # HydroGate should always have only one input/output resource
+    p = first(𝒫ᵒᵘᵗ)
+
+    # Constraint for the individual output stream connections
+    @constraint(m, [t ∈ 𝒯], m[:flow_out][n, t, p] == m[:cap_use][n, t] * outputs(n, p))
+
+    # If HydroGate has schedule data, fix the flow out variable
+    constraints = filter(is_constraint_data, node_data(n))
+    for c in constraints
+        build_hydro_gate_constraints(m, n, c, 𝒯, p)
+        # for t ∈ 𝒯
+        #     if is_active(c, t)
+        #         JuMP.fix(m[:flow_out][n, t, p], value(c, t); force=true)
+        #     end
+        # end
+    end
 end
 
 """

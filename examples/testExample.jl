@@ -76,41 +76,24 @@ hydro = HydroStor(
     Data[],             # Potential additional data
 )
 
-inflow = Inflow(    
-    "inflow",           # Node ID
-    FixedProfile(1000), # Capacity of inflow source (only included tbecause it is required)
-    FixedProfile(3),    # Inflow in mm3/hour
-    FixedProfile(0),    # Variable OPEX in EUR/MWh
-    FixedProfile(0),    # Fixed OPEX in EUR/MWh
-    Dict(Water => 1),   # Output from the Node, in this case, Power
-    Data[],
-    )
-
-hydro_reservoir = HydroReservoir(
+hydro_reservoir = HydroReservoir{CyclicStrategic}(
     "hydro_reservoir",  # Node ID
-    FixedProfile(100),   # rate_cap, capacity pump/discharge in mm3/timestep (begrenser input til node??)
-    FixedProfile(15),  # stor_cap, capacity reservoir in mm3
-    FixedProfile(0),   # level_int, initial water level in mm3
-    FixedProfile(0),    # level_min, minimum water level in mm3
-    #FixedProfile(100),  # level_max, maximum water level in mm3
-    FixedProfile(2),    # opex_var, variable OPEX in EUR/(mm3/h?)
-    FixedProfile(0),    # opex_fixed, Fixed OPEX in EUR/(mm3/h?)
-    Water,              # stor_res, stored resource 
+    StorCapOpex(
+        FixedProfile(100), # capacity, maximum storage capacity in mm3
+        FixedProfile(0),  # opex_var
+        FixedProfile(0),  # opex_fixed
+    ),
+    FixedProfile(0),   # storage_inflow
+    FixedProfile(0),   # storage_init, initial water level in mm3
+    FixedProfile(0),    # storage_min, minimum water level in mm3
+    FixedProfile(100),  # storage_max, maximum water level in mm3
+    Water,              # stor_res, stored resource
     #Dict(0 => 0, 100 => 10),        # vol_head
     #Dict(1 => Dict(0.0 => 0.0)),    # water_value
     Dict(Water => 1),               # input
-    Dict(Water => 1),               # output
-    Data[],                         
+    Dict(Water => 1)               # output
+    # Data[]
 )
-
-#reservoir_disch = HydroGate(
-#    "discharge_reservoir",  # Node ID
-#    FixedProfile(5),       # cap, in mm3/timestep
-#    FixedProfile(0),        # opex_var, variable OPEX in EUR/(mm3/h?)
-#    FixedProfile(0),        # opex_fixed, Fixed OPEX in EUR/(mm3/h?)
-#    Dict(Water => 1),       # input
-#    Dict(Water => 1),       # output
-#)
 
 reservoir_spill = HydroGate(
     "spill_reservoir",  # Node ID
@@ -153,8 +136,8 @@ hydro_station = HydroGenerator(
 
 
 
-   # Create a final water node, ocean
-   ocean = RefSink(
+# Create a final water node, ocean
+ocean = RefSink(
     "ocean",   # Node id
     FixedProfile(0),    # No demand for water
     Dict(:surplus => FixedProfile(0), :deficit => FixedProfile(0)),
@@ -163,40 +146,40 @@ hydro_station = HydroGenerator(
 )
 
 
-    # Create a power demand node
-    sink = RefSink(
-        "electricity demand",   # Node id
-        FixedProfile(5),    # Demand in MW
-        Dict(:surplus => FixedProfile(0), :deficit => FixedProfile(1e6)),
-        # Line above: Surplus and deficit penalty for the node in EUR/MWh
-        Dict(Power => 1),   # Energy demand and corresponding ratio
-    )
+# Create a power demand node
+sink = RefSink(
+    "electricity demand",   # Node id
+    FixedProfile(5),    # Demand in MW
+    Dict(:surplus => FixedProfile(0), :deficit => FixedProfile(1e6)),
+    # Line above: Surplus and deficit penalty for the node in EUR/MWh
+    Dict(Power => 1),   # Energy demand and corresponding ratio
+)
 
-    # Create the array of ndoes
-    nodes = [av, wind, hydro, inflow, hydro_reservoir, reservoir_spill, hydro_station, ocean, sink]
-    #nodes = [av, wind, hydro, inflow, hydro_reservoir]
+# Create the array of ndoes
+nodes = [av, wind, hydro, inflow, hydro_reservoir, reservoir_spill, hydro_station, ocean, sink]
+#nodes = [av, wind, hydro, inflow, hydro_reservoir]
 
-    # Connect all nodes with the availability node for the overall energy balance
-    links = [
-        Direct("wind-av", wind, av),
-        Direct("hy-av", hydro, av),
-        Direct("av-hy", av, hydro),
-        Direct("inf-hydro_res", inflow, hydro_reservoir),
-        Direct("hydro_res-hydro_disch", hydro_reservoir, hydro_station),
-        Direct("hydro_res-hydro_spill", hydro_reservoir, reservoir_spill),
-        Direct("hydro_gate-ocean", reservoir_spill, ocean),
-        Direct("hydro_station-ocean",  hydro_station, ocean),
-        Direct("hydro_station-av",  hydro_station, av),
-        #Direct("hydro_pump-hydro_reservoir",  hydro_pump, hydro_reservoir),
-        Direct("av-hydro_station", av, hydro_station),
-        #Direct("av-hydro_station", hydro_station, hydro_pump),
-        Direct("av-demand", av, sink),
-    ]
+# Connect all nodes with the availability node for the overall energy balance
+links = [
+    Direct("wind-av", wind, av),
+    Direct("hy-av", hydro, av),
+    Direct("av-hy", av, hydro),
+    Direct("inf-hydro_res", inflow, hydro_reservoir),
+    Direct("hydro_res-hydro_disch", hydro_reservoir, hydro_station),
+    Direct("hydro_res-hydro_spill", hydro_reservoir, reservoir_spill),
+    Direct("hydro_gate-ocean", reservoir_spill, ocean),
+    Direct("hydro_station-ocean",  hydro_station, ocean),
+    Direct("hydro_station-av",  hydro_station, av),
+    #Direct("hydro_pump-hydro_reservoir",  hydro_pump, hydro_reservoir),
+    Direct("av-hydro_station", av, hydro_station),
+    #Direct("av-hydro_station", hydro_station, hydro_pump),
+    Direct("av-demand", av, sink),
+]
 
-    # Create the case dictionary
-    case = Dict(:nodes => nodes, :links => links, :products => products, :T => T)
+# Create the case dictionary
+case = Dict(:nodes => nodes, :links => links, :products => products, :T => T)
 
-    optimizer = optimizer_with_attributes(HiGHS.Optimizer, MOI.Silent() => true)
+optimizer = optimizer_with_attributes(HiGHS.Optimizer, MOI.Silent() => true)
 m = EMB.run_model(case, model, optimizer)
 
 # Display some results
@@ -212,7 +195,7 @@ pretty_table(
 pretty_table(
     JuMP.Containers.rowtable(
         value,
-        m[:flow_out][case[:nodes][2:3], :, case[:products][2]]; 
+        m[:flow_out][case[:nodes][2:3], :, case[:products][2]];
         header = [:Node, :TimePeriod, :Production],
     ),
 )

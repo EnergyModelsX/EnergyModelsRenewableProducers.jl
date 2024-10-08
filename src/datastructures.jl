@@ -278,3 +278,176 @@ as `TimeProfile` or at operational period `t`.
 """
 opex_var_pump(n::PumpedHydroStor) = n.opex_var_pump
 opex_var_pump(n::PumpedHydroStor, t) = n.opex_var_pump[t]
+
+abstract type AbstractMinMaxConstraint <: EMB.Data end
+# struct NoConstraint <: AbstractMinMaxConstraint end
+struct MinConstraint <: AbstractMinMaxConstraint
+    name::Symbol
+    value::TS.TimeProfile{<:Number}
+    flag::TS.TimeProfile{Bool}
+    penalty::TS.TimeProfile{<:Number}
+end
+struct MaxConstraint <: AbstractMinMaxConstraint
+    name::Symbol
+    value::TimeProfile
+    flag::TS.TimeProfile{Bool}
+    penalty::TS.TimeProfile{<:Number}
+end
+struct ScheduleConstraint <: AbstractMinMaxConstraint
+    name::Symbol
+    value::TimeProfile
+    flag::TS.TimeProfile{Bool}
+    penalty::TS.TimeProfile{<:Number}
+end
+is_constraint_data(data) = (typeof(data) <: AbstractMinMaxConstraint)
+is_active(s::AbstractMinMaxConstraint, t) = s.flag[t]
+value(s::AbstractMinMaxConstraint, t) = s.value[t]
+penalty(s::AbstractMinMaxConstraint, t) = s.penalty[t]
+
+""" A regulated hydropower reservoir, modelled as a `Storage` node.
+
+## Fields
+- **`id`** is the name/identifyer of the node.\n
+- **`vol::EMB.UnionCapacity`** are the storage volume parameters of the HydroReservoir node.
+- **`vol_inflow::TimeProfile`** is the inflow to the reservoir.
+- **`vol_init::TimeProfile`** is the initial stored water in the reservoir.
+- **`vol_min::TimeProfile`** is the minimum storage limit for the reservoir.
+- **`vol_max::TimeProfile`** is the maximum storage limit for the reservoir.
+- **`vol_level::Dict{<:Real, <:Real}`** is the relation between stored volume of water in the reservoir and level.
+- **`stor_res::ResourceCarrier`** is the stored `Resource`.\n
+- **`input::Dict{Resource, Real}`** the stored and used resources.\n
+- **`output::Dict{Resource, Real}`** can only contain one entry, the stored resource.\n
+- **`data::Vector{Data}`** additional data (e.g. for investments). The field \
+`data` is conditional through usage of a constructor.
+"""
+
+struct HydroReservoir{T} <: EMB.Storage{T} # kan evnt bygge på HydroStor
+    id::Any
+    vol::EMB.UnionCapacity
+    vol_inflow::TimeProfile
+    vol_init::TimeProfile
+    # vol_constraint::AbstractMinMaxConstraint
+    # vol_min::TimeProfile
+    # vol_max::TimeProfile
+    # penalty_cost::Dict{Symbol, TimeProfile}
+    # TODO Not yet implemented
+    # vol_level::Dict{<:Real, <:Real}
+    # level_init::TimeProfile#
+    # level_inflow::TimeProfile
+    # level_min::TimeProfile # Lowest permitted regulated water level
+    # level_max::TimeProfile # Highest permitted regulated water level
+    #water_value::Dict{<: Int, <:Dict{<:Real, <:Real}} # linear constraints binding the value of the storage
+    stor_res::ResourceCarrier # Water
+    input::Dict{<:Resource,<:Real} # Water
+    output::Dict{<:Resource,<:Real} # Water
+    data::Vector{Data}
+end
+function HydroReservoir{T}(
+    id::Any,
+    vol::EMB.UnionCapacity,
+    vol_inflow::TimeProfile,
+    vol_init::TimeProfile,
+    # vol_constraint::AbstractMinMaxConstraint,
+    # vol_min::TimeProfile,
+    # vol_max::TimeProfile,
+    # TODO not yet implemented
+    # vol_level::Dict{<:Real, <:Real}
+    # level_init::TimeProfile#
+    # level_inflow::TimeProfile
+    # level_min::TimeProfile,
+    # level_max::TimeProfile,
+    #water_value::Union{<:Real, <:Real},
+    stor_res::ResourceCarrier,
+    input::Dict{<:Resource,<:Real},
+    output::Dict{<:Resource,<:Real}
+    ) where {T<:EMB.StorageBehavior}
+    return HydroReservoir{T}(
+        id,
+        vol,
+        vol_inflow,
+        vol_init,
+        # vol_constraint,
+        # vol_min,
+        # vol_max,
+        stor_res,
+        input,
+        output,
+        Data[],
+    )
+end
+
+"""
+    level(n::HydroReservoir)
+
+Returns the parameter type of the `vol` field of the node.
+"""
+EMB.level(n::HydroReservoir) = n.vol
+EMB.level(n::HydroReservoir, t) = n.vol[t]
+
+"""
+    stor_init(n::HydroReservoir, t)
+
+Returns the initial level of a node `n` of type `HydroReservoir` at operational period `t`
+"""
+vol_init(n::HydroReservoir, t) = n.vol_init[t]
+
+# """
+#     vol_min(n::HydroReservoir, t)
+
+# Returns the minimum level of a node `n` of type `HydroReservoir` at operational period `t`
+# """
+# function vol_min(n::HydroReservoir, t)
+#     if isnothing(n.vol_min)
+#         return nothing
+#     else
+#         return n.vol_min[t]
+#     end
+# end
+
+# """
+#     vol_max(n::HydroReservoir, t)
+
+# Returns the maximum level of a node `n` of type `HydroReservoir` at operational period `t`
+# """
+# function vol_max(n::HydroReservoir, t)
+#     if isnothing(n.vol_max)
+#         return nothing
+#     else
+#         return n.vol_max[t]
+#     end
+# end
+
+""" A Hydro Gate, modelled as a `NetworkNode` node. Can be used to model outlets/inlets and
+minimum/maximum requirements for water flow.
+
+## Fields
+- **`id`** is the name/identifier of the node.
+- **`cap::TimeProfile`** is the installed discharge capacity.
+- **`opex_var::TimeProfile`** is the variational operational costs per energy unit produced.
+- **`opex_fixed::TimeProfile`** is the fixed operational costs.
+- **`input::Dict{<:Resource, <:Real}`** are the input `Resource`s with conversion value `Real`.
+- **`output::Dict{<:Resource, <:Real}`** are the generated `Resource`s with conversion value `Real`.
+- **`data::Vector{Data}`** is the additional data (e.g. for investments). The field
+  `data` is conditional through usage of a constructor.
+"""
+#TODO add option for maximum and minimum requirement
+
+struct HydroGate <: EMB.NetworkNode
+    id::Any
+    cap::TimeProfile
+    opex_var::TimeProfile
+    opex_fixed::TimeProfile
+    input::Dict{<:Resource,<:Real}
+    output::Dict{<:Resource,<:Real}
+    data::Vector{Data}
+end
+function HydroGate(
+    id::Any,
+    cap::TimeProfile,
+    opex_var::TimeProfile,
+    opex_fixed::TimeProfile,
+    input::Dict{<:Resource,<:Real},
+    output::Dict{<:Resource,<:Real},
+)
+    return HydroGate(id, cap, opex_var, opex_fixed, input, output, Data[])
+end
