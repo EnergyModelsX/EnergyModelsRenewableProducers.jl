@@ -103,10 +103,8 @@ Penalty variables are included unless penalty value is not set or `Inf``.
 function build_hydro_reservoir_vol_constraints(m, n::HydroReservoir, c::MinConstraint, 𝒯)
     for t ∈ 𝒯
         if is_active(c, t)
-            println("Capacity: " * string(EMB.capacity(EMB.level(n), t)))
-            println("Constraint value: " * string(value(c, t)))
             if has_penalty(c, t)
-                @constraint(m, m[:stor_level][n, t] + m[:vol_penalty_up][n, t] ≥
+                @constraint(m, m[:stor_level][n, t] + m[:rsv_vol_penalty_up][n, t] ≥
                     EMB.capacity(EMB.level(n), t) * value(c, t))
             else
                 @constraint(m, m[:stor_level][n, t] ≥ EMB.capacity(EMB.level(n), t) * value(c, t))
@@ -118,7 +116,7 @@ function build_hydro_reservoir_vol_constraints(m, n::HydroReservoir, c::MaxConst
     for t ∈ 𝒯
         if is_active(c, t)
             if has_penalty(c, t)
-                @constraint(m, m[:stor_level][n, t] - m[:vol_penalty_down][n, t] ≤
+                @constraint(m, m[:stor_level][n, t] - m[:rsv_vol_penalty_down][n, t] ≤
                     EMB.capacity(EMB.level(n), t) * value(c, t))
             else
                 @constraint(m, m[:stor_level][n, t] ≤ EMB.capacity(EMB.level(n), t) * value(c, t))
@@ -131,7 +129,7 @@ function build_hydro_reservoir_vol_constraints(m, n::HydroReservoir, c::Schedule
         if is_active(c, t)
             if has_penalty(c, t)
                 @constraint(m, m[:stor_level][n, t] +
-                    m[:vol_penalty_up][n, t] - m[:vol_penalty_down][n, t] ==
+                    m[:penalty_up][n, t] - m[:rsv_vol_penalty_down][n, t] ==
                     EMB.capacity(EMB.level(n), t) * value(c, t))
             else
                 JuMP.fix(m[:stor_level][n, t], EMB.capacity(EMB.level(n), t) * value(c, t))
@@ -183,12 +181,14 @@ function EMB.constraints_level_aux(m, n::HydroReservoir{T} where T<:EMB.StorageB
     end
 end
 """
-EMB.constraints_opex_var(m, n::HydroReservoir{T}, 𝒯ᴵⁿᵛ, modeltype::EnergyModel)
+EMB.constraints_opex_var(m, n::HydroGate, 𝒯ᴵⁿᵛ, modeltype::EnergyModel)
 
-Function for creating the constraint on the variable OPEX of a `HydroReservoir`.
+Function for creating the constraint on the variable OPEX of a `HydroGate`.
 This function relates the penalty costs for violating constraints to the objective.
 """
-function EMB.constraints_opex_var(m, n::HydroReservoir, 𝒯ᴵⁿᵛ, modeltype::EnergyModel)
+function EMB.constraints_opex_var(m, n::HydroGate, 𝒯ᴵⁿᵛ,
+    modeltype::EnergyModel)
+
     constraints = filter(is_constraint_data, node_data(n))
     constraints_up = filter(has_penalty_up, constraints) # Max and schedule
     constraints_down = filter(has_penalty_down, constraints) # Min and schedule
@@ -197,29 +197,120 @@ function EMB.constraints_opex_var(m, n::HydroReservoir, 𝒯ᴵⁿᵛ, modeltype
         m[:opex_var][n, t_inv] ==
         sum(
             sum(
-                m[:vol_penalty_up][n, t] * penalty(c, t)
+                m[:penalty_up][n, t] * penalty(c, t)
                 for c in constraints_up if has_penalty(c, t)
             ) +
             sum(
-                m[:vol_penalty_down][n, t] * penalty(c, t)
+                m[:penalty_down][n, t] * penalty(c, t)
                 for c in constraints_down if has_penalty(c, t)
             )
         * multiple(t_inv, t) for t in t_inv)
     )
 end
 
-function build_hydro_gate_constraints(m, n::HydroGate, c::MinConstraint, 𝒯::TimeStructure, p::ResourceCarrier)
-    𝒯ᵃ = [t for t ∈ 𝒯 if is_active(c, t)]
-    @constraint(m, [t ∈ 𝒯ᵃ], m[:flow_out][n, t, p] ≥ value(c, t))
+"""
+EMB.constraints_opex_var(m, n::HydroResevoir{T}, 𝒯ᴵⁿᵛ, modeltype::EnergyModel)
+
+Function for creating the constraint on the variable OPEX of a `HydroReservoir`.
+This function relates the penalty costs for violating constraints to the objective in
+addition to exisitng OPEX for `Storage`.
+"""
+function EMB.constraints_opex_var(m, n::HydroReservoir{T}, 𝒯ᴵⁿᵛ,
+    modeltype::EnergyModel) where {T <: EMB.StorageBehavior}
+
+    # Extracts the contribution from the individual components
+    if EMB.has_level_OPEX_var(n)
+        opex_var_level = @expression(m, [t_inv ∈ 𝒯ᴵⁿᵛ],
+            sum(
+                m[:stor_level][n, t] * opex_var(level(n), t) * multiple(t_inv, t) for
+                t ∈ t_inv
+            )
+        )
+    else
+        opex_var_level = @expression(m, [t_inv ∈ 𝒯ᴵⁿᵛ], 0)
+    end
+    if EMB.has_charge_OPEX_var(n)
+        opex_var_charge = @expression(m, [t_inv ∈ 𝒯ᴵⁿᵛ],
+            sum(
+                m[:stor_charge_use][n, t] * opex_var(charge(n), t) * multiple(t_inv, t)
+                for t ∈ t_inv
+            )
+        )
+    else
+        opex_var_charge = @expression(m, [t_inv ∈ 𝒯ᴵⁿᵛ], 0)
+    end
+    if EMB.has_discharge_OPEX_var(n)
+        opex_var_discharge = @expression(m, [t_inv ∈ 𝒯ᴵⁿᵛ],
+            sum(
+                m[:stor_discharge_use][n, t] *
+                opex_var(discharge(n), t) *
+                multiple(t_inv, t) for t ∈ t_inv
+            )
+        )
+    else
+        opex_var_discharge = @expression(m, [t_inv ∈ 𝒯ᴵⁿᵛ], 0)
+    end
+
+    # Create the constraint penalty constraint
+    constraints = filter(is_constraint_data, node_data(n))
+    constraints_up = filter(has_penalty_up, constraints) # Max and schedule
+    constraints_down = filter(has_penalty_down, constraints) # Min and schedule
+
+    opex_penalty_var = @expression(m, [t_inv ∈ 𝒯ᴵⁿᵛ],
+        sum(
+            sum(
+                m[:rsv_vol_penalty_up][n, t] * penalty(c, t)
+                for c in constraints_up if has_penalty(c, t)
+            ) +
+            sum(
+                m[:rsv_vol_penalty_down][n, t] * penalty(c, t)
+                for c in constraints_down if has_penalty(c, t)
+            )
+        * multiple(t_inv, t) for t in t_inv)
+    )
+
+    # Create the overall constraint
+    @constraint(m, [t_inv ∈ 𝒯ᴵⁿᵛ],
+        m[:opex_var][n, t_inv] == opex_var_level[t_inv] + opex_var_charge[t_inv] +
+            opex_var_discharge[t_inv] + opex_penalty_var[t_inv]
+    )
 end
-function build_hydro_gate_constraints(m, n::HydroGate, c::MaxConstraint, 𝒯::TimeStructure, p::ResourceCarrier)
-    𝒯ᵃ = [t for t ∈ 𝒯 if is_active(c, t)]
-    @constraint(m, [t ∈ 𝒯ᵃ], m[:flow_out][n, t, p] ≤ value(c, t))
+
+function build_hydro_gate_constraints(m, n::HydroGate, c::MinConstraint, 𝒯::TimeStructure,
+    p::ResourceCarrier)
+    for t ∈ 𝒯
+        if is_active(c, t)
+            if has_penalty(c, t)
+                @constraint(m, m[:flow_out][n, t, p] + m[:penalty_up][n, t] ≥ value(c, t))
+            else
+                @constraint(m, m[:flow_out][n, t, p] ≥ value(c, t))
+            end
+        end
+    end
 end
-function build_hydro_gate_constraints(m, n::HydroGate, c::ScheduleConstraint, 𝒯::TimeStructure, p::ResourceCarrier)
-    𝒯ᵃ = [t for t ∈ 𝒯 if is_active(c, t)]
-    for t ∈ 𝒯ᵃ
-        JuMP.fix(m[:flow_out][n, t, p], value(c, t); force=true)
+function build_hydro_gate_constraints(m, n::HydroGate, c::MaxConstraint, 𝒯::TimeStructure,
+    p::ResourceCarrier)
+    for t ∈ 𝒯
+        if is_active(c, t)
+            if has_penalty(c, t)
+                @constraint(m, m[:flow_out][n, t, p] - m[:penalty_down][n, t] ≤ value(c, t))
+            else
+                @constraint(m, m[:flow_out][n, t, p] ≤ value(c, t))
+            end
+        end
+    end
+end
+function build_hydro_gate_constraints(m, n::HydroGate, c::ScheduleConstraint,
+    𝒯::TimeStructure, p::ResourceCarrier)
+    for t ∈ 𝒯
+        if is_active(c, t)
+            if has_penalty(c, t)
+                @constraint(m, m[:flow_out][n, t, p] +
+                    m[:penalty_up][n, t] - m[:penalty_down][n, t] == value(c, t))
+            else
+                JuMP.fix(m[:flow_out][n, t, p], value(c, t); force=true)
+            end
+        end
     end
 end
 
