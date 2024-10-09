@@ -333,11 +333,11 @@ penalty(s::AbstractMinMaxConstraint, t) = s.penalty[t]
 `data` is conditional through usage of a constructor.
 """
 
-struct HydroReservoir{T} <: EMB.Storage{T} # kan evnt bygge på HydroStor
+struct HydroReservoir{T} <: EMB.Storage{T}
     id::Any
     vol::EMB.UnionCapacity
     vol_inflow::TimeProfile
-    vol_init::TimeProfile
+    # vol_init::TimeProfile
     # vol_constraint::AbstractMinMaxConstraint
     # vol_min::TimeProfile
     # vol_max::TimeProfile
@@ -358,7 +358,7 @@ function HydroReservoir{T}(
     id::Any,
     vol::EMB.UnionCapacity,
     vol_inflow::TimeProfile,
-    vol_init::TimeProfile,
+    # vol_init::TimeProfile,
     # vol_constraint::AbstractMinMaxConstraint,
     # vol_min::TimeProfile,
     # vol_max::TimeProfile,
@@ -377,7 +377,7 @@ function HydroReservoir{T}(
         id,
         vol,
         vol_inflow,
-        vol_init,
+        # vol_init,
         # vol_constraint,
         # vol_min,
         # vol_max,
@@ -396,38 +396,6 @@ Returns the parameter type of the `vol` field of the node.
 EMB.level(n::HydroReservoir) = n.vol
 EMB.level(n::HydroReservoir, t) = n.vol[t]
 
-"""
-    stor_init(n::HydroReservoir, t)
-
-Returns the initial level of a node `n` of type `HydroReservoir` at operational period `t`
-"""
-vol_init(n::HydroReservoir, t) = n.vol_init[t]
-
-# """
-#     vol_min(n::HydroReservoir, t)
-
-# Returns the minimum level of a node `n` of type `HydroReservoir` at operational period `t`
-# """
-# function vol_min(n::HydroReservoir, t)
-#     if isnothing(n.vol_min)
-#         return nothing
-#     else
-#         return n.vol_min[t]
-#     end
-# end
-
-# """
-#     vol_max(n::HydroReservoir, t)
-
-# Returns the maximum level of a node `n` of type `HydroReservoir` at operational period `t`
-# """
-# function vol_max(n::HydroReservoir, t)
-#     if isnothing(n.vol_max)
-#         return nothing
-#     else
-#         return n.vol_max[t]
-#     end
-# end
 
 """ A Hydro Gate, modelled as a `NetworkNode` node. Can be used to model outlets/inlets and
 minimum/maximum requirements for water flow.

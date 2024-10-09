@@ -181,10 +181,10 @@ function EMB.check_node(n::HydroReservoir, 𝒯, modeltype::EMB.EnergyModel, che
             "The volume capacity has to be non-negative."
         )
     end
-    @assert_or_log(
-        0 ≤ vol_init(n, first(𝒯ᴵⁿᵛ)) ≤ capacity(par_level, first(𝒯ᴵⁿᵛ)),
-        "The initial volume must be between the minimum and the capacity volume."
-    )
+    # @assert_or_log(
+    #     0 ≤ vol_init(n, first(𝒯ᴵⁿᵛ)) ≤ capacity(par_level, first(𝒯ᴵⁿᵛ)),
+    #     "The initial volume must be between the minimum and the capacity volume."
+    # )
     # if isa(n.vol_constraint,
     #     Union{MaxConstraint, MinMaxConstraint, MaxPenaltyConstraint, MinMaxPenaltyConstraint})
     #     @assert_or_log(

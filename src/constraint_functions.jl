@@ -162,18 +162,6 @@ function EMB.constraints_level_aux(m, n::HydroReservoir{T} where T<:EMB.StorageB
             m[:stor_charge_use][n, t] - m[:stor_discharge_use][n, t]
     )
 
-    # The initial storage level is given by the specified initial level in the strategic
-    # period `t_inv`. This level corresponds to the value before inflow and outflow.
-    # This is different to the `RefStorage` node.
-    # TODO receeding horizon will introduce InitStorageData <: Data such that InitStorageData(init_level)
-    @constraint(
-        m,
-        [t_inv ∈ strategic_periods(𝒯)],
-        m[:stor_level][n, first(t_inv)] ==
-            vol_init(n, first(t_inv)) +
-            m[:stor_level_Δ_op][n, first(t_inv)] * duration(first(t_inv))
-    )
-
     # The minimum and maximum contents of the reservoir is bounded below and above.
     constraint_data = filter(is_constraint_data, node_data(n))
     for c in constraint_data
