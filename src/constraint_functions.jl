@@ -168,6 +168,7 @@ function EMB.constraints_level_aux(m, n::HydroReservoir{T} where T<:EMB.StorageB
         build_hydro_reservoir_vol_constraints(m, n, c, 𝒯)
     end
 end
+
 """
 EMB.constraints_opex_var(m, n::HydroGate, 𝒯ᴵⁿᵛ, modeltype::EnergyModel)
 

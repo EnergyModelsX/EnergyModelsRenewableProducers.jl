@@ -31,6 +31,7 @@ EnergyModelsRenewableProducers.opex_var_pump
 
 ```@docs
 EnergyModelsBase.level
+EnergyModelsBase.constraints_opex_var
 ```
 
 ## `HydroGenerator`
@@ -38,3 +39,7 @@ EnergyModelsBase.level
 ## `HydroPump`
 
 ## `HydroGate`
+
+```@docs
+EnergyModelsBase.constraints_opex_var
+```
