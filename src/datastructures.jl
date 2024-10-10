@@ -436,7 +436,6 @@ struct HydroPump <: EMB.NetworkNode # plant or pump or both?
     opex_fixed::TimeProfile
     input::Dict{<:Resource,<:Real}
     output::Dict{<:Resource,<:Real}
-    η::Vector{Real} # PQ_curve: production and discharge ratio [MW / m3/s]
     data::Vector{Data}
 end
 function HydroPump(
@@ -446,10 +445,8 @@ function HydroPump(
     opex_var::TimeProfile,
     opex_fixed::TimeProfile,
     input::Dict{<:Resource,<:Real},
-    output::Dict{<:Resource,<:Real};
-    pq_curve = nothing,
-    η = Real[],
+    output::Dict{<:Resource,<:Real}
 )
 
-    return HydroPump(id, cap, pq_curve, opex_var, opex_fixed, input, output, η, Data[])
+    return HydroPump(id, cap, pq_curve, opex_var, opex_fixed, input, output, Data[])
 end
