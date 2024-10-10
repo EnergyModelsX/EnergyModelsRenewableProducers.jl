@@ -168,6 +168,7 @@ function EMB.constraints_level_aux(m, n::HydroReservoir{T} where T<:EMB.StorageB
         build_hydro_reservoir_vol_constraints(m, n, c, 𝒯)
     end
 end
+
 """
 EMB.constraints_opex_var(m, n::HydroGate, 𝒯ᴵⁿᵛ, modeltype::EnergyModel)
 
@@ -329,7 +330,6 @@ end
 
 Function for creating the constraint on the outlet flow from a HydroGenerator Node.
 """
-
 function constraints_flow_out(m, n::HydroGenerator, 𝒯::TimeStructure, modeltype::EnergyModel)
     # Declaration of the required subsets, excluding CO2, if specified
     𝒫ᵒᵘᵗ = EMB.res_not(outputs(n), co2_instance(modeltype))
