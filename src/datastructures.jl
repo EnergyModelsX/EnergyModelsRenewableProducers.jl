@@ -367,6 +367,7 @@ end
 
 """
     level(n::HydroReservoir)
+    level(n::HydroReservoir, t)
 
 Returns the parameter type of the `vol` field of the node.
 """
