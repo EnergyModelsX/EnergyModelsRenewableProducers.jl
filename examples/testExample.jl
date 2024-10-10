@@ -1,4 +1,3 @@
-using Revise
 using Pkg
 # Activate the local environment including EnergyModelsRenewableProducers, HiGHS, PrettyTables
 Pkg.activate(@__DIR__)

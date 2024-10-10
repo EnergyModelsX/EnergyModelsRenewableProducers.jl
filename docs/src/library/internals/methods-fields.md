@@ -30,7 +30,7 @@ EnergyModelsRenewableProducers.opex_var_pump
 ## `HydroReservoir`
 
 ```@docs
-EnergyModelsRenewableProducers.level
+EnergyModelsBase.level
 ```
 
 ## `HydroGenerator`
