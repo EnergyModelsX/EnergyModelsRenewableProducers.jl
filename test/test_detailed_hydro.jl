@@ -114,7 +114,7 @@ end
         )
     )
     m = EMB.run_model(case, model, optimizer)
-    for sp in TS.strategic_periods(𝒯)
+    for sp in strategic_periods(𝒯)
         rsv_vol = value.([m[:stor_level][hydro_reservoir, t] for t in sp])
         min_vol = [hydro_reservoir.vol.capacity[t] for t in sp] .* min_profile
         max_vol = [hydro_reservoir.vol.capacity[t] for t in sp] .* max_profile
@@ -153,7 +153,7 @@ end
     )
     m = EMB.run_model(case, model, optimizer)
     max_vol_violation_cost = 0
-    for sp in TS.strategic_periods(𝒯)
+    for sp in strategic_periods(𝒯)
         rsv_vol = value.([m[:stor_level][hydro_reservoir, t] for t in sp])
         min_vol = [hydro_reservoir.vol.capacity[t] for t in sp] .* min_profile
         max_vol = [hydro_reservoir.vol.capacity[t] for t in sp] .* max_profile
@@ -186,7 +186,7 @@ end
     )
     m = EMB.run_model(case, model, optimizer)
     max_vol_violation_cost = 0
-    for sp in TS.strategic_periods(𝒯)
+    for sp in strategic_periods(𝒯)
         gate_flow = value.([m[:flow_out][hydro_gate, t, Water] for t in sp])
         # Verify that schedule equals flow when flag is set
         @test all(.!flags .| (schedule_profile .== gate_flow))
