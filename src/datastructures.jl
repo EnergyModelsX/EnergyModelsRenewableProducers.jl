@@ -336,7 +336,6 @@ storage volume `vol`
 - **`data::Vector{Data}`** additional data (e.g. for investments). The field \
 `data` is conditional through usage of a constructor.
 """
-
 struct HydroReservoir{T} <: EMB.Storage{T}
     id::Any
     vol::EMB.UnionCapacity
@@ -375,7 +374,10 @@ EMB.level(n::HydroReservoir) = n.vol
 EMB.level(n::HydroReservoir, t) = n.vol[t]
 
 
-""" A Hydro Gate, modelled as a `NetworkNode` node. Can be used to model outlets/inlets and
+"""
+    HydroGate <: EMB.NetworkNode
+
+A Hydro Gate, modelled as a `NetworkNode` node. Can be used to model outlets/inlets and
 minimum/maximum requirements for water flow.
 
 ## Fields
@@ -388,8 +390,6 @@ minimum/maximum requirements for water flow.
 - **`data::Vector{Data}`** is the additional data (e.g. for investments). The field
   `data` is conditional through usage of a constructor.
 """
-#TODO add option for maximum and minimum requirement
-
 struct HydroGate <: EMB.NetworkNode
     id::Any
     cap::TimeProfile
