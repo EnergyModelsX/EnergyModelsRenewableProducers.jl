@@ -1,27 +1,3 @@
-## START - ONLY FOR TESTING ##
-using Revise
-using Pkg
-# Activate the local environment including EnergyModelsRenewableProducers, HiGHS, PrettyTables
-Pkg.activate(@__DIR__)
-# Use dev version if run as part of tests
-Pkg.resolve()
-Pkg.develop(path=joinpath(@__DIR__, ".."))
-#Pkg.activate()
-# Install the dependencies.
-Pkg.instantiate()
-## END - ONLY FOR TESTING ##
-
-
-using EnergyModelsBase
-using EnergyModelsRenewableProducers
-using HiGHS
-using JuMP
-using Test
-using TimeStruct
-
-const EMB = EnergyModelsBase
-const EMRP = EnergyModelsRenewableProducers
-
 function build_case()
     # Define the different resources and their emission intensity in tCO2/MWh
     # CO2 has to be defined, even if not used, as it is required for the `EnergyModel` type
@@ -154,6 +130,7 @@ end
     hydro_reservoir = case[:nodes][1]
     hydro_gate = case[:nodes][2]
     Water = case[:products][3]
+
     # Verify reservoir minimum/maximum hard constraint
     max_profile = [1, 0, 0.8, 1]
     penalty_cost = 57
@@ -161,8 +138,8 @@ end
         MaxConstraint(
             Symbol(),
             OperationalProfile(max_profile), # value
-            OperationalProfile([false, true, false, false]),                 # flag
-            FixedProfile(penalty_cost),                  # penalty
+            OperationalProfile([false, true, false, false]), # flag
+            FixedProfile(penalty_cost),                      # penalty
         )
     )
     min_profile = [1, 0, 0, 0]
@@ -170,19 +147,48 @@ end
         MinConstraint(
             Symbol(),
             OperationalProfile(min_profile), # value
-            FixedProfile(true),                 # flag
-            FixedProfile(Inf),                  # penalty
+            FixedProfile(true),              # flag
+            FixedProfile(Inf),               # penalty
         )
     )
     m = EMB.run_model(case, model, optimizer)
-    # sp = first(TS.strategic_periods(𝒯))
     max_vol_violation_cost = 0
     for sp in TS.strategic_periods(𝒯)
         rsv_vol = value.([m[:stor_level][hydro_reservoir, t] for t in sp])
         min_vol = [hydro_reservoir.vol.capacity[t] for t in sp] .* min_profile
         max_vol = [hydro_reservoir.vol.capacity[t] for t in sp] .* max_profile
         max_vol_violation = max.(rsv_vol - max_vol, 0)
-        max_vol_violation_cost += sum(max_vol_violation * 57)
+        max_vol_violation_cost += sum(max_vol_violation * penalty_cost)
     end
     @test objective_value(m) + max_vol_violation_cost == 0
+end
+
+@testset "Test hydro gate schedule" begin
+    case, model = build_case()
+    optimizer = optimizer_with_attributes(HiGHS.Optimizer, MOI.Silent() => true)
+
+    𝒯 = case[:T]
+    hydro_reservoir = case[:nodes][1]
+    hydro_gate = case[:nodes][2]
+    Water = case[:products][3]
+
+    # Verify reservoir minimum/maximum hard constraint
+    schedule_profile = 10 * ones(4)
+    flags = [false, false, true, false]
+    penalty_cost = 57
+    push!(hydro_gate.data,
+        ScheduleConstraint(
+            Symbol(),
+            OperationalProfile(schedule_profile), # value
+            OperationalProfile(flags), # flag
+            FixedProfile(penalty_cost),                      # penalty
+        )
+    )
+    m = EMB.run_model(case, model, optimizer)
+    max_vol_violation_cost = 0
+    for sp in TS.strategic_periods(𝒯)
+        gate_flow = value.([m[:flow_out][hydro_gate, t, Water] for t in sp])
+        # Verify that schedule equals flow when flag is set
+        @test all(.!flags .| (schedule_profile .== gate_flow))
+    end
 end
