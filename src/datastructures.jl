@@ -439,7 +439,7 @@ struct HydroPump <: EMB.NetworkNode # plant or pump or both?
     η::Vector{Real} # PQ_curve: production and discharge ratio [MW / m3/s]
     data::Vector{Data}
 end
-function HydroGenerator(
+function HydroPump(
     id::Any,
     cap::TimeProfile,
     pq_curve::Union{Dict{<:Resource, <:Vector{<:Real}}, Nothing},# Production and discharge ratio [MW / m3/s]
@@ -451,5 +451,5 @@ function HydroGenerator(
     η = Real[],
 )
 
-    return HydroGenerator(id, cap, pq_curve, opex_var, opex_fixed, input, output, η, Data[])
+    return HydroPump(id, cap, pq_curve, opex_var, opex_fixed, input, output, η, Data[])
 end
