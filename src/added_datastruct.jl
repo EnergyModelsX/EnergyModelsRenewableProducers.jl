@@ -6,7 +6,10 @@
 # TODO make pump module
 # TODO add minimum release? eller skal dette settes opp med bruk av HydroGate?
 
-""" A regular hydropower plant, modelled as a `NetworkNode` node.
+"""
+    HydroGenerator <: EMB.NetworkNode
+
+A regular hydropower plant, modelled as a `NetworkNode` node.
 
 ## Fields
 - **`id`** is the name/identifier of the node.\n
@@ -21,7 +24,6 @@ where the input resource also is an output resource. \n
 - **`data::Vector{Data}`** is the additional data (e.g. for investments). The field \
 `data` is conditional through usage of a constructor.
 """
-
 struct HydroGenerator <: EMB.NetworkNode # plant or pump or both?
     id::Any
     #power_cap::TimeProfile # maximum production MW/(time unit)
