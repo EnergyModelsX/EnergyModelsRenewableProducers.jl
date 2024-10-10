@@ -409,3 +409,47 @@ function HydroGate(
 )
     return HydroGate(id, cap, opex_var, opex_fixed, input, output, Data[])
 end
+
+"""
+    HydroPump <: EMB.NetworkNode
+
+A regular hydropower pump, modelled as a `NetworkNode` node.
+
+## Fields
+- **`id`** is the name/identifier of the node.\n
+- **`cap::TimeProfile`** is the installed discharge capacity.\n
+- **`pq_curve::Dict{<:Resource, <:Vector{<:Real}}` describes the relationship between power and discharge (water).\
+requires one input resource (usually Water) and two output resources (usually Water and Power) to be defined \
+where the input resource also is an output resource. \n
+- **`opex_var::TimeProfile`** is the variational operational costs per energy unit produced.\n
+- **`opex_fixed::TimeProfile`** is the fixed operational costs.\n
+- **`input::Dict{<:Resource, <:Real}`** are the input `Resource`s with conversion value `Real`.\n
+- **`output::Dict{<:Resource, <:Real}`** are the generated `Resource`s with conversion value `Real`.\n
+- **`data::Vector{Data}`** is the additional data (e.g. for investments). The field \
+`data` is conditional through usage of a constructor.
+"""
+struct HydroPump <: EMB.NetworkNode # plant or pump or both?
+    id::Any
+    cap::TimeProfile # maximum discharge mm3/(time unit)
+    pq_curve::Union{Dict{<:Resource, <:Vector{<:Real}}, Nothing}# Production and discharge ratio [MW / m3/s]
+    opex_var::TimeProfile
+    opex_fixed::TimeProfile
+    input::Dict{<:Resource,<:Real}
+    output::Dict{<:Resource,<:Real}
+    η::Vector{Real} # PQ_curve: production and discharge ratio [MW / m3/s]
+    data::Vector{Data}
+end
+function HydroGenerator(
+    id::Any,
+    cap::TimeProfile,
+    pq_curve::Union{Dict{<:Resource, <:Vector{<:Real}}, Nothing},# Production and discharge ratio [MW / m3/s]
+    opex_var::TimeProfile,
+    opex_fixed::TimeProfile,
+    input::Dict{<:Resource,<:Real},
+    output::Dict{<:Resource,<:Real};
+    pq_curve = nothing,
+    η = Real[],
+)
+
+    return HydroGenerator(id, cap, pq_curve, opex_var, opex_fixed, input, output, η, Data[])
+end
