@@ -316,16 +316,20 @@ end
 
 penalty(s::AbstractMinMaxConstraint, t) = s.penalty[t]
 
-""" A regulated hydropower reservoir, modelled as a `Storage` node.
+"""
+    HydroReservoir{T} <: EMB.Storage{T}
+
+A regulated hydropower reservoir, modelled as a `Storage` node. A regulated hydro storage node
+requires a storage volume for the `vol` and volume inflow `vol_inflow`. The `stor_res` is
+typically water in million cubic meters. Minimum, maximum and schedule volume constraints
+can be added using `Data` input of the composite types `MinConstraint`, `MaxConstraint` and
+`ScheduleConstraint`. These are given relative sizes between 0 and 1 relative to the total
+storage volume `vol`
 
 ## Fields
 - **`id`** is the name/identifyer of the node.\n
 - **`vol::EMB.UnionCapacity`** are the storage volume parameters of the HydroReservoir node.
 - **`vol_inflow::TimeProfile`** is the inflow to the reservoir.
-- **`vol_init::TimeProfile`** is the initial stored water in the reservoir.
-- **`vol_min::TimeProfile`** is the minimum storage limit for the reservoir.
-- **`vol_max::TimeProfile`** is the maximum storage limit for the reservoir.
-- **`vol_level::Dict{<:Real, <:Real}`** is the relation between stored volume of water in the reservoir and level.
 - **`stor_res::ResourceCarrier`** is the stored `Resource`.\n
 - **`input::Dict{Resource, Real}`** the stored and used resources.\n
 - **`output::Dict{Resource, Real}`** can only contain one entry, the stored resource.\n
@@ -337,18 +341,6 @@ struct HydroReservoir{T} <: EMB.Storage{T}
     id::Any
     vol::EMB.UnionCapacity
     vol_inflow::TimeProfile
-    # vol_init::TimeProfile
-    # vol_constraint::AbstractMinMaxConstraint
-    # vol_min::TimeProfile
-    # vol_max::TimeProfile
-    # penalty_cost::Dict{Symbol, TimeProfile}
-    # TODO Not yet implemented
-    # vol_level::Dict{<:Real, <:Real}
-    # level_init::TimeProfile#
-    # level_inflow::TimeProfile
-    # level_min::TimeProfile # Lowest permitted regulated water level
-    # level_max::TimeProfile # Highest permitted regulated water level
-    #water_value::Dict{<: Int, <:Dict{<:Real, <:Real}} # linear constraints binding the value of the storage
     stor_res::ResourceCarrier # Water
     input::Dict{<:Resource,<:Real} # Water
     output::Dict{<:Resource,<:Real} # Water
@@ -358,17 +350,6 @@ function HydroReservoir{T}(
     id::Any,
     vol::EMB.UnionCapacity,
     vol_inflow::TimeProfile,
-    # vol_init::TimeProfile,
-    # vol_constraint::AbstractMinMaxConstraint,
-    # vol_min::TimeProfile,
-    # vol_max::TimeProfile,
-    # TODO not yet implemented
-    # vol_level::Dict{<:Real, <:Real}
-    # level_init::TimeProfile#
-    # level_inflow::TimeProfile
-    # level_min::TimeProfile,
-    # level_max::TimeProfile,
-    #water_value::Union{<:Real, <:Real},
     stor_res::ResourceCarrier,
     input::Dict{<:Resource,<:Real},
     output::Dict{<:Resource,<:Real}
@@ -377,10 +358,6 @@ function HydroReservoir{T}(
         id,
         vol,
         vol_inflow,
-        # vol_init,
-        # vol_constraint,
-        # vol_min,
-        # vol_max,
         stor_res,
         input,
         output,
