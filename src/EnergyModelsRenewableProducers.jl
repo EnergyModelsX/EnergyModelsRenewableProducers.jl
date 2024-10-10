@@ -29,7 +29,7 @@ include("legacy_constructor.jl")
 
 export NonDisRES
 export HydroStorage, RegHydroStor, HydroStor, PumpedHydroStor
-export HydroReservoir, HydroGenerator, HydroGate
+export HydroReservoir, HydroGenerator, HydroPump, HydroGate
 export MinConstraint, MaxConstraint, ScheduleConstraint
 
 end # module
