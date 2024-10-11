@@ -373,7 +373,6 @@ Returns the parameter type of the `vol` field of the node.
 EMB.level(n::HydroReservoir) = n.vol
 EMB.level(n::HydroReservoir, t) = n.vol[t]
 
-
 """
     HydroGate <: EMB.NetworkNode
 

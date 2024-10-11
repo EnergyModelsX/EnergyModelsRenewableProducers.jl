@@ -55,7 +55,8 @@ makedocs(
             "Public" => "library/public.md",
             "Internals" => String[
                 "library/internals/methods-fields.md",
-                "library/internals/methods-EMB.md"
+                "library/internals/methods-EMB.md",
+                "library/internals/methods-EMRP.md",
             ],
         ],
     ],
