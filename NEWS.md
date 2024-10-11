@@ -1,5 +1,9 @@
 # Release notes
 
+## Unversioned
+
+* Minor updates on docstrings and descriptions.
+
 ## Version 0.6.1 (2024-09-03)
 
 * Dependency increase for `EnergyModelsBase` as the changes do not directly affect `EnergyModelsCO2`.

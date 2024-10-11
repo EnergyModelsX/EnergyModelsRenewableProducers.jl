@@ -40,7 +40,7 @@ end
     profile(n::NonDisRES)
     profile(n::NonDisRES, t)
 
-Returns the profile of a node `n` of type `NonDisRES` either as `TimeProfile` or at
+Returns the profile of a node `n` of type `NonDisRES` either as `TimeProfile` or in
 operational period `t`.
 """
 profile(n::NonDisRES) = n.profile
@@ -243,7 +243,7 @@ end
     level_init(n::HydroStorage)
     level_init(n::HydroStorage, t)
 
-Returns the initial level of a node `n` of type `HydroStorage` either as `TimeProfile` or at
+Returns the initial level of a node `n` of type `HydroStorage` either as `TimeProfile` or in
 operational period `t`.
 """
 level_init(n::HydroStorage) = n.level_init
@@ -253,7 +253,7 @@ level_init(n::HydroStorage, t) = n.level_init[t]
     level_inflow(n::HydroStorage)
     level_inflow(n::HydroStorage, t)
 
-Returns the inflow to a node `n` of type `HydroStorage` either as `TimeProfile` or at
+Returns the inflow to a node `n` of type `HydroStorage` either as `TimeProfile` or in
 operational period `t`.
 """
 level_inflow(n::HydroStorage) = n.level_inflow
@@ -263,7 +263,7 @@ level_inflow(n::HydroStorage, t) = n.level_inflow[t]
     level_min(n::HydroStorage)
     level_min(n::HydroStorage, t)
 
-Returns the minimum level of a node `n` of type `HydroStorage` either as `TimeProfile` or at
+Returns the minimum level of a node `n` of type `HydroStorage` either as `TimeProfile` or in
 operational period `t`.
 """
 level_min(n::HydroStorage) = n.level_min
@@ -274,7 +274,7 @@ level_min(n::HydroStorage, t) = n.level_min[t]
     opex_var_pump(n::PumpedHydroStor, t)
 
 Returns the variable OPEX of a node `n` of type `PumpedHydroStor` related to pumping either
-as `TimeProfile` or at operational period `t`.
+as `TimeProfile` or in operational period `t`.
 """
 opex_var_pump(n::PumpedHydroStor) = n.opex_var_pump
 opex_var_pump(n::PumpedHydroStor, t) = n.opex_var_pump[t]
