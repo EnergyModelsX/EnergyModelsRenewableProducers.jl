@@ -94,7 +94,7 @@ function EMB.constraints_level_aux(m, n::HydroStorage, 𝒯, 𝒫, modeltype::En
 end
 
 """
-build_hydro_reservoir_vol_constraints(m, c::AbstractMinMaxConstraint, 𝒯)
+    build_hydro_reservoir_vol_constraints(m, n::HydroReservoir, c::AbstractMinMaxConstraint, 𝒯)
 
 Create minimum/maximum volume constraints for the `HydroReservoir` node. The
 restriction is specified as a composite type of the abstract type `AbstractMinMaxConstraint`.

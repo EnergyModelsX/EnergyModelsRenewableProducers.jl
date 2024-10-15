@@ -279,26 +279,63 @@ as `TimeProfile` or at operational period `t`.
 opex_var_pump(n::PumpedHydroStor) = n.opex_var_pump
 opex_var_pump(n::PumpedHydroStor, t) = n.opex_var_pump[t]
 
+""" Declaration of general constraint type as subtype of `EMB.Data`."""
 abstract type AbstractMinMaxConstraint <: EMB.Data end
-# struct NoConstraint <: AbstractMinMaxConstraint end
+
+"""
+    MinConstraint <: AbstractMinMaxConstraint
+
+Type for defining minimum constraints.
+
+## Fields
+- **`name::Symbol`** is the name of the constraint and could be used if a node can have different constraint types.
+- **`value::TimeProfile`** is the constraint value, the limit that should not be violated.
+- **`flag::TimeProfile`** is a boolean value indicating if the constraint is active.
+- **`penalty::TimeProfile`** is the penalty for violating the constraint. If penalty is set to `Inf` it will be built as a hard constraint.
+"""
 struct MinConstraint <: AbstractMinMaxConstraint
     name::Symbol
-    value::TS.TimeProfile{<:Number}
-    flag::TS.TimeProfile{Bool}
-    penalty::TS.TimeProfile{<:Number}
+    value::TimeProfile{<:Number}
+    flag::TimeProfile{Bool}
+    penalty::TimeProfile{<:Number}
 end
+
+"""
+    MaxConstraint <: AbstractMinMaxConstraint
+
+Type for defining maximum constraints.
+
+## Fields
+- **`name::Symbol`** is the name of the constraint and could be used if a node can have different constraint types.
+- **`value::TimeProfile`** is the constraint value, the limit that should not be violated.
+- **`flag::TimeProfile`** is a boolean value indicating if the constraint is active.
+- **`penalty::TimeProfile`** is the penalty for violating the constraint. If penalty is set to `Inf` it will be built as a hard constraint.
+"""
 struct MaxConstraint <: AbstractMinMaxConstraint
     name::Symbol
     value::TimeProfile
-    flag::TS.TimeProfile{Bool}
-    penalty::TS.TimeProfile{<:Number}
+    flag::TimeProfile{Bool}
+    penalty::TimeProfile{<:Number}
 end
+
+"""
+    ScheduleConstraint <: AbstractMinMaxConstraint
+
+Type for defining schedule constraints.
+
+## Fields
+- **`name::Symbol`** is the name of the constraint and could be used if a node can have different constraint types.
+- **`value::TimeProfile`** is the constraint value, the limit that should not be violated.
+- **`flag::TimeProfile`** is a boolean value indicating if the constraint is active.
+- **`penalty::TimeProfile`** is the penalty for violating the constraint. If penalty is set to `Inf` it will be built as a hard constraint.
+"""
 struct ScheduleConstraint <: AbstractMinMaxConstraint
     name::Symbol
     value::TimeProfile
-    flag::TS.TimeProfile{Bool}
-    penalty::TS.TimeProfile{<:Number}
+    flag::TimeProfile{Bool}
+    penalty::TimeProfile{<:Number}
 end
+
 is_constraint_data(data::Data) = (typeof(data) <: AbstractMinMaxConstraint)
 is_active(s::AbstractMinMaxConstraint, t) = s.flag[t]
 value(s::AbstractMinMaxConstraint, t) = s.value[t]

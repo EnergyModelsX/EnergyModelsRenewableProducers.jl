@@ -73,6 +73,7 @@ Pages = [
     "library/internals/methods-fields.md",
     "library/internals/methods-EMB.md",
     "library/internals/methods-EMRP.md",
+    "library/internals/types-EMRP.md",
 ]
 Depth = 1
 ```
