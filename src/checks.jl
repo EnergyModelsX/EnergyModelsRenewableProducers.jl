@@ -236,7 +236,6 @@ function EMB.check_node(n::HydroReservoir, 𝒯, modeltype::EMB.EnergyModel, che
 end
 
 """
-
     EMB.check_node(n::HydroGenerator, 𝒯, modeltype::EMB.EnergyModel, check_timeprofiles::Bool)
 
 This method checks that the *[`HydroGenerator`](@ref)* node is valid.
