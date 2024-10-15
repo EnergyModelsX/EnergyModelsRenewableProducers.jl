@@ -1,4 +1,4 @@
-# [Hydro reservoir node](@id nodes-hydro_gate)
+# [Hydro gate node](@id nodes-hydro_gate)
 
 The [`HydroReservoir`](@ref), [`HydroGate`](@ref), [`HydroGenerator`](@ref), and [`HydroPump`](@ref) should be used for detailed hydropower modeling.
 Unlike [`HydroStorage`](@ref), [`HydroReservoir`](@ref) can have water as the stored resource.
