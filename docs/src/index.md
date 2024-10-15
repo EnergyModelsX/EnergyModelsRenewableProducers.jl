@@ -23,12 +23,12 @@ These all use intermittent energy sources in the production of energy, so the ma
 
 ### [`HydroStor`](@ref) and [`PumpedHydroStor`](@ref)
 
-The second and third nodes implement a regulated hydropower storage plant, both with ([`PumpedHydroStor`](@ref)) and without pumps ([`HydroStor`](@ref)) for filling the reservoir with excess energy.
-The hydropower storage plant can also be extended as they are declared as subtypes of [`HydroStorage`](@ref).
+The [`PumpedHydroStor`](@ref) and [`HydroStor`](@ref) nodes implement a regulated hydropower storage plant, either with or without pumps for filling the reservoir with excess energy.
+The hydropower storage plant can also be extended as they are declared as subtypes of [`HydroStorage`](@ref). 
 
 ### [`HydroReservoir`](@ref), [`HydroGenerator`](@ref), [`HydroPump`](@ref), and [`HydroGate`](@ref)
 
-Node 4-7 can be used to construct detailed cascaded hydropower systems.
+These nodes can be used to construct detailed cascaded hydropower systems and include conversion from water to electric energy. 
 
 ## Manual outline
 
