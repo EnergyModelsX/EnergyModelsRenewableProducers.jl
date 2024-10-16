@@ -44,14 +44,14 @@ function NonDisRES(
 end
 
 """
-    profile(n::NonDisRES)
-    profile(n::NonDisRES, t)
+    profile(n::AbstractNonDisRES)
+    profile(n::AbstractNonDisRES, t)
 
-Returns the profile of a node `n` of type `NonDisRES` either as `TimeProfile` or in
+Returns the profile of a node `n` of type `AbstractNonDisRES` either as `TimeProfile` or in
 operational period `t`.
 """
-profile(n::NonDisRES) = n.profile
-profile(n::NonDisRES, t) = n.profile[t]
+profile(n::AbstractNonDisRES) = n.profile
+profile(n::AbstractNonDisRES, t) = n.profile[t]
 
 """ An abstract type for hydro storage nodes, with or without pumping. """
 abstract type HydroStorage{T} <: EMB.Storage{T} end
