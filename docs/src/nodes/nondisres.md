@@ -138,11 +138,11 @@ These standard constraints are:
 - `constraints_opex_var`:
 
   ```math
-  \texttt{opex\_var}[n, t_{inv}] = \sum_{t \in t_{inv}} opex\_var(n, t) \times \texttt{cap\_use}[n, t] \times EMB.multiple(t_{inv}, t)
+  \texttt{opex\_var}[n, t_{inv}] = \sum_{t \in t_{inv}} opex\_var(n, t) \times \texttt{cap\_use}[n, t] \times scale\_op\_sp(t_{inv}, t)
   ```
 
-  !!! tip "The function `EMB.multiple`"
-      The function [``EMB.multiple(t_{inv}, t)``](@extref EnergyModelsBase.multiple) calculates the scaling factor between operational and strategic periods.
+  !!! tip "The function `scale_op_sp`"
+      The function [``scale\_op\_sp(t_{inv}, t)``](@extref EnergyModelsBase.scale_op_sp) calculates the scaling factor between operational and strategic periods.
       It also takes into account potential operational scenarios and their probability as well as representative periods.
 
 - `constraints_data`:\
