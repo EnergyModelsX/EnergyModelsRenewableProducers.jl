@@ -357,16 +357,16 @@ penalty(s::AbstractMinMaxConstraint, t) = s.penalty[t]
     HydroReservoir{T} <: EMB.Storage{T}
 
 A regulated hydropower reservoir, modelled as a `Storage` node. A regulated hydro storage node
-requires a storage volume for the `vol` and volume inflow `vol_inflow`. The `stor_res` is
-typically water in million cubic meters. Minimum, maximum and schedule volume constraints
-can be added using `Data` input of the composite types `MinConstraint`, `MaxConstraint` and
-`ScheduleConstraint`. These are given relative sizes between 0 and 1 relative to the total
-storage volume `vol`
+requires a storage volume for the `vol` and volume inflow `vol_inflow`. The `stor_res`
+represents water. Minimum, maximum and schedule volume constraints can be added using `Data`
+input of the composite types `MinConstraint`, `MaxConstraint` and `ScheduleConstraint`.
+These are given relative sizes between 0 and 1 relative to the total storage volume `vol`.
 
 ## Fields
 - **`id`** is the name/identifyer of the node.\n
-- **`vol::EMB.UnionCapacity`** are the storage volume parameters of the HydroReservoir node.
-- **`vol_inflow::TimeProfile`** is the inflow to the reservoir.
+- **`vol::EMB.UnionCapacity`** are the storage volume parameters of the HydroReservoir node
+  (typically million cubic meters).
+- **`vol_inflow::TimeProfile`** is the inflow to the reservoir (typically million cubic per time unit).
 - **`stor_res::ResourceCarrier`** is the stored `Resource`.\n
 - **`input::Dict{Resource, Real}`** the stored and used resources.\n
 - **`output::Dict{Resource, Real}`** can only contain one entry, the stored resource.\n
