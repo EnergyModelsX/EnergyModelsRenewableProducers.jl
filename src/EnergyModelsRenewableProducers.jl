@@ -26,7 +26,7 @@ include("constraint_functions.jl")
 # Legacy constructors for node types
 include("legacy_constructor.jl")
 
-export NonDisRES
+export AbstractNonDisRES, NonDisRES
 export HydroStorage, RegHydroStor, HydroStor, PumpedHydroStor
 
 end # module
