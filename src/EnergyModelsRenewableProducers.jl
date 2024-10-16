@@ -19,7 +19,6 @@ const EMB = EnergyModelsBase
 const TS = TimeStruct
 
 include("datastructures.jl")
-include("added_datastruct.jl")
 include("model.jl")
 include("checks.jl")
 include("constraint_functions.jl")
