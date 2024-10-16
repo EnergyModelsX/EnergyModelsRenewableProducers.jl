@@ -1,6 +1,6 @@
 # Release notes
 
-## Version 0.6.2 (2024-09-03)
+## Version 0.6.2 (2024-10-16)
 
 * Minor updates on docstrings and descriptions.
 * Adjusted to [`EnergyModelsBase` v0.8.1](https://github.com/EnergyModelsX/EnergyModelsBase.jl/releases/tag/v0.8.1).
