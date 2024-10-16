@@ -236,10 +236,9 @@ function EMB.check_node(n::HydroReservoir, 𝒯, modeltype::EMB.EnergyModel, che
 end
 
 """
-
     EMB.check_node(n::HydroGenerator, 𝒯, modeltype::EMB.EnergyModel, check_timeprofiles::Bool)
 
-This method checks that the *[`HydroGenerator`](@ref HydroGenerator_public)* node is valid.
+This method checks that the *[`HydroGenerator`](@ref)* node is valid.
 
 ## Checks
  - The field `cap` is required to be non-negative.

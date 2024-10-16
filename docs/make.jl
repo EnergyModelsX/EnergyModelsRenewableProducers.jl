@@ -42,6 +42,10 @@ makedocs(
         "Nodes" => Any[
             "Non-dispatchable RES" => "nodes/nondisres.md",
             "Hydropower" => "nodes/hydropower.md",
+            "Hydro reservoir" => "nodes/hydroreservoir.md",
+            "Hydro generator" => "nodes/hydrogenerator.md",
+            "Hydro pump" => "nodes/hydropump.md",
+            "Hydro gate" => "nodes/hydrogate.md",
         ],
         "How to" => Any[
             "Update models" => "how-to/update-models.md",
@@ -51,7 +55,9 @@ makedocs(
             "Public" => "library/public.md",
             "Internals" => String[
                 "library/internals/methods-fields.md",
-                "library/internals/methods-EMB.md"
+                "library/internals/methods-EMB.md",
+                "library/internals/methods-EMRP.md",
+                "library/internals/types-EMRP.md",
             ],
         ],
     ],

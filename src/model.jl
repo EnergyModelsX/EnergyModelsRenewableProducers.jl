@@ -24,8 +24,6 @@ end
 
 Sets all constraints for the regulated hydro storage node.
 """
-
-
 function EMB.create_node(m, n::HydroStorage, 𝒯, 𝒫, modeltype::EnergyModel)
 
     # Declaration of the required subsets.
@@ -62,12 +60,12 @@ function EMB.create_node(m, n::HydroStorage, 𝒯, 𝒫, modeltype::EnergyModel)
 end
 
 """
-    EMB.variables_node(m, 𝒩::Vector{<:Union{HydroReservoir, HydroGate}}, 𝒯, modeltype::EnergyModel)
+    EMB.variables_node(m, 𝒩::Vector{HydroGate}, 𝒯, modeltype::EnergyModel)
 
-Create the optimization variable `:penalty_up` or `:penalty_down` for every HydroStorage and
-HydroGate node that has constraints with penalty variables. This variable enables hydro
-reservoir and gate nodes to take penalty if volume or discharge constraint is violated.
-Wihtout this penalty variable, to strict volume restrictions may lead to an infeasible model.
+Create the optimization variable `:penalty_up` or `:penalty_down` for every HydroGate node
+that has constraints with penalty variables. This variable enables `HydroGate` nodes to take
+penalty if volume or discharge constraint is violated. Wihtout this penalty variable, too
+strict volume restrictions may lead to an infeasible model.
 """
 function EMB.variables_node(m, 𝒩::Vector{HydroGate}, 𝒯,
     modeltype::EnergyModel)
@@ -82,6 +80,15 @@ function EMB.variables_node(m, 𝒩::Vector{HydroGate}, 𝒯,
     ] ≥ 0)
 end
 
+"""
+    EMB.variables_node(m, 𝒩::Vector{HydroReservoir{T}}, 𝒯,
+    modeltype::EnergyModel) where {T <: EMB.StorageBehavior}
+
+Create the optimization variable `:penalty_up` or `:penalty_down` for every `HydroReservoir`
+node that has constraints with penalty variables. This variable enables `HydroReservoir`
+nodes to take penalty if volume or discharge constraint is violated. Wihtout this penalty
+variable, too strict volume restrictions may lead to an infeasible model.
+"""
 function EMB.variables_node(m, 𝒩::Vector{HydroReservoir{T}}, 𝒯,
     modeltype::EnergyModel) where {T <: EMB.StorageBehavior}
 
@@ -118,7 +125,6 @@ end
     create_node(m, n::HydroGenerator, 𝒯, 𝒫, modeltype::EnergyModel)
 
 Set all constraints for a `HydroGenerator`.
-
 """
 function EMB.create_node(m, n::HydroGenerator, 𝒯, 𝒫, modeltype::EnergyModel)
 

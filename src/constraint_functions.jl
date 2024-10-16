@@ -94,7 +94,7 @@ function EMB.constraints_level_aux(m, n::HydroStorage, 𝒯, 𝒫, modeltype::En
 end
 
 """
-build_hydro_reservoir_vol_constraints(m, c::AbstractMinMaxConstraint, 𝒯)
+    build_hydro_reservoir_vol_constraints(m, n::HydroReservoir, c::AbstractMinMaxConstraint, 𝒯)
 
 Create minimum/maximum volume constraints for the `HydroReservoir` node. The
 restriction is specified as a composite type of the abstract type `AbstractMinMaxConstraint`.
@@ -168,6 +168,7 @@ function EMB.constraints_level_aux(m, n::HydroReservoir{T} where T<:EMB.StorageB
         build_hydro_reservoir_vol_constraints(m, n, c, 𝒯)
     end
 end
+
 """
 EMB.constraints_opex_var(m, n::HydroGate, 𝒯ᴵⁿᵛ, modeltype::EnergyModel)
 
@@ -329,8 +330,7 @@ end
 
 Function for creating the constraint on the outlet flow from a HydroGenerator Node.
 """
-
-function constraints_flow_out(m, n::HydroGenerator, 𝒯::TimeStructure, modeltype::EnergyModel)
+function EMB.constraints_flow_out(m, n::HydroGenerator, 𝒯::TimeStructure, modeltype::EnergyModel)
     # Declaration of the required subsets, excluding CO2, if specified
     𝒫ᵒᵘᵗ = EMB.res_not(outputs(n), co2_instance(modeltype))
     𝒫ⁱⁿ  = EMB.res_not(inputs(n), co2_instance(modeltype))

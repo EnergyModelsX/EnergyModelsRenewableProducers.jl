@@ -1,4 +1,3 @@
-using Revise
 using Pkg
 # Activate the local environment including EnergyModelsRenewableProducers, HiGHS, PrettyTables
 Pkg.activate(@__DIR__)
@@ -20,6 +19,7 @@ using TimeStruct
 
 const EMB = EnergyModelsBase
 
+"""
 @info "Generate case data - Simple `HydroStor` example"
 
 # Define the different resources and their emission intensity in tCO2/MWh
@@ -84,9 +84,9 @@ hydro_reservoir = HydroReservoir{CyclicStrategic}(
         FixedProfile(0),  # opex_fixed
     ),
     FixedProfile(0),   # storage_inflow
-    FixedProfile(0),   # storage_init, initial water level in mm3
-    FixedProfile(0),    # storage_min, minimum water level in mm3
-    FixedProfile(100),  # storage_max, maximum water level in mm3
+    # FixedProfile(0),   # storage_init, initial water level in mm3
+    # FixedProfile(0),    # storage_min, minimum water level in mm3
+    # FixedProfile(100),  # storage_max, maximum water level in mm3
     Water,              # stor_res, stored resource
     #Dict(0 => 0, 100 => 10),        # vol_head
     #Dict(1 => Dict(0.0 => 0.0)),    # water_value
@@ -109,7 +109,7 @@ hydro_station = HydroGenerator(
     "hydropower_station",   # Node ID
     #FixedProfile(10),       # power_cap
     FixedProfile(5),       # cap
-    #Dict(0 => 0, 1 => 1),   # pq_curve
+    Dict(0 => 0, 1 => 1),   # pq_curve
     #FixedProfile(0),        # pump_power_cap
     #FixedProfile(0),        # pump_disch_cap
     #Dict(0 => 0, 1 => 1),   # pump_pq_curve
@@ -121,7 +121,7 @@ hydro_station = HydroGenerator(
     Dict(Water => 1, Power => 1);   # output
     #Data[],                 # data;
     #pq_curve = Dict(Water => [0,0.8, 1], Power => [0,0.9,1]),   # pq_curve, nb, må være konkav!
-    η = [],
+    [],
 )
 
 #=hydro_pump = HydroGenerator(
@@ -203,3 +203,4 @@ pretty_table(
 # Run the GUI
 #using EnergyModelsGUI
 #gui = GUI(case; model = m, coarseCoastLines = false)
+"""
