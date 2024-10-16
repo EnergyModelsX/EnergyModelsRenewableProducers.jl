@@ -18,6 +18,10 @@ const EMRP = EnergyModelsRenewableProducers
         include("test_hydro.jl")
     end
 
+    @testset "RP - Detailed hydropower" begin
+        include("test_detailed_hydro.jl")
+    end
+
     @testset "RP - examples" begin
         include("test_examples.jl")
     end

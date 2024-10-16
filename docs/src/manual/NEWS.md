@@ -1,7 +1,10 @@
 # Release notes
 
-## Unversioned
+## Version 0.6.1 (2024-09-03)
 
+* Dependency increase for `EnergyModelsBase` as the changes do not directly affect `EnergyModelsCO2`.
+* Updated the documentation using the new structure released by `EnergyModelsCO2`.
+* Included the package `DocumenterInterLinks` for crossreferences to `EnergyModelsBase`.
 * Use dev version of EMRP for examples when running as part of tests, similar to [PR #33 of EMB](https://github.com/EnergyModelsX/EnergyModelsBase.jl/pull/33).
 
 ## Version 0.6.0 (2024-05-28)

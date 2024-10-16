@@ -1,12 +1,16 @@
 # EnergyModelsRenewableProducers
 
-This Julia package implements three new nodes with corresponding JuMP variables and constraints, extending the package [`EnergyModelsBase`](https://energymodelsx.github.io/EnergyModelsBase.jl/) with more detailed representation of *renewable energy sources*.
+This Julia package implements new nodes with corresponding JuMP variables and constraints, extending the package [`EnergyModelsBase`](https://energymodelsx.github.io/EnergyModelsBase.jl/) with more detailed representation of *renewable energy sources*.
 
 These nodes are
 
 1. a `Source` node [`NonDisRES`](@ref),
-2. a `Storage` node ([`HydroStor`](@ref)), and
-3. a `Storage` node ([`PumpedHydroStor`](@ref)).
+2. a `Storage` node ([`HydroStor`](@ref)),
+3. a `Storage` node ([`PumpedHydroStor`](@ref)),
+4. a `Storage` node ([`HydroReservoir`](@ref)),
+5. a `NetworkNode` node ([`HydroGenerator`](@ref)),
+6. a `NetworkNode` node ([`HydroPump`](@ref)), and
+7. a `NetworkNode` node ([`HydroGate`](@ref)).
 
 The new introduced node types are also documented in the *[public library](@ref lib-pub)* as well as the corresponding nodal page.
 
@@ -19,8 +23,12 @@ These all use intermittent energy sources in the production of energy, so the ma
 
 ### [`HydroStor`](@ref) and [`PumpedHydroStor`](@ref)
 
-The other nodes implement a regulated hydropower storage plant, both with ([`PumpedHydroStor`](@ref)) and without pumps ([`HydroStor`](@ref)) for filling the reservoir with excess energy.
-The hydropower storage plant can also be extended as they are declared as subtypes of [`HydroStorage`](@ref).
+The [`PumpedHydroStor`](@ref) and [`HydroStor`](@ref) nodes implement a regulated hydropower storage plant, either with or without pumps for filling the reservoir with excess energy. These nodes can be used to model a single hydropower plant and reservoir, or to model an aggregated description of a hydropower system. The nodes do not include conversion from water to energy, and therby requires an energy-based descriton of the hydropower system.
+The hydropower storage plant can also be extended as they are declared as subtypes of [`HydroStorage`](@ref). 
+
+### [`HydroReservoir`](@ref), [`HydroGenerator`](@ref), [`HydroPump`](@ref), and [`HydroGate`](@ref)
+
+These nodes can be used to construct detailed cascaded hydropower systems and include conversion from water to electric energy. 
 
 ## Manual outline
 
@@ -39,6 +47,10 @@ Depth = 1
 Pages = [
     "nodes/nondisres.md",
     "nodes/hydropower.md",
+    "node/hydroreservoir.md",
+    "node/hydrogenerator.md",
+    "node/hydropump.md",
+    "node/hydrogate.md",
 ]
 Depth = 1
 ```
@@ -60,6 +72,8 @@ Pages = [
     "library/public.md",
     "library/internals/methods-fields.md",
     "library/internals/methods-EMB.md",
+    "library/internals/methods-EMRP.md",
+    "library/internals/types-EMRP.md",
 ]
 Depth = 1
 ```

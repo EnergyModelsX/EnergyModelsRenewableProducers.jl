@@ -18,7 +18,9 @@ EnergyModelsBase.create_node
 ```@docs
 EnergyModelsBase.constraints_capacity
 EnergyModelsBase.constraints_flow_in
+EnergyModelsBase.constraints_flow_out
 EnergyModelsBase.constraints_level_aux
+EnergyModelsBase.constraints_opex_var
 ```
 
 ## Check methods

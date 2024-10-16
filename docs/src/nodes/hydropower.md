@@ -1,11 +1,11 @@
-# [CO₂ storage node](@id nodes-hydro_power)
+# [Hydropower storage node](@id nodes-hydro_power)
 
 The reference storage node, [`RefStorage`](@extref EnergyModelsBase.RefStorage) is quite flexible with respect to the individual storage behaviours, that is cyclic (both representative and strategic) or accumulating as it is included as parametric type using the individual *[storage behaviours](@extref EnergyModelsBase lib-pub-nodes-stor_behav)*.
-In addition, it allows for both charge and level different *[storage parameters](@extref EnergyModelsBase lib-pub-nodes-stor_par)*.
-It is however not possible at the moment to provide a discharge capacity required in hydropower modelling.
+In addition, it allows for modelling charge and storage level as different *[storage parameters](@extref EnergyModelsBase lib-pub-nodes-stor_par)*.
+It is, however, not possible at the moment to provide a discharge capacity required in hydropower modelling.
 Furthermore, it is not possible to include an inflow to the storage node, except through artifically creating a source node representing the water flowing into the node.
 
-Hence, it is necessary to include specific hydropower storage node
+Hence, it is necessary to include a specific hydropower storage node.
 
 ## [Introduced type and its field](@id nodes-hydro_power-fields)
 
@@ -13,10 +13,12 @@ The [`HydroStorage`](@ref) abstract type is used to simplify the design of the c
 It has in its current stage two concrete subtypes, [`HydroStor`](@ref) and [`PumpedHydroStor`](@ref).
 Both types utilize the same main functionality, although [`PumpedHydroStor`](@ref) allows for utilizing electricity to store more water.
 The two nodes are designed to work with the cyclic *[storage behaviors](@extref EnergyModelsBase lib-pub-nodes-stor_behav)*.
-
+[`HydroStor`](@ref) and [`PumpedHydroStor`](@ref) should mainly be used for aggregated hydropower descriptions.
 !!! warning "Input, output, and stored resource"
     Although hydro reservoir store water, we have to assume in the current implementation that electricity is stored.
     The key reason for this is that we do not support in the modelling approach a conversion from the variable ``\texttt{flow\_in}`` of a resource to a different stored resource.
+
+For detailed hydropower modeling, see [](@ref nodes-hydro_reservoir), [](@ref nodes-hydro_generator), [](@ref nodes-hydro_pump), and [](@ref nodes-hydro_gate).
 
 ### [Standard fields](@id nodes-hydro_power-fields-stand)
 

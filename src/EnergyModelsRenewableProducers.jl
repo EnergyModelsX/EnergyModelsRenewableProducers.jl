@@ -8,6 +8,14 @@ non-dispatchable renewable producer, as wind, solar etc.
 hydro storage.
 - `HydroStor` is a subtype of `Storage` and represents a regulated hydro storage, \
 that is a standard hydro powerplant without pumps.
+- `HydroReservoir` is a subtype of `Storage` and represents a hydro storage for \
+cascaded hydro power systems.
+- `HydroGenerator` is a subtype of `Network` and represents a hydro generator for \
+cascaded hydro power systems.
+- `HydroPump` is a subtype of `Network` and represents a hydro pump for \
+cascaded hydro power systems.
+- `HydroGate` is a subtype of `Network` and represents a gate for cascaded hydro power \
+systems.
 """
 module EnergyModelsRenewableProducers
 
@@ -28,7 +36,7 @@ include("legacy_constructor.jl")
 
 export NonDisRES
 export HydroStorage, RegHydroStor, HydroStor, PumpedHydroStor
-export HydroReservoir, HydroGenerator, HydroGate
+export HydroReservoir, HydroGenerator, HydroPump, HydroGate
 export MinConstraint, MaxConstraint, ScheduleConstraint
 
 end # module

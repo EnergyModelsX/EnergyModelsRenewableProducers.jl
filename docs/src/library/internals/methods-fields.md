@@ -26,3 +26,20 @@ EnergyModelsRenewableProducers.level_min
 ```@docs
 EnergyModelsRenewableProducers.opex_var_pump
 ```
+
+## `HydroReservoir`
+
+```@docs
+EnergyModelsBase.level
+```
+
+## `HydroGenerator`
+
+```@docs
+EnergyModelsRenewableProducers.efficiency
+EnergyModelsRenewableProducers.pq_curve
+```
+
+## `HydroPump`
+
+## `HydroGate`
