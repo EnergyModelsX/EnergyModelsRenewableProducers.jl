@@ -1,4 +1,4 @@
-# [CO₂ storage node](@id nodes-hydro_power)
+# [Hydro storage node](@id nodes-hydro_power)
 
 The reference storage node, [`RefStorage`](@extref EnergyModelsBase.RefStorage) is quite flexible with respect to the individual storage behaviours, that is cyclic (both representative and strategic) or accumulating as it is included as parametric type using the individual *[storage behaviours](@extref EnergyModelsBase lib-pub-nodes-stor_behav)*.
 In addition, it allows for both charge and level different *[storage parameters](@extref EnergyModelsBase lib-pub-nodes-stor_par)*.
@@ -7,7 +7,7 @@ Furthermore, it is not possible to include an inflow to the storage node, except
 
 Hence, it is necessary to include specific hydropower storage node
 
-## [Introduced type and its field](@id nodes-hydro_power-fields)
+## [Introduced types and their fields](@id nodes-hydro_power-fields)
 
 The [`HydroStorage`](@ref) abstract type is used to simplify the design of the constraints.
 It has in its current stage two concrete subtypes, [`HydroStor`](@ref) and [`PumpedHydroStor`](@ref).
@@ -23,7 +23,7 @@ The two nodes are designed to work with the cyclic *[storage behaviors](@extref 
 The standard fields are given as:
 
 - **`id`**:\
-  The field **`id`** is only used for providing a name to the node. This is similar to the approach utilized in `EnergyModelsBase`.
+  The field `id` is only used for providing a name to the node. This is similar to the approach utilized in `EnergyModelsBase`.
 - **`charge::EMB.UnionCapacity`**:\
   The charge storage parameters must include a capacity for charging.
   More information can be found on *[storage parameters](@extref EnergyModelsBase lib-pub-nodes-stor_par)*.
@@ -110,7 +110,6 @@ The variables include:
 - [``\texttt{flow\_out}``](@extref EnergyModelsBase man-opt_var-flow)
 - [``\texttt{stor\_level\_Δ\_op}``](@extref EnergyModelsBase man-opt_var-cap)
 - [``\texttt{stor\_level\_Δ\_rp}``](@extref EnergyModelsBase man-opt_var-cap) if the `TimeStruct` includes `RepresentativePeriods`
-- [``\texttt{emissions\_node}``](@extref EnergyModelsBase man-opt_var-emissions)
 
 The variables ``\texttt{flow\_in}`` and ``\texttt{stor\_charge\_use}`` are fixed to a value of 0 in the function `constraints_flow_in` for [`HydroStor`](@ref) nodes as these nodes correspond to regulated hydropower plants and not pumped hydropower plants..
 
@@ -187,14 +186,14 @@ These standard constraints are:
   ```math
   \begin{aligned}
   \texttt{opex\_var}&[n, t_{inv}] = \\ \sum_{t \in t_{inv}}&
-    opex\_var(level(n), t) \times \texttt{stor\_level}[n, t] \times EMB.multiple(t_{inv}, t) + \\ &
-    opex\_var(charge(n), t) \times \texttt{stor\_charge\_use}[n, t] \times EMB.multiple(t_{inv}, t) + \\ &
-    opex\_var(discharge(n), t) \times \texttt{stor\_discharge\_use}[n, t] \times EMB.multiple(t_{inv}, t)
+    opex\_var(level(n), t) \times \texttt{stor\_level}[n, t] \times scale\_op\_sp(t_{inv}, t) + \\ &
+    opex\_var(charge(n), t) \times \texttt{stor\_charge\_use}[n, t] \times scale\_op\_sp(t_{inv}, t) + \\ &
+    opex\_var(discharge(n), t) \times \texttt{stor\_discharge\_use}[n, t] \times scale\_op\_sp(t_{inv}, t)
   \end{aligned}
   ```
 
-  !!! tip "The function `EMB.multiple`"
-      The function [``EMB.multiple(t_{inv}, t)``](@extref EnergyModelsBase.multiple) calculates the scaling factor between operational and strategic periods.
+  !!! tip "The function `scale_op_sp`"
+      The function [``scale\_op\_sp(t_{inv}, t)``](@extref EnergyModelsBase.scale_op_sp) calculates the scaling factor between operational and strategic periods.
       It also takes into account potential operational scenarios and their probability as well as representative periods.
 
 - `constraints_data`:\
@@ -290,7 +289,7 @@ If the time structure includes representative periods, we also calculate the cha
 
 ```math
   \texttt{stor\_level\_Δ\_rp}[n, t_{rp}] = \sum_{t \in t_{rp}}
-  \texttt{stor\_level\_Δ\_op}[n, t] \times EMB.multiple(t_{rp}, t)
+  \texttt{stor\_level\_Δ\_op}[n, t] \times scale\_op\_sp(t_{inv}, t)
 ```
 
 The general level constraint is calculated in the function `constraints_level_iterate` (from `EnergyModelsBase`):
