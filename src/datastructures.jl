@@ -1,8 +1,15 @@
 """
-    NonDisRES <: EMB.Source
+    abstract type AbstractNonDisRES <: EMB.Source
+
+Abstract supertype for all non-dispatchable renewable energy source. All functions for the
+implemented version of the [`NonDisRES`](@ref) are dispatching on this supertype.
+"""
+abstract type AbstractNonDisRES <: EMB.Source end
+"""
+    NonDisRES <: AbstractNonDisRES
 
 A non-dispatchable renewable energy source. It extends the existing `RefSource` node through
-including a profile that corresponds to thr production. The profile can have variations on
+including a profile that corresponds to the production. The profile can have variations on
 the strategic level.
 
 # Fields
@@ -16,7 +23,7 @@ the strategic level.
 - **`data::Vector{Data}`** is the additional data (e.g. for investments). The field `data`
   is conditional through usage of a constructor.
 """
-struct NonDisRES <: EMB.Source
+struct NonDisRES <: AbstractNonDisRES
     id::Any
     cap::TimeProfile
     profile::TimeProfile

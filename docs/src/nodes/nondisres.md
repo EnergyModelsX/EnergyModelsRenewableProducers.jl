@@ -8,7 +8,12 @@ As a consequence, the design of the [`RefSource`](@extref EnergyModelsBase.RefSo
 
 Hence, it is necessary to implement a source node representing intermittent renewable energy generation.
 
-## [Introduced type and its fields](@id nodes-nondisres-fields)
+!!! note "Abstract supertype"
+    We implemented an abstract supertype [`AbstractNonDisRES`](@ref).
+    This supertype is used for introducing the variable ``\texttt{curtailment}[n, t]`` and updateing the capacity constraints.
+    Hence, if you plan to create a new non-dispatchable renewable energy source, you can create it as subtype of `AbstractNonDisRES`, resulting in the variable being available.
+
+## [Introduced type and its field](@id nodes-nondisres-fields)
 
 The [`NonDisRES`](@ref) is implemented as equivalent to a [`RefSource`](@extref EnergyModelsBase.RefSource).
 Hence, it utilizes the same functions declared in `EnergyModelsBase`.

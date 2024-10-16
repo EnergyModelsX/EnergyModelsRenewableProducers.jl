@@ -1,9 +1,10 @@
 # Release notes
 
-## Unversioned
+## Version 0.6.2 (2024-09-03)
 
 * Minor updates on docstrings and descriptions.
 * Adjusted to [`EnergyModelsBase` v0.8.1](https://github.com/EnergyModelsX/EnergyModelsBase.jl/releases/tag/v0.8.1).
+* Introduced abstract supertype `AbstractNonDisRES` for `NonDisRES` to allow for other implementations that use as well the variable `curtailement`.
 
 ## Version 0.6.1 (2024-09-03)
 
