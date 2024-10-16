@@ -289,7 +289,7 @@ If the time structure includes representative periods, we also calculate the cha
 
 ```math
   \texttt{stor\_level\_Δ\_rp}[n, t_{rp}] = \sum_{t \in t_{rp}}
-  \texttt{stor\_level\_Δ\_op}[n, t] \times scale_op_sp(t_{rp}, t)
+  \texttt{stor\_level\_Δ\_op}[n, t] \times scale\_op\_sp(t_{inv}, t)
 ```
 
 The general level constraint is calculated in the function `constraints_level_iterate` (from `EnergyModelsBase`):
