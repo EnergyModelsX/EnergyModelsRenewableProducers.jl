@@ -345,7 +345,7 @@ function constraints_flow_out(m, n::HydroGenerator, 𝒯::TimeStructure, modelty
     new_resource = 𝒫ᵒᵘᵗ[𝒫ᵒᵘᵗ .∉ [𝒫ⁱⁿ]] # Power
     original_resource = 𝒫ᵒᵘᵗ[𝒫ᵒᵘᵗ .∈ [𝒫ⁱⁿ]] # Water
     # Since the type of resource is defined by the user it is not convenient to set conditions
-    # based on the type (namin conventions or spelling can vary, e.g. water/hydro or power/electricity).
+    # based on the type (naming conventions or spelling can vary, e.g. water/hydro or power/electricity).
 
     @constraint(m, [t ∈ 𝒯, p ∈ original_resource],
     m[:flow_out][n, t, p] == m[:cap_use][n, t] * outputs(n, p)

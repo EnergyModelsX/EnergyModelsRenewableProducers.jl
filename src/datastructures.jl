@@ -481,12 +481,34 @@ function HydroGenerator(
     opex_fixed::TimeProfile,
     input::Dict{<:Resource,<:Real},
     output::Dict{<:Resource,<:Real};
-    pq_curve = nothing,
-    η = Real[],
+    pq_curve::AbstractPqCurve,
+    #η = Real[],
 )
 
     return HydroGenerator(id, cap, pq_curve, opex_var, opex_fixed, input, output, η, Data[])
 end
+
+abstract type AbstractPqCurve <: EMB.Data end
+
+# struct NoPqCurve <: AbstractPqCurve end # Do we need this to enable modelling as energy only (not conversion from water to energy)?
+
+# do we need this or can we use existing functionality in outputs?
+struct EnergyEquivalent <: AbstractPqCurve
+    name::Symbol
+    value::Real # MW / m3/s
+end
+
+struct PqCurve <: AbstractPqCurve
+    name::Symbol
+    value::Vecor{Real}  # MW / m3/s
+    DischargeBreakpoints::Vecor{Real} #share of total discharege capacity (0,1)
+end
+
+#struct PqCurveHeadDependen <: AbstractPqCurve
+#    name::Symbol
+#    value::Real
+#end
+
 
 
 """
@@ -507,7 +529,6 @@ end
 
 Returns the values in the pq_curve for resurce p of a node `n` of type `HydroGenerator`
 """
-
 function pq_curve(n::HydroGenerator, p::Resource)
 
     if !isnothing(n.pq_curve)
