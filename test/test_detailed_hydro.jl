@@ -40,8 +40,7 @@ function build_case()
         FixedProfile(1000),     # cap, in mm3/timestep
         FixedProfile(0),      # opex_var, variable OPEX in EUR/(mm3/h?)
         FixedProfile(0),        # opex_fixed, Fixed OPEX in EUR/(mm3/h?)
-        Dict(Water => 1),       # input
-        Dict(Water => 1),       # output
+        Water,
     )
 
     # Create a hydro sink

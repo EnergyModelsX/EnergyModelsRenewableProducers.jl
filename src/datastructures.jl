@@ -453,8 +453,7 @@ minimum/maximum requirements for water flow.
 - **`cap::TimeProfile`** is the installed discharge capacity.
 - **`opex_var::TimeProfile`** is the variational operational costs per energy unit produced.
 - **`opex_fixed::TimeProfile`** is the fixed operational costs.
-- **`input::Dict{<:Resource, <:Real}`** are the input `Resource`s with conversion value `Real`.
-- **`output::Dict{<:Resource, <:Real}`** are the generated `Resource`s with conversion value `Real`.
+- **`resource<:Resource`** is the water resource type since gates are only used for dispatching water.
 - **`data::Vector{Data}`** is the additional data (e.g. for investments). The field
   `data` is conditional through usage of a constructor.
 """
@@ -466,16 +465,33 @@ struct HydroGate <: EMB.NetworkNode
     input::Dict{<:Resource,<:Real}
     output::Dict{<:Resource,<:Real}
     data::Vector{Data}
+    function HydroGate(
+        id::Any,
+        cap::TimeProfile,
+        opex_var::TimeProfile,
+        opex_fixed::TimeProfile,
+        resource::ResourceCarrier,
+        data::Vector{Data}
+    )
+        new(
+            id,
+            cap,
+            opex_var,
+            opex_fixed,
+            Dict(resource => 1.0),
+            Dict(resource => 1.0),
+            data
+        )
+    end
 end
 function HydroGate(
     id::Any,
     cap::TimeProfile,
     opex_var::TimeProfile,
     opex_fixed::TimeProfile,
-    input::Dict{<:Resource,<:Real},
-    output::Dict{<:Resource,<:Real},
+    resource::ResourceCarrier,
 )
-    return HydroGate(id, cap, opex_var, opex_fixed, input, output, Data[])
+    return HydroGate(id, cap, opex_var, opex_fixed, resource, Data[])
 end
 
 """
