@@ -23,7 +23,7 @@ The standard fields are given as:
 - **`output::Dict{<:Resource,<:Real}`**:\
   The only output from the reservoir should be water.
 - **`data::Vector{Data}`**:\
-  An entry for providing additional data to the model. Could be used to add minimum, maximum and schedule constraints for the volume using [MinConstraint](@ref EnergyModelsRenewableProducers.MinConstraint), [MaxConstraint](@ref EnergyModelsRenewableProducers.MaxConstraint), or [ScheduleConstraint](@ref EnergyModelsRenewableProducers.ScheduleConstraint).
+  An entry for providing additional data to the model. Could be used to add minimum, maximum and schedule constraints for the volume using [Constraint{T<:AbstractConstraintType}](@ref EnergyModelsRenewableProducers.Constraint), where [AbstractConstraintType](@ref EnergyModelsRenewableProducers.AbstractConstraintType) has subtypes [MinConstraintType](@ref EnergyModelsRenewableProducers.MinConstraintType), [MaxConstraintType](@ref EnergyModelsRenewableProducers.MaxConstraintType), and [ScheduleConstraintType](@ref EnergyModelsRenewableProducers.ScheduleConstraintType).
     
 ### [Additional fields](@id nodes-hydro_reservoir-fields-new)
 

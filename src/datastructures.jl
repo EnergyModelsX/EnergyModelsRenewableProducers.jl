@@ -279,13 +279,22 @@ as `TimeProfile` or at operational period `t`.
 opex_var_pump(n::PumpedHydroStor) = n.opex_var_pump
 opex_var_pump(n::PumpedHydroStor, t) = n.opex_var_pump[t]
 
-""" Declaration of general constraint type as subtype of `EMB.Data`."""
-abstract type AbstractMinMaxConstraint <: EMB.Data end
+""" Abstract constraint type. """
+abstract type AbstractConstraintType end
+
+""" Abstract type to denote that a `Constraint` is a minimum constraint."""
+abstract type MinConstraintType <: AbstractConstraintType end
+
+""" Abstract type to denote that a `Constraint` is a maximum constraint."""
+abstract type MaxConstraintType <: AbstractConstraintType end
+
+""" Abstract type to denote that a `Constraint` is a schedule constraint."""
+abstract type ScheduleConstraintType <: AbstractConstraintType end
 
 """
-    MinConstraint <: AbstractMinMaxConstraint
+    Constraint <: AbstractConstraint where {T<:AbstractConstraintType}
 
-Type for defining minimum constraints.
+Type for defining constraints `T` denots constraint type.
 
 ## Fields
 - **`name::Symbol`** is the name of the constraint and could be used if a node can have different constraint types.
@@ -293,72 +302,41 @@ Type for defining minimum constraints.
 - **`flag::TimeProfile`** is a boolean value indicating if the constraint is active.
 - **`penalty::TimeProfile`** is the penalty for violating the constraint. If penalty is set to `Inf` it will be built as a hard constraint.
 """
-struct MinConstraint <: AbstractMinMaxConstraint
+struct Constraint{T} <: Data where {T<:AbstractConstraintType}
     name::Symbol
     value::TimeProfile{<:Number}
     flag::TimeProfile{Bool}
     penalty::TimeProfile{<:Number}
 end
 
-"""
-    MaxConstraint <: AbstractMinMaxConstraint
-
-Type for defining maximum constraints.
-
-## Fields
-- **`name::Symbol`** is the name of the constraint and could be used if a node can have different constraint types.
-- **`value::TimeProfile`** is the constraint value, the limit that should not be violated.
-- **`flag::TimeProfile`** is a boolean value indicating if the constraint is active.
-- **`penalty::TimeProfile`** is the penalty for violating the constraint. If penalty is set to `Inf` it will be built as a hard constraint.
-"""
-struct MaxConstraint <: AbstractMinMaxConstraint
-    name::Symbol
-    value::TimeProfile
-    flag::TimeProfile{Bool}
-    penalty::TimeProfile{<:Number}
-end
-
-"""
-    ScheduleConstraint <: AbstractMinMaxConstraint
-
-Type for defining schedule constraints.
-
-## Fields
-- **`name::Symbol`** is the name of the constraint and could be used if a node can have different constraint types.
-- **`value::TimeProfile`** is the constraint value, the limit that should not be violated.
-- **`flag::TimeProfile`** is a boolean value indicating if the constraint is active.
-- **`penalty::TimeProfile`** is the penalty for violating the constraint. If penalty is set to `Inf` it will be built as a hard constraint.
-"""
-struct ScheduleConstraint <: AbstractMinMaxConstraint
-    name::Symbol
-    value::TimeProfile
-    flag::TimeProfile{Bool}
-    penalty::TimeProfile{<:Number}
-end
-
-""" Returns true of `Data` input is a constraint (subtype of `AbstractMinMaxConstraint`)."""
-is_constraint_data(data::Data) = (typeof(data) <: AbstractMinMaxConstraint)
+""" Returns true if `Data` input is of type `Constraint`."""
+is_constraint_data(data::Data) = false
+is_constraint_data(data::Constraint) = true
 
 """ Returns true if given constraint is active at time step `t`."""
-is_active(s::AbstractMinMaxConstraint, t) = s.flag[t]
+is_active(s::Constraint, t) = s.flag[t]
 
 """ Returns the value of a constraint at time step `t`."""
-value(s::AbstractMinMaxConstraint, t) = s.value[t]
+value(s::Constraint, t) = s.value[t]
 
 """ Returns true if a constraint has penalty at time step `t`."""
-has_penalty(s::AbstractMinMaxConstraint, t) = !isinf(s.penalty[t])
+has_penalty(s::Constraint, t) = !isinf(s.penalty[t])
 
 """ Returns true if a constraint has a constraint that might require penalty up variable."""
-has_penalty_up(data::AbstractMinMaxConstraint) = (typeof(data) <: Union{MinConstraint, ScheduleConstraint})
+has_penalty_up(data::Constraint) = false
+has_penalty_up(data::Constraint{MinConstraintType}) = true
+has_penalty_up(data::Constraint{ScheduleConstraintType}) = true
 
 """ Returns true if a constraint requires a penalty up variable at time step `t`."""
-has_penalty_up(data::AbstractMinMaxConstraint, t) = has_penalty_up(data) & has_penalty(data, t)
+has_penalty_up(data::Constraint, t) = has_penalty_up(data) & has_penalty(data, t)
 
 """ Returns true if a constraint has a constraint that might require penalty down variable."""
-has_penalty_down(data::AbstractMinMaxConstraint) = (typeof(data) <: Union{MaxConstraint, ScheduleConstraint})
+has_penalty_down(data::Constraint) = false
+has_penalty_down(data::Constraint{MaxConstraintType}) = true
+has_penalty_down(data::Constraint{ScheduleConstraintType}) = true
 
 """ Returns true if a constraint requires a penalty down variable at time step `t`."""
-has_penalty_down(data::AbstractMinMaxConstraint, t) = has_penalty_down(data) & has_penalty(data, t)
+has_penalty_down(data::Constraint, t) = has_penalty_down(data) & has_penalty(data, t)
 
 """ Returns subset of time steps `t ∈ 𝒯` where penalty up variable should be added."""
 function get_penalty_up_time(data::Vector{<:Data}, 𝒯)
@@ -371,7 +349,7 @@ function get_penalty_down_time(data::Vector{<:Data}, 𝒯)
 end
 
 """ Returns penalty value of constraint."""
-penalty(s::AbstractMinMaxConstraint, t) = s.penalty[t]
+penalty(s::Constraint, t) = s.penalty[t]
 
 """
     struct ReservoirVolHead{T<:Number}
@@ -385,7 +363,7 @@ struct ReservoirVolHead{T<:Number}
         if length(vol) != length(head)
             error("Volume and head vector should have the same length.")
         end
-        new(vol, head)
+        new{ReservoirVolHead}(vol, head)
     end
 end
 
@@ -395,7 +373,7 @@ end
 A regulated hydropower reservoir, modelled as a `Storage` node. A regulated hydro storage node
 requires a storage volume for the `vol` and volume inflow `vol_inflow`. The `stor_res`
 represents water. Minimum, maximum and schedule volume constraints can be added using `Data`
-input of the composite types `MinConstraint`, `MaxConstraint` and `ScheduleConstraint`.
+input of the composite type `Constraint`.
 These are given relative sizes between 0 and 1 relative to the total storage volume `vol`.
 
 ## Fields

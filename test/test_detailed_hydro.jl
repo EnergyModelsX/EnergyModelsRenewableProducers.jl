@@ -87,7 +87,7 @@ end
     @test level_Δ == inflow - discharge
 end
 
-@testset "Test hydro reservoir hard MinConstraint and MaxConstraint" begin
+@testset "Test hydro reservoir hard Constraint of type MinConstraintType and MaxConstraintType" begin
     case, model = build_case()
     optimizer = optimizer_with_attributes(HiGHS.Optimizer, MOI.Silent() => true)
 
@@ -97,7 +97,7 @@ end
     Water = case[:products][3]
     max_profile = [1, 0.8, 0.8, 1]
     push!(hydro_reservoir.data,
-        MaxConstraint(
+        Constraint{MaxConstraintType}(
             Symbol(),
             OperationalProfile(max_profile), # value
             FixedProfile(true),                 # flag
@@ -106,7 +106,7 @@ end
     )
     min_profile = [1, 0, 0, 0]
     push!(hydro_reservoir.data,
-        MinConstraint(
+        Constraint{MinConstraintType}(
             Symbol(),
             OperationalProfile(min_profile), # value
             FixedProfile(true),                 # flag
@@ -122,7 +122,7 @@ end
     end
 end
 
-@testset "Test hydro reservoir hard MaxConstraint penalty cost" begin
+@testset "Test hydro reservoir Constraint of type MaxConstraintType with penalty cost" begin
     case, model = build_case()
     optimizer = optimizer_with_attributes(HiGHS.Optimizer, MOI.Silent() => true)
 
@@ -135,7 +135,7 @@ end
     max_profile = [1, 0, 0.8, 1]
     penalty_cost = 57
     push!(hydro_reservoir.data,
-        MaxConstraint(
+        Constraint{MaxConstraintType}(
             Symbol(),
             OperationalProfile(max_profile), # value
             OperationalProfile([false, true, false, false]), # flag
@@ -144,7 +144,7 @@ end
     )
     min_profile = [1, 0, 0, 0]
     push!(hydro_reservoir.data,
-        MinConstraint(
+        Constraint{MinConstraintType}(
             Symbol(),
             OperationalProfile(min_profile), # value
             FixedProfile(true),              # flag
@@ -177,7 +177,7 @@ end
     flags = [false, false, true, false]
     penalty_cost = 57
     push!(hydro_gate.data,
-        ScheduleConstraint(
+        Constraint{ScheduleConstraintType}(
             Symbol(),
             OperationalProfile(schedule_profile), # value
             OperationalProfile(flags), # flag

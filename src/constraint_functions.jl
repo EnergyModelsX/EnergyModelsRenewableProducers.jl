@@ -94,13 +94,14 @@ function EMB.constraints_level_aux(m, n::HydroStorage, 𝒯, 𝒫, modeltype::En
 end
 
 """
-    build_hydro_reservoir_vol_constraints(m, n::HydroReservoir, c::AbstractMinMaxConstraint, 𝒯)
+    build_hydro_reservoir_vol_constraints(m, n::HydroReservoir, c::Constraint, 𝒯)
 
-Create minimum/maximum volume constraints for the `HydroReservoir` node. The
-restriction is specified as a composite type of the abstract type `AbstractMinMaxConstraint`.
+Create minimum/maximum/schedule volume constraints for the `HydroReservoir` node. The
+`Constraint{T}` can have types `T <: AbstractConstraintType` that defines the direction of
+the constraint.
 Penalty variables are included unless penalty value is not set or `Inf``.
 """
-function build_hydro_reservoir_vol_constraints(m, n::HydroReservoir, c::MinConstraint, 𝒯)
+function build_hydro_reservoir_vol_constraints(m, n::HydroReservoir, c::Constraint{MinConstraintType}, 𝒯)
     for t ∈ 𝒯
         if is_active(c, t)
             if has_penalty(c, t)
@@ -112,7 +113,7 @@ function build_hydro_reservoir_vol_constraints(m, n::HydroReservoir, c::MinConst
         end
     end
 end
-function build_hydro_reservoir_vol_constraints(m, n::HydroReservoir, c::MaxConstraint, 𝒯)
+function build_hydro_reservoir_vol_constraints(m, n::HydroReservoir, c::Constraint{MaxConstraintType}, 𝒯)
     for t ∈ 𝒯
         if is_active(c, t)
             if has_penalty(c, t)
@@ -124,7 +125,7 @@ function build_hydro_reservoir_vol_constraints(m, n::HydroReservoir, c::MaxConst
         end
     end
 end
-function build_hydro_reservoir_vol_constraints(m, n::HydroReservoir, c::ScheduleConstraint, 𝒯)
+function build_hydro_reservoir_vol_constraints(m, n::HydroReservoir, c::Constraint{ScheduleConstraintType}, 𝒯)
     for t ∈ 𝒯
         if is_active(c, t)
             if has_penalty(c, t)
@@ -265,8 +266,8 @@ function EMB.constraints_opex_var(m, n::HydroReservoir{T}, 𝒯ᴵⁿᵛ,
     )
 end
 
-function build_hydro_gate_constraints(m, n::HydroGate, c::MinConstraint, 𝒯::TimeStructure,
-    p::ResourceCarrier)
+function build_hydro_gate_constraints(m, n::HydroGate, c::Constraint{MinConstraintType},
+    𝒯::TimeStructure, p::ResourceCarrier)
     for t ∈ 𝒯
         if is_active(c, t)
             if has_penalty(c, t)
@@ -277,8 +278,8 @@ function build_hydro_gate_constraints(m, n::HydroGate, c::MinConstraint, 𝒯::T
         end
     end
 end
-function build_hydro_gate_constraints(m, n::HydroGate, c::MaxConstraint, 𝒯::TimeStructure,
-    p::ResourceCarrier)
+function build_hydro_gate_constraints(m, n::HydroGate, c::Constraint{MaxConstraintType},
+    𝒯::TimeStructure, p::ResourceCarrier)
     for t ∈ 𝒯
         if is_active(c, t)
             if has_penalty(c, t)
@@ -289,7 +290,7 @@ function build_hydro_gate_constraints(m, n::HydroGate, c::MaxConstraint, 𝒯::T
         end
     end
 end
-function build_hydro_gate_constraints(m, n::HydroGate, c::ScheduleConstraint,
+function build_hydro_gate_constraints(m, n::HydroGate, c::Constraint{ScheduleConstraintType},
     𝒯::TimeStructure, p::ResourceCarrier)
     for t ∈ 𝒯
         if is_active(c, t)
