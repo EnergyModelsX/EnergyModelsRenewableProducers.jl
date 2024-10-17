@@ -12,6 +12,7 @@ EnergyModelsRenewableProducers
 
 ```@docs
 HydroStorage
+AbstractNonDisRES
 ```
 
 ### [Concrete types](@id lib-pub-node-concrete)

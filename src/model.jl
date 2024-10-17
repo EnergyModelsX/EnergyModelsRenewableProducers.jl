@@ -1,10 +1,11 @@
 
 """
-    EMB.variables_node(m, 𝒩ⁿᵈʳ::Vector{NonDisRES}, 𝒯, modeltype::EnergyModel)
+    EMB.variables_node(m, 𝒩ⁿᵈʳ::Vector{<:AbstractNonDisRES}, 𝒯, modeltype::EnergyModel)
 
-Create the optimization variable `:curtailment` for every NonDisRES node. This method is called
-from `EnergyModelsBase.jl`."""
-function EMB.variables_node(m, 𝒩ⁿᵈʳ::Vector{NonDisRES}, 𝒯, modeltype::EnergyModel)
+Create the optimization variable `:curtailment` for every [`AbstractNonDisRES`](@ref) node.
+This method is called from `EnergyModelsBase.jl`.
+"""
+function EMB.variables_node(m, 𝒩ⁿᵈʳ::Vector{<:AbstractNonDisRES}, 𝒯, modeltype::EnergyModel)
     @variable(m, curtailment[𝒩ⁿᵈʳ, 𝒯] ≥ 0)
 end
 

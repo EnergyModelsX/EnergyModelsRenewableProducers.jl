@@ -35,7 +35,7 @@ include("constraint_functions.jl")
 # Legacy constructors for node types
 include("legacy_constructor.jl")
 
-export NonDisRES
+export AbstractNonDisRES, NonDisRES
 export HydroStorage, RegHydroStor, HydroStor, PumpedHydroStor
 export HydroReservoir, HydroGenerator, HydroPump, HydroGate
 export Constraint, MinConstraintType, MaxConstraintType, ScheduleConstraintType

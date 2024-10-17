@@ -1,12 +1,12 @@
 #! format: off
 
 """
-    constraints_capacity(m, n::NonDisRES, 𝒯::TimeStructure, modeltype::EnergyModel)
+    constraints_capacity(m, n::AbstractNonDisRES, 𝒯::TimeStructure, modeltype::EnergyModel)
 
-Function for creating the constraint on the maximum capacity of a `NonDisRES`.
+Function for creating the constraint on the maximum capacity of a `AbstractNonDisRES`.
 Also sets the constraint defining curtailment.
 """
-function EMB.constraints_capacity(m, n::NonDisRES, 𝒯::TimeStructure, modeltype::EnergyModel)
+function EMB.constraints_capacity(m, n::AbstractNonDisRES, 𝒯::TimeStructure, modeltype::EnergyModel)
     @constraint(m, [t ∈ 𝒯],
         m[:cap_use][n, t] ≤ m[:cap_inst][n, t]
     )
