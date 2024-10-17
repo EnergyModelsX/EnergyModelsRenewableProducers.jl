@@ -18,10 +18,6 @@ The standard fields are given as:
   The installed volume corresponds to the total water volume storage capacity of the reservoir.
 - **`stor_res::ResourceCarrier`**:\
   The resource that is stored in the reservoir. Should be the reserource representing water and must be consistent for all components in the watercourse.
-- **`input::Dict{<:Resource,<:Real}`**:\
-  The only input to the reservoir should be water.
-- **`output::Dict{<:Resource,<:Real}`**:\
-  The only output from the reservoir should be water.
 - **`data::Vector{Data}`**:\
   An entry for providing additional data to the model. Could be used to add minimum, maximum and schedule constraints for the volume using [Constraint{T<:AbstractConstraintType}](@ref EnergyModelsRenewableProducers.Constraint), where [AbstractConstraintType](@ref EnergyModelsRenewableProducers.AbstractConstraintType) has subtypes [MinConstraintType](@ref EnergyModelsRenewableProducers.MinConstraintType), [MaxConstraintType](@ref EnergyModelsRenewableProducers.MaxConstraintType), and [ScheduleConstraintType](@ref EnergyModelsRenewableProducers.ScheduleConstraintType).
     

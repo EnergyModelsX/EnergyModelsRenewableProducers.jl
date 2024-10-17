@@ -32,9 +32,6 @@ function build_case()
         ),
         OperationalProfile([5, 10, 15, 20]),   # storage_inflow
         Water,              # stor_res, stored resource
-        Dict(Water => 1),               # input
-        Dict(Water => 1),               # output
-
     )
 
     # Create a hydro reservoir gate

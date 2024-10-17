@@ -370,7 +370,7 @@ struct ReservoirVolHead{T<:Number}
         if length(vol) != length(head)
             error("Volume and head vector should have the same length.")
         end
-        new{ReservoirVolHead}(vol, head)
+        new{T}(vol, head)
     end
 end
 
@@ -389,8 +389,6 @@ These are given relative sizes between 0 and 1 relative to the total storage vol
   (typically million cubic meters).
 - **`vol_inflow::TimeProfile`** is the inflow to the reservoir (typically million cubic per time unit).
 - **`stor_res::ResourceCarrier`** is the stored `Resource`.\n
-- **`input::Dict{Resource, Real}`** the stored and used resources.\n
-- **`output::Dict{Resource, Real}`** can only contain one entry, the stored resource.\n
 - **`data::Vector{Data}`** additional data (e.g. for investments). The field \
 `data` is conditional through usage of a constructor.
 """
@@ -402,22 +400,35 @@ struct HydroReservoir{T} <: EMB.Storage{T}
     input::Dict{<:Resource,<:Real} # Water
     output::Dict{<:Resource,<:Real} # Water
     data::Vector{Data}
+    function HydroReservoir{T}(
+        id::Any,
+        vol::EMB.UnionCapacity,
+        vol_inflow::TimeProfile,
+        stor_res::ResourceCarrier,
+        data::Vector{Data}
+    ) where {T<:EMB.StorageBehavior}
+        new{T}(
+            id,
+            vol,
+            vol_inflow,
+            stor_res,
+            Dict(stor_res => 1.0),
+            Dict(stor_res => 1.0),
+            data
+        )
+    end
 end
 function HydroReservoir{T}(
     id::Any,
     vol::EMB.UnionCapacity,
     vol_inflow::TimeProfile,
-    stor_res::ResourceCarrier,
-    input::Dict{<:Resource,<:Real},
-    output::Dict{<:Resource,<:Real}
+    stor_res::ResourceCarrier
     ) where {T<:EMB.StorageBehavior}
     return HydroReservoir{T}(
         id,
         vol,
         vol_inflow,
         stor_res,
-        input,
-        output,
         Data[],
     )
 end
