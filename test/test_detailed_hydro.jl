@@ -50,8 +50,11 @@ function build_case()
     # Create a hydro sink
     hydro_ocean = RefSink(
         "ocean",   # Node id
-        FixedProfile(0),    # No demand for water
-        Dict(:surplus => FixedProfile(0), :deficit => FixedProfile(0)),
+        FixedProfile(15),    # Firm demand that can't be fulfilled
+        Dict(
+            :surplus => FixedProfile(0),
+            :deficit => OperationalProfile([0, 20, 0, 0]) # Cost for violating demand at step 2
+        ),
         Dict(Water => 1),   # Resource and corresponding ratio
     )
 
@@ -85,6 +88,7 @@ end
     discharge = value.([m[:flow_in][hydro_gate, t, Water] for t in 𝒯])
     inflow = [hydro_reservoir.vol_inflow[t] for t in 𝒯]
     @test level_Δ == inflow - discharge
+    @test objective_value(m) == 0
 end
 
 @testset "Test hydro reservoir hard Constraint of type MinConstraintType and MaxConstraintType" begin
@@ -94,8 +98,9 @@ end
     𝒯 = case[:T]
     hydro_reservoir = case[:nodes][1]
     hydro_gate = case[:nodes][2]
+    hydro_ocean = case[:nodes][3]
     Water = case[:products][3]
-    max_profile = [1, 0.8, 0.8, 1]
+    max_profile = [0.2, 0.8, 0.8, 1]
     push!(hydro_reservoir.data,
         Constraint{MaxConstraintType}(
             Symbol(),
@@ -104,7 +109,7 @@ end
             FixedProfile(Inf),                  # penalty
         )
     )
-    min_profile = [1, 0, 0, 0]
+    min_profile = [0.2, 0.2, 0, 0]
     push!(hydro_reservoir.data,
         Constraint{MinConstraintType}(
             Symbol(),
@@ -114,12 +119,22 @@ end
         )
     )
     m = EMB.run_model(case, model, optimizer)
+    discharge_deficit_cost = 0
     for sp in strategic_periods(𝒯)
         rsv_vol = value.([m[:stor_level][hydro_reservoir, t] for t in sp])
         min_vol = [hydro_reservoir.vol.capacity[t] for t in sp] .* min_profile
         max_vol = [hydro_reservoir.vol.capacity[t] for t in sp] .* max_profile
         @test min_vol ≤ rsv_vol ≤ max_vol
+
+        discharge = value.([m[:flow_in][hydro_gate, t, Water] for t in sp])
+        demand = [hydro_ocean.cap[t] for t in sp]
+        deficit = max.(demand - discharge, 0)
+        penalty = [hydro_ocean.penalty[:deficit][t] for t in sp]
+        discharge_deficit_cost += sum(deficit .* penalty .* [duration(t) for t in sp])
     end
+    # Verify that restriction has caused a deficit meaning that optimal solution has changes
+    @test discharge_deficit_cost > 0
+    @test objective_value(m) + discharge_deficit_cost == 0
 end
 
 @testset "Test hydro reservoir Constraint of type MaxConstraintType with penalty cost" begin
@@ -158,7 +173,7 @@ end
         min_vol = [hydro_reservoir.vol.capacity[t] for t in sp] .* min_profile
         max_vol = [hydro_reservoir.vol.capacity[t] for t in sp] .* max_profile
         max_vol_violation = max.(rsv_vol - max_vol, 0)
-        max_vol_violation_cost += sum(max_vol_violation * penalty_cost)
+        max_vol_violation_cost += sum(max_vol_violation .* [duration(t) for t in sp] * penalty_cost)
     end
     @test objective_value(m) + max_vol_violation_cost == 0
 end

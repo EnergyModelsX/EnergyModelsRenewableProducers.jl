@@ -186,15 +186,15 @@ function EMB.constraints_opex_var(m, n::HydroGate, 𝒯ᴵⁿᵛ,
     @constraint(m, [t_inv ∈ 𝒯ᴵⁿᵛ],
         m[:opex_var][n, t_inv] ==
         sum(
-            sum(
+            (sum(
                 m[:penalty_up][n, t] * penalty(c, t)
                 for c in constraints_up if has_penalty(c, t)
             ) +
             sum(
                 m[:penalty_down][n, t] * penalty(c, t)
                 for c in constraints_down if has_penalty(c, t)
-            )
-        * multiple(t_inv, t) for t in t_inv)
+            ))
+        * scale_op_sp(t_inv, t) for t in t_inv)
     )
 end
 
@@ -212,7 +212,7 @@ function EMB.constraints_opex_var(m, n::HydroReservoir{T}, 𝒯ᴵⁿᵛ,
     if EMB.has_level_OPEX_var(n)
         opex_var_level = @expression(m, [t_inv ∈ 𝒯ᴵⁿᵛ],
             sum(
-                m[:stor_level][n, t] * opex_var(level(n), t) * multiple(t_inv, t) for
+                m[:stor_level][n, t] * opex_var(level(n), t) * scale_op_sp(t_inv, t) for
                 t ∈ t_inv
             )
         )
@@ -222,7 +222,7 @@ function EMB.constraints_opex_var(m, n::HydroReservoir{T}, 𝒯ᴵⁿᵛ,
     if EMB.has_charge_OPEX_var(n)
         opex_var_charge = @expression(m, [t_inv ∈ 𝒯ᴵⁿᵛ],
             sum(
-                m[:stor_charge_use][n, t] * opex_var(charge(n), t) * multiple(t_inv, t)
+                m[:stor_charge_use][n, t] * opex_var(charge(n), t) * scale_op_sp(t_inv, t)
                 for t ∈ t_inv
             )
         )
@@ -234,7 +234,7 @@ function EMB.constraints_opex_var(m, n::HydroReservoir{T}, 𝒯ᴵⁿᵛ,
             sum(
                 m[:stor_discharge_use][n, t] *
                 opex_var(discharge(n), t) *
-                multiple(t_inv, t) for t ∈ t_inv
+                scale_op_sp(t_inv, t) for t ∈ t_inv
             )
         )
     else
@@ -248,15 +248,15 @@ function EMB.constraints_opex_var(m, n::HydroReservoir{T}, 𝒯ᴵⁿᵛ,
 
     opex_penalty_var = @expression(m, [t_inv ∈ 𝒯ᴵⁿᵛ],
         sum(
-            sum(
+            (sum(
                 m[:rsv_vol_penalty_up][n, t] * penalty(c, t)
                 for c in constraints_up if has_penalty(c, t)
             ) +
             sum(
                 m[:rsv_vol_penalty_down][n, t] * penalty(c, t)
                 for c in constraints_down if has_penalty(c, t)
-            )
-        * multiple(t_inv, t) for t in t_inv)
+            ))
+        * scale_op_sp(t_inv, t) for t in t_inv)
     )
 
     # Create the overall constraint
