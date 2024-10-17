@@ -336,22 +336,58 @@ struct ScheduleConstraint <: AbstractMinMaxConstraint
     penalty::TimeProfile{<:Number}
 end
 
+""" Returns true of `Data` input is a constraint (subtype of `AbstractMinMaxConstraint`)."""
 is_constraint_data(data::Data) = (typeof(data) <: AbstractMinMaxConstraint)
+
+""" Returns true if given constraint is active at time step `t`."""
 is_active(s::AbstractMinMaxConstraint, t) = s.flag[t]
+
+""" Returns the value of a constraint at time step `t`."""
 value(s::AbstractMinMaxConstraint, t) = s.value[t]
+
+""" Returns true if a constraint has penalty at time step `t`."""
 has_penalty(s::AbstractMinMaxConstraint, t) = !isinf(s.penalty[t])
+
+""" Returns true if a constraint has a constraint that might require penalty up variable."""
 has_penalty_up(data::AbstractMinMaxConstraint) = (typeof(data) <: Union{MinConstraint, ScheduleConstraint})
+
+""" Returns true if a constraint requires a penalty up variable at time step `t`."""
 has_penalty_up(data::AbstractMinMaxConstraint, t) = has_penalty_up(data) & has_penalty(data, t)
+
+""" Returns true if a constraint has a constraint that might require penalty down variable."""
 has_penalty_down(data::AbstractMinMaxConstraint) = (typeof(data) <: Union{MaxConstraint, ScheduleConstraint})
+
+""" Returns true if a constraint requires a penalty down variable at time step `t`."""
 has_penalty_down(data::AbstractMinMaxConstraint, t) = has_penalty_down(data) & has_penalty(data, t)
+
+""" Returns subset of time steps `t ∈ 𝒯` where penalty up variable should be added."""
 function get_penalty_up_time(data::Vector{<:Data}, 𝒯)
     return [t for t in 𝒯 if any(has_penalty_up(c, t) for c in data)]
 end
+
+""" Returns subset of time steps `t ∈ 𝒯` where penalty down variable should be added."""
 function get_penalty_down_time(data::Vector{<:Data}, 𝒯)
     return [t for t in 𝒯 if any(has_penalty_down(c, t) for c in data)]
 end
 
+""" Returns penalty value of constraint."""
 penalty(s::AbstractMinMaxConstraint, t) = s.penalty[t]
+
+"""
+    struct ReservoirVolHead{T<:Number}
+
+A description of the releation between volume level and head level of a `HydroReservoir`.
+"""
+struct ReservoirVolHead{T<:Number}
+    vol::Vector{T}
+    head::Vector{T}
+    function ReservoirVolHead(vol, head)
+        if length(vol) != length(head)
+            error("Volume and head vector should have the same length.")
+        end
+        new(vol, head)
+    end
+end
 
 """
     HydroReservoir{T} <: EMB.Storage{T}
