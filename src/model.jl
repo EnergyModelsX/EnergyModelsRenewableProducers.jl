@@ -102,6 +102,7 @@ function EMB.variables_node(m, 𝒩::Vector{HydroReservoir{T}}, 𝒯,
     ] ≥ 0)
 end
 
+
 """
     EMB.variables_node(m, 𝒩::Vector{HydroGenerator}, 𝒯, modeltype::EnergyModel)
 
@@ -110,15 +111,21 @@ enables the use of a concave PQ-curve. The sum of the utilisation of the dischar
 equal the cap_use. """
 function EMB.variables_node(m, 𝒩::Vector{HydroGenerator}, 𝒯, modeltype::EnergyModel)
 
-    𝒫ᵒᵘᵗ = EMB.res_not(outputs(first(𝒩)), co2_instance(modeltype))
-    𝒫ⁱⁿ  = EMB.res_not(inputs(first(𝒩)), co2_instance(modeltype))
-    original_resource = 𝒫ᵒᵘᵗ[𝒫ᵒᵘᵗ .∈ [𝒫ⁱⁿ]]
+    #𝒫ᵒᵘᵗ = EMB.res_not(outputs(first(𝒩)), co2_instance(modeltype))
+    #𝒫ⁱⁿ  = EMB.res_not(inputs(first(𝒩)), co2_instance(modeltype))
+    #original_resource = 𝒫ᵒᵘᵗ[𝒫ᵒᵘᵗ .∈ [𝒫ⁱⁿ]]
 
-    for n in 𝒩
-        if !isnothing(pq_curve(n, original_resource[1]))
-            @variable(m, discharge_segment[n, 𝒯, 1:length(pq_curve(n, original_resource[1]))-1] >= 0)
+    N_seq = get_nodes_with_discharge_segments(𝒩)
+
+    #for n in 𝒩
+         if  !isempty(N_seq)
+            @variable(m, discharge_segment[
+                n ∈ N_seq,
+                t ∈ 𝒯,
+                q ∈ range(1,number_of_discharge_points(pq_curve(n))-1)
+            ] >= 0)
         end
-    end
+    #end
 end
 
 """

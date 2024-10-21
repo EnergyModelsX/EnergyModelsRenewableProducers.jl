@@ -497,7 +497,25 @@ struct EnergyEquivalent <: AbstractPqCurve
     value::Real # MW / m3/s
 end
 
+#struct PqEfficiencyCurve <: AbstractPqCurve
+#    name::Symbol
+#    efficiency::Vector{Real}  # MW / m3/s
+#    dischargeBreakpoints::Vector{Real} #share of total discharege capacity (0,1)
+#    refHead::Real
+#end
 
+struct PqPoints <: AbstractPqCurve
+    # requiremets: equal size vectors
+    #              0-0 as first point
+    name::Symbol
+    powerLevels::Vector{Real}  # MW / m3/s
+    dischargeLevels::Vector{Real} #share of total discharege capacity (0,1)
+end
+
+#struct PqCurveHeadDependen <: AbstractPqCurve
+#    name::Symbol
+#    value::Real
+#end
 
 
 """ A regular hydropower plant, modelled as a `NetworkNode` node.
@@ -565,8 +583,12 @@ Returns the resources in the PQ-curve of a node `n` of type `HydroGenerator`
 """
 pq_curve(n::HydroGenerator) = n.pq_curve
 
-#has_discharge_segments(pq_curve::AbstractPqCurve) = (typeof(pq_curve) <: Union{PqEfficiencyCurve})
-#number_of_discharge_points(pq_curve::PqPoints) = length(pq_curve.dischargeLevels)
+has_discharge_segments(pq_curve::AbstractPqCurve) = (typeof(pq_curve) <: Union{PqEfficiencyCurve, PqPoints})
+number_of_discharge_points(pq_curve::PqPoints) = length(pq_curve.dischargeLevels)
+
+function get_nodes_with_discharge_segments(𝒩::Vector{HydroGenerator})
+    return [n for n in 𝒩 if has_discharge_segments(pq_curve(n))]
+end
 
 #"""
 #    efficiency(n::HydroGenerator)
@@ -578,24 +600,5 @@ pq_curve(n::HydroGenerator) = n.pq_curve
 
 # TODO make pump module
 
-"""
-struct PqEfficiencyCurve <: AbstractPqCurve
-    name::Symbol
-    efficiency::Vector{Real}  # MW / m3/s
-    dischargeBreakpoints::Vector{Real} #share of total discharege capacity (0,1)
-    refHead::Real
-end
 
-struct PqPoints <: AbstractPqCurve
-    # requiremets: equal size vectors
-    #              0-0 as first point
-    name::Symbol
-    powerLevels::Vector{Real}  # MW / m3/s
-    dischargeLevels::Vector{Real} #share of total discharege capacity (0,1)
-end
 
-#struct PqCurveHeadDependen <: AbstractPqCurve
-#    name::Symbol
-#    value::Real
-#end
-"""

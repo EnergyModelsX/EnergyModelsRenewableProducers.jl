@@ -329,11 +329,12 @@ end
 function build_pq_constaints(m, n::HydroGenerator, c::EnergyEquivalent, 𝒯::TimeStructure)
 
      # water inn = water out
+    # @constraint(m, [t ∈ 𝒯],
+    # m[:flow_out][n, t,  water_resource(n)] == m[:flow_in][n, t,  water_resource(n)] 
+    # )
      @constraint(m, [t ∈ 𝒯],
-     m[:flow_out][n, t,  water_resource(n)] == m[:flow_in][n, t,  water_resource(n)] 
+     m[:flow_out][n, t, water_resource(n)] == m[:cap_use][n, t] * outputs(n, water_resource(n))
      )
-
-
 
      # Relatinship between discharge of water and power generated
      @constraint(m, [t ∈ 𝒯],
@@ -342,40 +343,42 @@ function build_pq_constaints(m, n::HydroGenerator, c::EnergyEquivalent, 𝒯::Ti
 
 end
 
-"""
+
 function build_pq_constaints(m, n::HydroGenerator, c::PqPoints, 𝒯::TimeStructure)
 
 
     #disch_levels = pq_curve(n, original_resource[1])
     #power_levels = pq_curve(n, new_resource[1])
     η = Real[]
-    for i in range(2, length(n.powerLevels))
-        push!(n.η, (c.powerLevels[i] - c.powerLevels[i-1]) / (c.dischargeLevels[i] - c.dischargeLevels[i-1]))
+    for i in range(2, length(c.powerLevels))
+        push!(η, (c.powerLevels[i] - c.powerLevels[i-1]) / (c.dischargeLevels[i] - c.dischargeLevels[i-1]))
     end
 
+    @constraint(m, [t ∈ 𝒯],
+    m[:flow_out][n, t, water_resource(n)] == m[:cap_use][n, t] * outputs(n, water_resource(n))
+    )
     
     # produksjon = discharge_segment*virkningsgrad_segment
-    N = range(1,length(η))
+    Q = range(1,number_of_discharge_points(c)-1)
 
-    @constraint(m, [t ∈ 𝒯, q ∈ N],
+    @constraint(m, [t ∈ 𝒯, q ∈  Q],
     m[:discharge_segment][n, t, q] <= c.dischargeLevels[q+1].- c.dischargeLevels[q]
     )
 
-    @constraint(m, [t ∈ 𝒯, p ∈ water_resource(n)],
-    m[:flow_out][n, t, p] == sum(m[:discharge_segment][n, t, q] for q ∈ Nˢ)
+    @constraint(m, [t ∈ 𝒯],
+    m[:flow_out][n, t,  water_resource(n)] == sum(m[:discharge_segment][n, t, q] for q ∈ Q)
     )
 
 
     @constraint(m, [t ∈ 𝒯],
-    m[:cap_use][n, t] == sum(m[:discharge_segment][n, t, q]* η[q] for q ∈ Nˢ)
+    m[:flow_out][n, t, electricity_resource(n) ] == sum(m[:discharge_segment][n, t, q]* η[q] for q ∈ Q)
     )
 
-    @constraint(m, [t ∈ 𝒯, p ∈ electricity_resource(n)],
-    m[:flow_out][n, t, p] == m[:cap_use][n, t]
-    )
+   
+
 
 end
-"""
+
 
 """
     constraints_flow_out(m, n::HydroGenerator, 𝒯::TimeStructure, modeltype::EnergyModel)
