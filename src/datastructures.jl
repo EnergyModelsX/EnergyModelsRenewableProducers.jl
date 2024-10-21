@@ -487,13 +487,25 @@ function HydroPump(
     return HydroPump(id, cap, pq_curve, opex_var, opex_fixed, input, output, Data[])
 end
 
+abstract type AbstractPqCurve <: EMB.Data end
+
+# struct NoPqCurve <: AbstractPqCurve end # Do we need this to enable modelling as energy only (not conversion from water to energy)?
+
+# do we need this or can we use existing functionality in outputs?
+struct EnergyEquivalent <: AbstractPqCurve
+    name::Symbol
+    value::Real # MW / m3/s
+end
+
+
+
 
 """ A regular hydropower plant, modelled as a `NetworkNode` node.
 
 ## Fields
 - **`id`** is the name/identifier of the node.\n
 - **`cap::TimeProfile`** is the installed discharge capacity.\n
-- **`pq_curve::Dict{<:Resource, <:Vector{<:Real}}` describes the relationship between power and discharge (water).\
+- **`pq_curve::AbstractPqCurve` describes the relationship between power and discharge (water).\
 requires one input resource (usually Water) and two output resources (usually Water and Power) to be defined \
 where the input resource also is an output resource. \n
 - **`opex_var::TimeProfile`** is the variational operational costs per energy unit produced.\n
@@ -506,100 +518,84 @@ where the input resource also is an output resource. \n
 
 struct HydroGenerator <: EMB.NetworkNode # plant or pump or both?
     id::Any
-    #power_cap::TimeProfile # maximum production MW/(time unit)
-    cap::TimeProfile # maximum discharge mm3/(time unit)
-    pq_curve::Union{Dict{<:Resource, <:Vector{<:Real}}, Nothing}# Production and discharge ratio [MW / m3/s]
-    #pump_power_cap::TimeProfile #maximum production MW
-    #pump_disch_cap::TimeProfile #maximum discharge mm3/time unit
-    #pump_pq_curve::Dict{<:Real, <:Real}
-    #prod_min::TimeProfile # Minimum production [MW]
-    #prod_max::TimeProfile # Maximum production [MW]
-    #cons_min::TimeProfile # Minimum consumption [MW]
-    #cons_max::TimeProfile # Maximum consumption [MW]
+    cap::TimeProfile # maximum prduction in MW
+    pq_curve::AbstractPqCurve# Production and discharge ratio [MW / m3/s]
     opex_var::TimeProfile
     opex_fixed::TimeProfile
+    electricity_resource::Resource
+    water_resource::Resource
     input::Dict{<:Resource,<:Real}
     output::Dict{<:Resource,<:Real}
-    η::Vector{Real} # PQ_curve: production and discharge ratio [MW / m3/s]
     data::Vector{Data}
 end
 function HydroGenerator(
     id::Any,
-    #power_cap::TimeProfile,
     cap::TimeProfile,
-    #pq_curve::Dict{<:Real, <:Real},
-    #pump_power_cap::TimeProfile,
-    #pump_disch_cap::TimeProfile,
-    #pump_pq_curve::Dict{<:Real, <:Real},
-    #prod_min::TimeProfile,
-    #prod_max::TimeProfile,
+    pq_curve::AbstractPqCurve,
     opex_var::TimeProfile,
     opex_fixed::TimeProfile,
-    input::Dict{<:Resource,<:Real},
-    output::Dict{<:Resource,<:Real};
-    pq_curve::AbstractPqCurve,
-    #η = Real[],
+    electricity_resource::Resource,
+    water_resource::Resource,
 )
 
-    return HydroGenerator(id, cap, pq_curve, opex_var, opex_fixed, input, output, η, Data[])
+    input = Dict(water_resource => 1.0)
+    output = Dict(water_resource => 1.0, electricity_resource => 1.0)
+
+    return HydroGenerator(id, cap, pq_curve, opex_var, opex_fixed, electricity_resource, water_resource, input, output, Data[])
 end
 
-abstract type AbstractPqCurve <: EMB.Data end
+"""
+    electricity_resource(n::HydroGenerator)
 
-# struct NoPqCurve <: AbstractPqCurve end # Do we need this to enable modelling as energy only (not conversion from water to energy)?
+Returns the resource of the `electricity_resource` field of a node `n`.
+"""
+electricity_resource(n::HydroGenerator) = n.electricity_resource
 
-# do we need this or can we use existing functionality in outputs?
-struct EnergyEquivalent <: AbstractPqCurve
-    name::Symbol
-    value::Real # MW / m3/s
-end
+"""
+    water_resource(n::HydroGenerator)
 
-struct PqCurve <: AbstractPqCurve
-    name::Symbol
-    value::Vecor{Real}  # MW / m3/s
-    DischargeBreakpoints::Vecor{Real} #share of total discharege capacity (0,1)
-end
-
-#struct PqCurveHeadDependen <: AbstractPqCurve
-#    name::Symbol
-#    value::Real
-#end
-
-
+Returns the resource of the `water_resource` field of a node `n`.
+"""
+water_resource(n::HydroGenerator) = n.water_resource
 
 """
     pq_curve(n::HydroGenerator)
 
 Returns the resources in the PQ-curve of a node `n` of type `HydroGenerator`
 """
-function pq_curve(n::HydroGenerator)
-    if !isnothing(n.pq_curve)
-        return collect(keys(n.pq_curve))
-    else
-        return nothing
-    end
-end
+pq_curve(n::HydroGenerator) = n.pq_curve
 
-"""
-    pq_curve(n::HydroGenerator, p)
+#has_discharge_segments(pq_curve::AbstractPqCurve) = (typeof(pq_curve) <: Union{PqEfficiencyCurve})
+#number_of_discharge_points(pq_curve::PqPoints) = length(pq_curve.dischargeLevels)
 
-Returns the values in the pq_curve for resurce p of a node `n` of type `HydroGenerator`
-"""
-function pq_curve(n::HydroGenerator, p::Resource)
-
-    if !isnothing(n.pq_curve)
-        return  n.pq_curve[p]
-    else
-        return nothing
-    end
-
-end
-"""
-    efficiency(n::HydroGenerator)
-
-Returns vector of the efficiency segments a node `n` of type `HydroGenerator`
-"""
-efficiency(n::HydroGenerator) = n.η
+#"""
+#    efficiency(n::HydroGenerator)
+#
+#Returns vector of the efficiency segments a node `n` of type `HydroGenerator`
+#"""
+#efficiency(n::HydroGenerator) = n.η
 
 
 # TODO make pump module
+
+"""
+struct PqEfficiencyCurve <: AbstractPqCurve
+    name::Symbol
+    efficiency::Vector{Real}  # MW / m3/s
+    dischargeBreakpoints::Vector{Real} #share of total discharege capacity (0,1)
+    refHead::Real
+end
+
+struct PqPoints <: AbstractPqCurve
+    # requiremets: equal size vectors
+    #              0-0 as first point
+    name::Symbol
+    powerLevels::Vector{Real}  # MW / m3/s
+    dischargeLevels::Vector{Real} #share of total discharege capacity (0,1)
+end
+
+#struct PqCurveHeadDependen <: AbstractPqCurve
+#    name::Symbol
+#    value::Real
+#end
+"""

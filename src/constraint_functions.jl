@@ -325,6 +325,58 @@ function EMB.constraints_flow_out(m, n::HydroGate, 𝒯::TimeStructure, modeltyp
     end
 end
 
+
+function build_pq_constaints(m, n::HydroGenerator, c::EnergyEquivalent, 𝒯::TimeStructure)
+
+     # water inn = water out
+     @constraint(m, [t ∈ 𝒯],
+     m[:flow_out][n, t,  water_resource(n)] == m[:flow_in][n, t,  water_resource(n)] 
+     )
+
+
+
+     # Relatinship between discharge of water and power generated
+     @constraint(m, [t ∈ 𝒯],
+     m[:flow_out][n, t, electricity_resource(n)] == m[:cap_use][n, t] * c.value
+     )
+
+end
+
+"""
+function build_pq_constaints(m, n::HydroGenerator, c::PqPoints, 𝒯::TimeStructure)
+
+
+    #disch_levels = pq_curve(n, original_resource[1])
+    #power_levels = pq_curve(n, new_resource[1])
+    η = Real[]
+    for i in range(2, length(n.powerLevels))
+        push!(n.η, (c.powerLevels[i] - c.powerLevels[i-1]) / (c.dischargeLevels[i] - c.dischargeLevels[i-1]))
+    end
+
+    
+    # produksjon = discharge_segment*virkningsgrad_segment
+    N = range(1,length(η))
+
+    @constraint(m, [t ∈ 𝒯, q ∈ N],
+    m[:discharge_segment][n, t, q] <= c.dischargeLevels[q+1].- c.dischargeLevels[q]
+    )
+
+    @constraint(m, [t ∈ 𝒯, p ∈ water_resource(n)],
+    m[:flow_out][n, t, p] == sum(m[:discharge_segment][n, t, q] for q ∈ Nˢ)
+    )
+
+
+    @constraint(m, [t ∈ 𝒯],
+    m[:cap_use][n, t] == sum(m[:discharge_segment][n, t, q]* η[q] for q ∈ Nˢ)
+    )
+
+    @constraint(m, [t ∈ 𝒯, p ∈ electricity_resource(n)],
+    m[:flow_out][n, t, p] == m[:cap_use][n, t]
+    )
+
+end
+"""
+
 """
     constraints_flow_out(m, n::HydroGenerator, 𝒯::TimeStructure, modeltype::EnergyModel)
 
@@ -332,8 +384,7 @@ Function for creating the constraint on the outlet flow from a HydroGenerator No
 """
 function EMB.constraints_flow_out(m, n::HydroGenerator, 𝒯::TimeStructure, modeltype::EnergyModel)
     # Declaration of the required subsets, excluding CO2, if specified
-    𝒫ᵒᵘᵗ = EMB.res_not(outputs(n), co2_instance(modeltype))
-    𝒫ⁱⁿ  = EMB.res_not(inputs(n), co2_instance(modeltype))
+
 
     # Constraint for the individual output stream connections
     # produksjon = discharge*energy equivalent
@@ -342,60 +393,17 @@ function EMB.constraints_flow_out(m, n::HydroGenerator, 𝒯::TimeStructure, mod
     # TODO: update energy equivalent if only one value in PQ-curve
 
 
-    new_resource = 𝒫ᵒᵘᵗ[𝒫ᵒᵘᵗ .∉ [𝒫ⁱⁿ]] # Power
-    original_resource = 𝒫ᵒᵘᵗ[𝒫ᵒᵘᵗ .∈ [𝒫ⁱⁿ]] # Water
+    #𝒫ᵒᵘᵗ = EMB.res_not(outputs(n), co2_instance(modeltype))
+    #𝒫ⁱⁿ  = EMB.res_not(inputs(n), co2_instance(modeltype))
+    #new_resource = 𝒫ᵒᵘᵗ[𝒫ᵒᵘᵗ .∉ [𝒫ⁱⁿ]] # Power
+    #original_resource = 𝒫ᵒᵘᵗ[𝒫ᵒᵘᵗ .∈ [𝒫ⁱⁿ]] # Water
+    
     # Since the type of resource is defined by the user it is not convenient to set conditions
     # based on the type (naming conventions or spelling can vary, e.g. water/hydro or power/electricity).
 
-    @constraint(m, [t ∈ 𝒯, p ∈ original_resource],
-    m[:flow_out][n, t, p] == m[:cap_use][n, t] * outputs(n, p)
-)
-
-    #TODO make cleaner as function
-    #if !isnothing(pq_curve) & isnothing(η)
-    #    η = calculate_efficiency()
-    #end
-
-    #@constraint(m, [t ∈ 𝒯, p ∈ new_resource],
-    #m[:flow_out][n, t, p] <= m[:cap_use][n, t] * outputs(n, p)
-    #)
-
-    if !isnothing(pq_curve(n)) && length(original_resource) == 1 && length(new_resource) == 1
-        disch_levels = pq_curve(n, original_resource[1])
-        power_levels = pq_curve(n, new_resource[1])
-        #n.η = Real[]
-        if length(disch_levels) == length(power_levels) && length(disch_levels) > 1
-            for i in range(2, length(disch_levels))
-                push!(n.η, (power_levels[i] - power_levels[i-1]) / (disch_levels[i] - disch_levels[i-1]))
-            end
-        else println("incorrect pq_curve values")
-        end
-       println(n.η)
-    else println("Requires one input resource and two output resources.")
-
-    end
-
-    # produksjon = discharge_segment*virkningsgrad_segment
-    Nˢ = range(1,length(n.η))
-    water_seq = pq_curve(n, original_resource[1])
-    println(water_seq)
-
-    @constraint(m, [t ∈ 𝒯, q ∈ Nˢ],
-    m[:discharge_segment][n, t, q] <= water_seq[q+1]*m[:cap_inst][n, t] .- water_seq[q]*m[:cap_inst][n, t]
-    )
-
-    @constraint(m, [t ∈ 𝒯],
-    m[:cap_use][n, t] == sum(m[:discharge_segment][n, t, q] for q ∈ Nˢ)
-    )
-
-    @constraint(m, [t ∈ 𝒯, p ∈ new_resource],
-    m[:flow_out][n, t, p] == sum(m[:discharge_segment][n, t, q] * n.η[q] for q ∈ Nˢ)
-)
 
 
-    # Opprett variabel per segment
-
-
+    build_pq_constaints(m, n, pq_curve(n), 𝒯)
 
 
 end
