@@ -446,6 +446,9 @@ function HydroGate(
     return HydroGate(id, cap, opex_var, opex_fixed, input, output, Data[])
 end
 
+""" `HydroUnit` node for either pumping or production."""
+abstract type HydroUnit <: EMB.NetworkNode end
+
 """
     HydroPump <: EMB.NetworkNode
 
@@ -464,12 +467,14 @@ where the input resource also is an output resource. \n
 - **`data::Vector{Data}`** is the additional data (e.g. for investments). The field \
 `data` is conditional through usage of a constructor.
 """
-struct HydroPump <: EMB.NetworkNode # plant or pump or both?
+struct HydroPump <: HydroUnit # plant or pump or both?
     id::Any
-    cap::TimeProfile # maximum discharge mm3/(time unit)
-    pq_curve::Union{Dict{<:Resource, <:Vector{<:Real}}, Nothing}# Production and discharge ratio [MW / m3/s]
+    cap::TimeProfile # maximum pumping in Mm3/timestep
+    pq_curve::AbstractPqCurve# Pumping-power ratio [Mm3/timestep / MW] (?)
     opex_var::TimeProfile
     opex_fixed::TimeProfile
+    electricity_resource::Resource
+    water_resource::Resource
     input::Dict{<:Resource,<:Real}
     output::Dict{<:Resource,<:Real}
     data::Vector{Data}
@@ -480,11 +485,14 @@ function HydroPump(
     pq_curve::Union{Dict{<:Resource, <:Vector{<:Real}}, Nothing},# Production and discharge ratio [MW / m3/s]
     opex_var::TimeProfile,
     opex_fixed::TimeProfile,
-    input::Dict{<:Resource,<:Real},
-    output::Dict{<:Resource,<:Real}
+    electricity_resource::Dict{<:Resource,<:Real},
+    water_resource::Dict{<:Resource,<:Real}
 )
 
-    return HydroPump(id, cap, pq_curve, opex_var, opex_fixed, input, output, Data[])
+    input = Dict(water_resource => 1.0, electricity_resource => 1.0)
+    output = Dict(water_resource => 1.0)
+
+    return HydroPump(id, cap, pq_curve, opex_var, opex_fixed, electricity_resource, water_resource, input, output, Data[])
 end
 
 abstract type AbstractPqCurve <: EMB.Data end
@@ -540,11 +548,10 @@ where the input resource also is an output resource. \n
 - **`data::Vector{Data}`** is the additional data (e.g. for investments). The field \
 `data` is conditional through usage of a constructor.
 """
-
-struct HydroGenerator <: EMB.NetworkNode # plant or pump or both?
+struct HydroGenerator <: HydroUnit # plant or pump or both?
     id::Any
-    cap::TimeProfile # maximum prduction in MW
-    pq_curve::AbstractPqCurve# Production and discharge ratio [MW / m3/s]
+    cap::TimeProfile # maximum discharge in Mm3/timestep
+    pq_curve::AbstractPqCurve# Production and discharge ratio [MW / Mm3/timestep]
     opex_var::TimeProfile
     opex_fixed::TimeProfile
     electricity_resource::Resource
