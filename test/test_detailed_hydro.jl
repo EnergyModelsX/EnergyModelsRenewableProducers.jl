@@ -7,14 +7,14 @@ function build_case()
     products = [CO2, Power, Water]
 
     # Variables for the individual entries of the time structure
-    op_duration = 2 # Operationl period duration
-    op_number = 4   # There are in total 4 operational periods
-    operational_periods = SimpleTimes(op_number, op_duration)
+    op_duration = [1, 1, 2, 4] # Operational period duration
+    op_number = length(op_duration)   # Number of operational periods
+    operational_periods = SimpleTimes(op_number, op_duration) # Assume step length is given i
 
     # The number of operational periods times the duration of the operational periods.
     # This implies, that a strategic period is 8 times longer than an operational period,
     # resulting in the values below as "/8h".
-    op_per_strat = op_duration * op_number
+    op_per_strat = sum(op_duration)
 
     # Create the time structure and global data
     T = TwoLevel(2, 1, operational_periods; op_per_strat)
@@ -101,8 +101,8 @@ end
         Constraint{MaxConstraintType}(
             Symbol(),
             OperationalProfile(max_profile), # value
-            FixedProfile(true),                 # flag
-            FixedProfile(Inf),                  # penalty
+            FixedProfile(true),              # flag
+            FixedProfile(Inf),               # penalty
         )
     )
     min_profile = [0.2, 0.2, 0, 0]
@@ -110,13 +110,14 @@ end
         Constraint{MinConstraintType}(
             Symbol(),
             OperationalProfile(min_profile), # value
-            FixedProfile(true),                 # flag
-            FixedProfile(Inf),                  # penalty
+            FixedProfile(true),              # flag
+            FixedProfile(Inf),               # penalty
         )
     )
     m = EMB.run_model(case, model, optimizer)
-    discharge_deficit_cost = 0
-    for sp in strategic_periods(𝒯)
+
+    # Find the discharge deficit cost for each strategic period
+    discharge_deficit_cost = map(strategic_periods(𝒯)) do sp
         rsv_vol = value.([m[:stor_level][hydro_reservoir, t] for t in sp])
         min_vol = [hydro_reservoir.vol.capacity[t] for t in sp] .* min_profile
         max_vol = [hydro_reservoir.vol.capacity[t] for t in sp] .* max_profile
@@ -126,11 +127,11 @@ end
         demand = [hydro_ocean.cap[t] for t in sp]
         deficit = max.(demand - discharge, 0)
         penalty = [hydro_ocean.penalty[:deficit][t] for t in sp]
-        discharge_deficit_cost += sum(deficit .* penalty .* [duration(t) for t in sp])
+        return sum(deficit .* penalty .* [duration(t) for t in sp])
     end
     # Verify that restriction has caused a deficit meaning that optimal solution has changes
-    @test discharge_deficit_cost > 0
-    @test objective_value(m) + discharge_deficit_cost == 0
+    @test sum(discharge_deficit_cost) > 0
+    @test objective_value(m) + sum(discharge_deficit_cost) == 0
 end
 
 @testset "Test hydro reservoir Constraint of type MaxConstraintType with penalty cost" begin
@@ -163,15 +164,16 @@ end
         )
     )
     m = EMB.run_model(case, model, optimizer)
-    max_vol_violation_cost = 0
-    for sp in strategic_periods(𝒯)
+
+    # Find the max vol violation cost for each strategic period
+    max_vol_violation_cost = map(strategic_periods(𝒯)) do sp
         rsv_vol = value.([m[:stor_level][hydro_reservoir, t] for t in sp])
-        min_vol = [hydro_reservoir.vol.capacity[t] for t in sp] .* min_profile
-        max_vol = [hydro_reservoir.vol.capacity[t] for t in sp] .* max_profile
+        min_vol = [capacity(level(hydro_reservoir), t) for t in sp] .* min_profile
+        max_vol = [capacity(level(hydro_reservoir), t) for t in sp] .* max_profile
         max_vol_violation = max.(rsv_vol - max_vol, 0)
-        max_vol_violation_cost += sum(max_vol_violation .* [duration(t) for t in sp] * penalty_cost)
+        return sum(max_vol_violation .* [duration(t) for t in sp] * penalty_cost)
     end
-    @test objective_value(m) + max_vol_violation_cost == 0
+    @test objective_value(m) + sum(max_vol_violation_cost) == 0
 end
 
 @testset "Test hydro gate schedule" begin
@@ -191,12 +193,12 @@ end
         Constraint{ScheduleConstraintType}(
             Symbol(),
             OperationalProfile(schedule_profile), # value
-            OperationalProfile(flags), # flag
-            FixedProfile(penalty_cost),                      # penalty
+            OperationalProfile(flags),            # flag
+            FixedProfile(penalty_cost),           # penalty
         )
     )
     m = EMB.run_model(case, model, optimizer)
-    max_vol_violation_cost = 0
+
     for sp in strategic_periods(𝒯)
         gate_flow = value.([m[:flow_out][hydro_gate, t, Water] for t in sp])
         # Verify that schedule equals flow when flag is set
