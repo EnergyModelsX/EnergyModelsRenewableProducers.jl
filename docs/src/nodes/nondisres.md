@@ -4,9 +4,14 @@ Non-dispatchable renewable energy sources generate electricity from intermittent
 Examples for intermittent energy sources are solar irradiation, the wind, or the flow within rivers.
 Although these energy sources have a constant nominal capacity, their production depends on intermittent energy sources.
 Although `EnergyModelsX` allows for capacities varying on the operational level, it is then not possible to include investments for a technology.
-Hence, the design of a [`RefSource`](@extref EnergyModelsBase.RefSource) is not satisfactory, when considering potential investments in capacities.=.
+As a consequence, the design of the [`RefSource`](@extref EnergyModelsBase.RefSource) is not satisfactory, when considering potential investments in capacities.=.
 
 Hence, it is necessary to implement a source node representing intermittent renewable energy generation.
+
+!!! note "Abstract supertype"
+    We implemented an abstract supertype [`AbstractNonDisRES`](@ref).
+    This supertype is used for introducing the variable ``\texttt{curtailment}[n, t]`` and updateing the capacity constraints.
+    Hence, if you plan to create a new non-dispatchable renewable energy source, you can create it as subtype of `AbstractNonDisRES`, resulting in the variable being available.
 
 ## [Introduced type and its field](@id nodes-nondisres-fields)
 
@@ -18,7 +23,7 @@ Hence, it utilizes the same functions declared in `EnergyModelsBase`.
 The standard fields are given as:
 
 - **`id`**:\
-  The field **`id`** is only used for providing a name to the node.
+  The field `id` is only used for providing a name to the node.
   This is similar to the approach utilized in `EnergyModelsBase`.
 - **`cap::TimeProfile`**:\
   The installed capacity corresponds to the nominal capacity of the node.\
@@ -79,9 +84,11 @@ The variables include:
 - [``\texttt{cap\_inst}``](@extref EnergyModelsBase man-opt_var-cap)
 - [``\texttt{flow\_out}``](@extref EnergyModelsBase man-opt_var-flow)
 - [``\texttt{emissions\_node}``](@extref EnergyModelsBase man-opt_var-emissions) if `EmissionsData` is added to the field `data`.
-  Note that non-dispatchable renewable energy source nodes are not compatible with `CaptureData`.
-  Hence, you can only provide [`EmissionsProcess`](@extref EnergyModelsBase.EmissionsProcess) to the node.
-  It is our aim to include the potential for construction emissions in a latter stage
+
+!!! note
+    Non-dispatchable renewable energy source nodes are not compatible with `CaptureData`.
+    Hence, you can only provide [`EmissionsProcess`](@extref EnergyModelsBase.EmissionsProcess) to the node.
+    It is our aim to include the potential for construction emissions in a latter stage
 
 #### [Additional variables](@id nodes-nondisres-math-add)
 
@@ -111,6 +118,10 @@ These standard constraints are:
   \texttt{cap\_inst}[n, t] = capacity(n, t)
   ```
 
+  !!! tip "Using investments"
+      The function `constraints_capacity_installed` is also used in [`EnergyModelsInvestments`](https://energymodelsx.github.io/EnergyModelsInvestments.jl/stable/) to incorporate the potential for investment.
+      Nodes with investments are then no longer constrained by the parameter capacity.
+
 - `constraints_flow_out`:
 
   ```math
@@ -125,20 +136,22 @@ These standard constraints are:
   \texttt{opex\_fixed}[n, t_{inv}] = opex\_fixed(n, t_{inv}) \times \texttt{cap\_inst}[n, first(t_{inv})]
   ```
 
+  !!! tip "Why do we use `first()`"
+      The variables ``\texttt{cap\_inst}`` are declared over all operational periods (see the section on *[Capacity variables](@extref EnergyModelsBase man-opt_var-cap)* for further explanations).
+      Hence, we use the function ``first(t_{inv})`` to retrieve the installed capacities in the first operational period of a given strategic period ``t_{inv}`` in the function `constraints_opex_fixed`.
+
 - `constraints_opex_var`:
 
   ```math
-  \texttt{opex\_var}[n, t_{inv}] = \sum_{t \in t_{inv}} opex_var(n, t) \times \texttt{cap\_use}[n, t] \times EMB.multiple(t_{inv}, t)
+  \texttt{opex\_var}[n, t_{inv}] = \sum_{t \in t_{inv}} opex\_var(n, t) \times \texttt{cap\_use}[n, t] \times scale\_op\_sp(t_{inv}, t)
   ```
+
+  !!! tip "The function `scale_op_sp`"
+      The function [``scale\_op\_sp(t_{inv}, t)``](@extref EnergyModelsBase.scale_op_sp) calculates the scaling factor between operational and strategic periods.
+      It also takes into account potential operational scenarios and their probability as well as representative periods.
 
 - `constraints_data`:\
   This function is only called for specified data of the non-dispatchable renewable energy source, see above.
-
-The function `constraints_capacity_installed` is also used in [`EnergyModelsInvestments`](https://energymodelsx.github.io/EnergyModelsInvestments.jl/stable/) to incorporate the potential for investment.
-Nodes with investments are then no longer constrained by the parameter capacity.
-
-The variable ``\texttt{cap\_inst}`` is declared over all operational periods (see the section on *[Capacity variables](@extref EnergyModelsBase man-opt_var-cap)* for further explanations).
-Hence, we use the function ``first(t_{inv})`` to retrieve the installed capacity in the first operational period of a given strategic period ``t_{inv}`` in the function `constraints_opex_fixed`.
 
 The function `constraints_capacity` is extended with a new method for non-dispatchable renewable energy source nodes to allow the inclusion of the production profile and the variable ``\texttt{curtailment}[n, t]``.
 It now includes two individual constraints:

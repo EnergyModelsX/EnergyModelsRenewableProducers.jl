@@ -1,8 +1,15 @@
 """
-    NonDisRES <: EMB.Source
+    abstract type AbstractNonDisRES <: EMB.Source
+
+Abstract supertype for all non-dispatchable renewable energy source. All functions for the
+implemented version of the [`NonDisRES`](@ref) are dispatching on this supertype.
+"""
+abstract type AbstractNonDisRES <: EMB.Source end
+"""
+    NonDisRES <: AbstractNonDisRES
 
 A non-dispatchable renewable energy source. It extends the existing `RefSource` node through
-including a profile that corresponds to thr production. The profile can have variations on
+including a profile that corresponds to the production. The profile can have variations on
 the strategic level.
 
 # Fields
@@ -16,7 +23,7 @@ the strategic level.
 - **`data::Vector{Data}`** is the additional data (e.g. for investments). The field `data`
   is conditional through usage of a constructor.
 """
-struct NonDisRES <: EMB.Source
+struct NonDisRES <: AbstractNonDisRES
     id::Any
     cap::TimeProfile
     profile::TimeProfile
@@ -37,14 +44,14 @@ function NonDisRES(
 end
 
 """
-    profile(n::NonDisRES)
-    profile(n::NonDisRES, t)
+    profile(n::AbstractNonDisRES)
+    profile(n::AbstractNonDisRES, t)
 
-Returns the profile of a node `n` of type `NonDisRES` either as `TimeProfile` or at
+Returns the profile of a node `n` of type `AbstractNonDisRES` either as `TimeProfile` or in
 operational period `t`.
 """
-profile(n::NonDisRES) = n.profile
-profile(n::NonDisRES, t) = n.profile[t]
+profile(n::AbstractNonDisRES) = n.profile
+profile(n::AbstractNonDisRES, t) = n.profile[t]
 
 """ An abstract type for hydro storage nodes, with or without pumping. """
 abstract type HydroStorage{T} <: EMB.Storage{T} end
@@ -243,7 +250,7 @@ end
     level_init(n::HydroStorage)
     level_init(n::HydroStorage, t)
 
-Returns the initial level of a node `n` of type `HydroStorage` either as `TimeProfile` or at
+Returns the initial level of a node `n` of type `HydroStorage` either as `TimeProfile` or in
 operational period `t`.
 """
 level_init(n::HydroStorage) = n.level_init
@@ -253,7 +260,7 @@ level_init(n::HydroStorage, t) = n.level_init[t]
     level_inflow(n::HydroStorage)
     level_inflow(n::HydroStorage, t)
 
-Returns the inflow to a node `n` of type `HydroStorage` either as `TimeProfile` or at
+Returns the inflow to a node `n` of type `HydroStorage` either as `TimeProfile` or in
 operational period `t`.
 """
 level_inflow(n::HydroStorage) = n.level_inflow
@@ -263,7 +270,7 @@ level_inflow(n::HydroStorage, t) = n.level_inflow[t]
     level_min(n::HydroStorage)
     level_min(n::HydroStorage, t)
 
-Returns the minimum level of a node `n` of type `HydroStorage` either as `TimeProfile` or at
+Returns the minimum level of a node `n` of type `HydroStorage` either as `TimeProfile` or in
 operational period `t`.
 """
 level_min(n::HydroStorage) = n.level_min
@@ -274,7 +281,7 @@ level_min(n::HydroStorage, t) = n.level_min[t]
     opex_var_pump(n::PumpedHydroStor, t)
 
 Returns the variable OPEX of a node `n` of type `PumpedHydroStor` related to pumping either
-as `TimeProfile` or at operational period `t`.
+as `TimeProfile` or in operational period `t`.
 """
 opex_var_pump(n::PumpedHydroStor) = n.opex_var_pump
 opex_var_pump(n::PumpedHydroStor, t) = n.opex_var_pump[t]
