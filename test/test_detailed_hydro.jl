@@ -187,7 +187,7 @@ end
 
     # Verify reservoir minimum/maximum hard constraint
     schedule_profile = 10 * ones(4)
-    flags = [false, false, true, false]
+    flags = [false, true, true, false]
     penalty_cost = 57
     push!(hydro_gate.data,
         Constraint{ScheduleConstraintType}(
@@ -204,4 +204,48 @@ end
         # Verify that schedule equals flow when flag is set
         @test all(.!flags .| (schedule_profile .== gate_flow))
     end
+end
+
+@testset "Test hydro gate schedule penalty value" begin
+    case, model = build_case()
+    optimizer = optimizer_with_attributes(HiGHS.Optimizer, MOI.Silent() => true)
+
+    𝒯 = case[:T]
+    hydro_reservoir = case[:nodes][1]
+    hydro_gate = case[:nodes][2]
+    hydro_ocean = case[:nodes][3]
+    Water = case[:products][3]
+
+    # Verify reservoir minimum/maximum hard constraint
+    schedule_profile = 10 * ones(4)
+    penalty_cost = [12, 23, 57, 44]
+    push!(hydro_gate.data,
+        Constraint{ScheduleConstraintType}(
+            Symbol(),
+            OperationalProfile(schedule_profile), # value
+            FixedProfile(true),                   # flag
+            OperationalProfile(penalty_cost),     # penalty
+        )
+    )
+    m = EMB.run_model(case, model, optimizer)
+
+    # for sp in strategic_periods(𝒯)
+    gate_penalties = map(strategic_periods(𝒯)) do sp
+        gate_flow = value.([m[:flow_out][hydro_gate, t, Water] for t in sp])
+        deviation_up = max.(gate_flow - schedule_profile, 0)
+        deviation_down = -min.(gate_flow - schedule_profile, 0)
+        return sum(deviation_down .* [duration(t) for t in sp] .* penalty_cost) +
+            sum(deviation_up .* [duration(t) for t in sp] .* penalty_cost)
+    end
+
+    # Hydro ocean demand
+    demand_penalties = map(strategic_periods(𝒯)) do sp
+        gate_flow = value.([m[:flow_out][hydro_gate, t, Water] for t in sp])
+        demand = [hydro_ocean.cap[t] for t in sp]
+        deficit = max.(demand - gate_flow, 0)
+        penalty = [hydro_ocean.penalty[:deficit][t] for t in sp]
+        return sum(deficit .* penalty .* [duration(t) for t in sp])
+    end
+
+    @test objective_value(m) + sum(gate_penalties) + sum(demand_penalties) ≈ 0
 end

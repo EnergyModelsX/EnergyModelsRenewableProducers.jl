@@ -256,23 +256,26 @@ function EMB.constraints_opex_var(m, n::HydroReservoir{T}, 𝒯ᴵⁿᵛ,
     constraints_up = filter(has_penalty_up, constraints) # Max and schedule
     constraints_down = filter(has_penalty_down, constraints) # Min and schedule
 
-    opex_penalty_var = @expression(m, [t_inv ∈ 𝒯ᴵⁿᵛ],
-        sum(
-            (sum(
-                m[:rsv_vol_penalty_up][n, t] * penalty(c, t)
-                for c in constraints_up if has_penalty(c, t)
-            ) +
-            sum(
-                m[:rsv_vol_penalty_down][n, t] * penalty(c, t)
-                for c in constraints_down if has_penalty(c, t)
-            ))
-        * scale_op_sp(t_inv, t) for t in t_inv)
-    )
+    if length(constraints_up) > 0
+        c_up = first(constraints_up)
+        penalty_up_var = @expression(m, [t_inv ∈ 𝒯ᴵⁿᵛ], sum(m[:rsv_vol_penalty_up][n, t] *
+            penalty(c_up, t) * scale_op_sp(t_inv, t) for t ∈ t_inv if has_penalty(c_up, t)))
+    else
+        penalty_up_var = @expression(m, [t_inv ∈ 𝒯ᴵⁿᵛ], 0)
+    end
+
+    if length(constraints_down) > 0
+        c_down = first(constraints_down)
+        penalty_down_var = @expression(m, [t_inv ∈ 𝒯ᴵⁿᵛ], sum(m[:rsv_vol_penalty_down][n, t] *
+            penalty(c_down, t) * scale_op_sp(t_inv, t) for t ∈ t_inv if has_penalty(c_down, t)))
+    else
+        penalty_down_var = @expression(m, [t_inv ∈ 𝒯ᴵⁿᵛ], 0)
+    end
 
     # Create the overall constraint
     @constraint(m, [t_inv ∈ 𝒯ᴵⁿᵛ],
         m[:opex_var][n, t_inv] == opex_var_level[t_inv] + opex_var_charge[t_inv] +
-            opex_var_discharge[t_inv] + opex_penalty_var[t_inv]
+            opex_var_discharge[t_inv] + penalty_up_var[t_inv] + penalty_down_var[t_inv]
     )
 end
 
