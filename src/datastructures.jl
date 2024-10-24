@@ -489,28 +489,35 @@ end
 
 abstract type AbstractPqCurve <: EMB.Data end
 
-# struct NoPqCurve <: AbstractPqCurve end # Do we need this to enable modelling as energy only (not conversion from water to energy)?
-
 # do we need this or can we use existing functionality in outputs?
 struct EnergyEquivalent <: AbstractPqCurve
     name::Symbol
     value::Real # MW / m3/s
 end
 
-#struct PqEfficiencyCurve <: AbstractPqCurve
-#    name::Symbol
-#    efficiency::Vector{Real}  # MW / m3/s
-#    dischargeBreakpoints::Vector{Real} #share of total discharege capacity (0,1)
-#    refHead::Real
-#end
-
 struct PqPoints <: AbstractPqCurve
     # requiremets: equal size vectors
     #              0-0 as first point
+    #              concave function
+    #              max discharge = max capacity
     name::Symbol
     powerLevels::Vector{Real}  # MW / m3/s
     dischargeLevels::Vector{Real} #share of total discharege capacity (0,1)
 end
+
+#=
+struct PqEfficiencyCurve <: AbstractPqCurve
+    # requiremets: non-decreasing efficiency
+    #              0 as first discharge level
+    #              max discharge = max capacity
+    #              length(efficiency) == length(dischargeLevels)-1 
+    name::Symbol
+    efficiency::Vector{Real}  # MW / m3/s
+    dischargeLevels::Vector{Real} #share of total discharege capacity (0,1)
+    refHead::Real
+end
+=#
+
 
 #struct PqCurveHeadDependen <: AbstractPqCurve
 #    name::Symbol
@@ -583,19 +590,14 @@ Returns the resources in the PQ-curve of a node `n` of type `HydroGenerator`
 """
 pq_curve(n::HydroGenerator) = n.pq_curve
 
-has_discharge_segments(pq_curve::AbstractPqCurve) = (typeof(pq_curve) <: Union{PqEfficiencyCurve, PqPoints})
+has_discharge_segments(pq_curve::AbstractPqCurve) = (typeof(pq_curve) <: Union{PqPoints}) #Union{PqEfficiencyCurve, PqPoints})
 number_of_discharge_points(pq_curve::PqPoints) = length(pq_curve.dischargeLevels)
+#number_of_discharge_points(pq_curve::PqEfficiencyCurve) = length(pq_curve.dischargeLevels)
 
 function get_nodes_with_discharge_segments(𝒩::Vector{HydroGenerator})
     return [n for n in 𝒩 if has_discharge_segments(pq_curve(n))]
 end
 
-#"""
-#    efficiency(n::HydroGenerator)
-#
-#Returns vector of the efficiency segments a node `n` of type `HydroGenerator`
-#"""
-#efficiency(n::HydroGenerator) = n.η
 
 
 # TODO make pump module

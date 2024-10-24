@@ -37,7 +37,7 @@ include("legacy_constructor.jl")
 export NonDisRES
 export HydroStorage, RegHydroStor, HydroStor, PumpedHydroStor
 export HydroReservoir, HydroGenerator, HydroPump, HydroGate
-export EnergyEquivalent, PqPoints
+export EnergyEquivalent, PqPoints #, PqEfficiencyCurve
 export MinConstraint, MaxConstraint, ScheduleConstraint
 
 end # module
