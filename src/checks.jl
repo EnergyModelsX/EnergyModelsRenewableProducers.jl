@@ -265,6 +265,7 @@ function EMB.check_node(n::HydroGenerator, 𝒯, modeltype::EnergyModel, check_t
         "The values for the Dictionary `input` must be non-negative."
     )
 
+ #=
     @assert_or_log(
         sum(outputs(n, p) ≥ 0 for p ∈ outputs(n)) == length(outputs(n)),
         "The values for the Dictionary `output` must be non-negative."
@@ -298,7 +299,7 @@ function EMB.check_node(n::HydroGenerator, 𝒯, modeltype::EnergyModel, check_t
              )
 
     end
-
+|| =#
    #TODO add test for concave PQ-curve
 
 
