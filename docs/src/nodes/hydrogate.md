@@ -45,18 +45,18 @@ Instead, it is implicitly assumed that the constraints are valid ``\forall n ∈
 In addition, all constraints are valid ``\forall t \in T`` (that is in all operational periods) or ``\forall t_{inv} \in T^{Inv}`` (that is in all strategic periods). The ``\texttt{gate\_disch\_penalty\_up}[n, t]`` and ``\texttt{gate\_disch\_penalty\_down}[n, t]`` variables are only added if required in a constraint, where ``c_{up}`` denotes constraint requiring up penalty, and ``c_{down}`` denotes constraint requiring down penalty.
 
 #### [Standard constraints](@id nodes-hydro_gate-math-con-stand)
-`HydroGate` nodes utilize in general the standard constraints described on *[Constraint functions](@extref EnergyModelsBase man-con)* for `NetworkNode`. In addition, it includes the penalty variables when required for constraints when dispatching `constraints_opex_fixed`:
+`HydroGate` nodes utilize in general the standard constraints described in *[Constraint functions for `NetworkNode`](@extref EnergyModelsBase nodes-network_node-math-con)*. In addition, it includes the penalty variables when required for constraints when dispatching `constraints_opex_fixed`:
 ```math
 \begin{aligned}
   \texttt{opex\_var}&[n, t_{inv}] = \\
-    \sum_{t \in t_{inv}} ( &\texttt{cap\_use}[n, t] \times opex\_var(n, t) + \\&
-    \texttt{gate\_disch\_penalty\_up}[n, t] \times penalty(c_{up}, t) + \\&
-    \texttt{gate\_disch\_penalty\_down}[n, t] \times penalty(c_{down}, t) )
+    \sum_{t \in t_{inv}} \Big( &\texttt{cap\_use}[n, t] \times opex\_var(n, t) \times scale\_op\_sp(t_{inv}, t) + \\&
+    \texttt{gate\_disch\_penalty\_up}[n, t] \times penalty(c_{up}, t) \times scale\_op\_sp(t_{inv}, t) + \\&
+    \texttt{gate\_disch\_penalty\_down}[n, t] \times penalty(c_{down}, t) \times scale\_op\_sp(t_{inv}, t) \Big)
 \end{aligned}
 ```
 
 #### [Additional constraints](@id nodes-hydro_gate-math-con-add)
-The `HydroGate` nodes utilize the majority of the concepts from [NetworkNode](@extref EnergyModelsBase.NetworkNode) but require adjustments for both constraining the variable ``\texttt{flow\_out}``. This is achieved through dispatching the function `constraints_flow_out` by adding
+The `HydroGate` nodes utilize the majority of the concepts from [NetworkNode](@extref EnergyModelsBase nodes-network_node-math-con) but require adjustments for both constraining the variable ``\texttt{flow\_out}``. This is achieved through dispatching the function `constraints_flow_out` by adding
 
 1. the discharge constraints if additional constraints exist on the `Data` field,
 

@@ -14,5 +14,4 @@ EnergyModelsRenewableProducers.AbstractConstraintType
 EnergyModelsRenewableProducers.MinConstraintType
 EnergyModelsRenewableProducers.MaxConstraintType
 EnergyModelsRenewableProducers.ScheduleConstraintType
-EnergyModelsRenewableProducers.ReservoirVolHead
 ```
