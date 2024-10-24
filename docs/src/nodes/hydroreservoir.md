@@ -23,7 +23,7 @@ The standard fields are given as:
     
 ### [Additional fields](@id nodes-hydro_reservoir-fields-new)
 
-[`HydroReservoir`](@ref) nodes add a single additional field  compared to a [`RefStorage`](@extref EnergyModelsBase.RefStorage), and does not include the `charge` field since charge/discharge capacity is given throug the [`HydroGenerator`](@ref), [`HydroPump`](@ref), and [`HydroGate`](@ref):
+[`HydroReservoir`](@ref) nodes add a single additional field compared to a [`RefStorage`](@extref EnergyModelsBase.RefStorage), and does not include the `charge` field since charge/discharge capacity is given throug the [`HydroGenerator`](@ref), [`HydroPump`](@ref), and [`HydroGate`](@ref):
 
 - **`vol_inflow::TimeProfile`**:\
   The volume inflow to the reservoir per timestep.
@@ -44,8 +44,8 @@ The variables that are used in the additional constraints are:
 - [``\texttt{stor\_discharge\_use}``](@extref EnergyModelsBase man-opt_var-cap)
 
 #### [Additional variables](@id nodes-hydro_reservoir-math-add)
-- ``\texttt{rsv\_vol\_penalty\_up}[n, t]``: Penalty for violating volume constraint in direction up in `HydroReservoir` node ``n`` in operational period ``t`` with a typical unit of ``Mm^3``.
-- ``\texttt{rsv\_vol\_penalty\_down}[n, t]``: Penalty for violating volume constraint in direction down in `HydroReservoir` node ``n`` in operational period ``t`` with a typical unit of ``Mm^3``.
+- ``\texttt{rsv\_vol\_penalty\_up}[n, t]``: Variable for penalizing violation of the volume constraint in direction up in `HydroReservoir` node ``n`` in operational period ``t`` with a typical unit of ``Mm^3``.
+- ``\texttt{rsv\_vol\_penalty\_down}[n, t]``: Variable for penalizing violation of the volume constraint in direction down in `HydroReservoir` node ``n`` in operational period ``t`` with a typical unit of ``Mm^3``.
 
 ### [Constraints](@id nodes-hydro_reservoir-math-con)
 
@@ -74,7 +74,7 @@ This is achieved through dispatching on the functions `constraints_level_aux` th
    \end{aligned}
    ```
 
-3. the level constraints with penalty if the constraints has non-infinite penalty.
+3. the level constraints with penalty if the constraints has non-infinite penalty value.
 
    ```math
    \begin{aligned}

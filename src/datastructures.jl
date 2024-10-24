@@ -359,22 +359,6 @@ end
 penalty(s::Constraint, t) = s.penalty[t]
 
 """
-    struct ReservoirVolHead{T<:Number}
-
-A description of the releation between volume level and head level of a `HydroReservoir`.
-"""
-struct ReservoirVolHead{T<:Number}
-    vol::Vector{T}
-    head::Vector{T}
-    function ReservoirVolHead(vol, head)
-        if length(vol) != length(head)
-            error("Volume and head vector should have the same length.")
-        end
-        new{T}(vol, head)
-    end
-end
-
-"""
     HydroReservoir{T} <: EMB.Storage{T}
 
 A regulated hydropower reservoir, modelled as a `Storage` node. A regulated hydro storage node
