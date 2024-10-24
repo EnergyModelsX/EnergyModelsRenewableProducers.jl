@@ -449,6 +449,7 @@ end
 """ `HydroUnit` node for either pumping or production."""
 abstract type HydroUnit <: EMB.NetworkNode end
 
+#=
 """
     HydroPump <: EMB.NetworkNode
 
@@ -482,11 +483,11 @@ end
 function HydroPump(
     id::Any,
     cap::TimeProfile,
-    pq_curve::Union{Dict{<:Resource, <:Vector{<:Real}}, Nothing},# Production and discharge ratio [MW / m3/s]
+    pq_curve::Union{Dict{<:Resource, <:Vector{<:Real}}, Nothing}, # Production and discharge ratio [MW / m3/s]
     opex_var::TimeProfile,
     opex_fixed::TimeProfile,
     electricity_resource::Dict{<:Resource,<:Real},
-    water_resource::Dict{<:Resource,<:Real}
+    water_resource::Dict{<:Resource,<:Real},
 )
 
     input = Dict(water_resource => 1.0, electricity_resource => 1.0)
@@ -494,6 +495,7 @@ function HydroPump(
 
     return HydroPump(id, cap, pq_curve, opex_var, opex_fixed, electricity_resource, water_resource, input, output, Data[])
 end
+=#
 
 abstract type AbstractPqCurve <: EMB.Data end
 
