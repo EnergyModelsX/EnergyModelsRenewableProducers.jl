@@ -10,4 +10,6 @@ Pages = ["methods-EMRP.md"]
 
 ```@docs
 EnergyModelsRenewableProducers.build_hydro_reservoir_vol_constraints
+EnergyModelsRenewableProducers.water_resource
+EnergyModelsRenewableProducers.electricity_resource
 ```

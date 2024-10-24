@@ -13,4 +13,5 @@ EnergyModelsRenewableProducers.AbstractMinMaxConstraint
 EnergyModelsRenewableProducers.MinConstraint
 EnergyModelsRenewableProducers.MaxConstraint
 EnergyModelsRenewableProducers.ScheduleConstraint
+EnergyModelsRenewableProducers.HydroUnit
 ```

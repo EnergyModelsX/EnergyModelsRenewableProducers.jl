@@ -36,7 +36,6 @@ EnergyModelsBase.level
 ## `HydroGenerator`
 
 ```@docs
-EnergyModelsRenewableProducers.efficiency
 EnergyModelsRenewableProducers.pq_curve
 ```
 
