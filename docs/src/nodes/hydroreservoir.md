@@ -48,8 +48,23 @@ The variables that are used in the additional constraints are:
 - ``\texttt{rsv\_vol\_penalty\_down}[n, t]``: Variable for penalizing violation of the volume constraint in direction down in `HydroReservoir` node ``n`` in operational period ``t`` with a typical unit of ``Mm^3``.
 
 ### [Constraints](@id nodes-hydro_reservoir-math-con)
+The following sections omit the direct inclusion of the vector of `HydroReservoir` nodes.
+Instead, it is implicitly assumed that the constraints are valid ``\forall n ∈ N`` for all [`HydroGate`](@ref) types if not stated differently.
+In addition, all constraints are valid ``\forall t \in T`` (that is in all operational periods) or ``\forall t_{inv} \in T^{Inv}`` (that is in all strategic periods). The ``\texttt{rsv\_vol\_penalty\_up}[n, t]`` and ``\texttt{rsv\_vol\_penalty\_down}[n, t]`` variables are only added if required in a constraint, where ``c_{up}`` denotes constraint requiring up penalty, and ``c_{down}`` denotes constraint requiring down penalty.
 
 #### [Standard constraints](@id nodes-hydro_reservoir-math-con-stand)
+`HydroReservoir` nodes utilize in general the standard constraints described in *[Constraint functions for `Storage` nodes](@extref EnergyModelsBase nodes-storage-math-con)*. In addition, it includes the penalty variables when required for constraints when dispatching `constraints_opex_var`:
+```math
+\begin{aligned}
+  \texttt{opex\_var}&[n, t_{inv}] = \\ \sum_{t \in t_{inv}} \Big( &
+    opex\_var(level(n), t) \times \texttt{stor\_level}[n, t] + \\ &
+    opex\_var(charge(n), t) \times \texttt{stor\_charge\_use}[n, t] + \\ &
+    opex\_var(discharge(n), t) \times \texttt{stor\_discharge\_use}[n, t] \\&
+    penalty(c_{up}, t) \times \texttt{rsv\_vol\_penalty\_up}[n, t]+ \\&
+    penalty(c_{down}, t) \times \texttt{rsv\_vol\_penalty\_down}[n, t] \Big) \times scale\_op\_sp(t_{inv}, t) 
+\end{aligned}
+```
+
 
 #### [Additional constraints](@id nodes-hydro_reservoir-math-con-add)
 The `HydroReservoir` nodes utilize the majority of the concepts from `EnergyModelsBase` but require adjustments for both constraining the variables ``\texttt{stor\_level\_Δ\_op}`` and ``\texttt{stor\_level}``.
