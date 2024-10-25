@@ -543,8 +543,14 @@ struct PqPoints <: AbstractPqCurve
     #              concave function
     #              max discharge = max capacity
     name::Symbol
-    powerLevels::Vector{Real}  # MW / m3/s
-    dischargeLevels::Vector{Real} #share of total discharege capacity (0,1)
+    power_levels::Vector{Real}  # MW / m3/s
+    discharge_levels::Vector{Real} #share of total discharege capacity (0,1)
+    function PqPoints(name, power_levels, discharge_levels)
+        if length(power_levels) != length(discharge_levels)
+            throw("Power levels and discharge levels arrays have different length.")
+        end
+        return new(name, power_levels, discharge_levels)
+    end
 end
 
 #=
@@ -552,10 +558,10 @@ struct PqEfficiencyCurve <: AbstractPqCurve
     # requiremets: non-decreasing efficiency
     #              0 as first discharge level
     #              max discharge = max capacity
-    #              length(efficiency) == length(dischargeLevels)-1 
+    #              length(efficiency) == length(discharge_levels)-1
     name::Symbol
     efficiency::Vector{Real}  # MW / m3/s
-    dischargeLevels::Vector{Real} #share of total discharege capacity (0,1)
+    discharge_levels::Vector{Real} #share of total discharege capacity (0,1)
     refHead::Real
 end
 =#
@@ -632,8 +638,8 @@ Returns the resources in the PQ-curve of a node `n` of type `HydroGenerator`
 pq_curve(n::HydroGenerator) = n.pq_curve
 
 has_discharge_segments(pq_curve::AbstractPqCurve) = (typeof(pq_curve) <: Union{PqPoints}) #Union{PqEfficiencyCurve, PqPoints})
-number_of_discharge_points(pq_curve::PqPoints) = length(pq_curve.dischargeLevels)
-#number_of_discharge_points(pq_curve::PqEfficiencyCurve) = length(pq_curve.dischargeLevels)
+number_of_discharge_points(pq_curve::PqPoints) = length(pq_curve.discharge_levels)
+#number_of_discharge_points(pq_curve::PqEfficiencyCurve) = length(pq_curve.discharge_levels)
 
 function get_nodes_with_discharge_segments(𝒩::Vector{HydroGenerator})
     return [n for n in 𝒩 if has_discharge_segments(pq_curve(n))]
@@ -642,6 +648,3 @@ end
 
 
 # TODO make pump module
-
-
-

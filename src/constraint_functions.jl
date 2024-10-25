@@ -366,27 +366,27 @@ end
 function build_pq_constaints(m, n::HydroGenerator, c::PqPoints, 𝒯::TimeStructure)
 
     η = Real[]
-    for i in range(2, length(c.dischargeLevels))
-        push!(η, (c.powerLevels[i] - c.powerLevels[i-1]) / (c.dischargeLevels[i] - c.dischargeLevels[i-1]))
+    for i in range(2, length(c.discharge_levels))
+        push!(η, (c.power_levels[i] - c.power_levels[i-1]) / (c.discharge_levels[i] - c.discharge_levels[i-1]))
     end
 
     @constraint(m, [t ∈ 𝒯],
     m[:flow_out][n, t, water_resource(n)] == m[:cap_use][n, t] * outputs(n, water_resource(n))
     )
-    
+
     # produksjon = discharge_segment*virkningsgrad_segment
     Q = range(1,number_of_discharge_points(c)-1)
 
     @constraint(m, [t ∈ 𝒯, q ∈  Q],
-    m[:discharge_segment][n, t, q] <= c.dischargeLevels[q+1].- c.dischargeLevels[q] #m3/timeunit (or Mm3/timeunit)
+    m[:discharge_segment][n, t, q] <= c.discharge_levels[q+1].- c.discharge_levels[q] #m3/timeunit (or Mm3/timeunit)
     )
 
-    # max(dischargeLevels) == installed_capacity?
+    # max(discharge_levels) == installed_capacity?
     @constraint(m, [t ∈ 𝒯],
     m[:cap_use][n, t] == sum(m[:discharge_segment][n, t, q] for q ∈ Q)
     )
 
-    # dischargeLevels må være samme enhet som 
+    # discharge_levels må være samme enhet som
     @constraint(m, [t ∈ 𝒯],
     m[:flow_out][n, t, electricity_resource(n) ] == sum(m[:discharge_segment][n, t, q]* η[q] for q ∈ Q)
     )
@@ -399,13 +399,13 @@ function build_pq_constaints(m, n::HydroGenerator, c::PqEfficiencyCurve, 𝒯::T
     @constraint(m, [t ∈ 𝒯],
     m[:flow_out][n, t, water_resource(n)] == m[:cap_use][n, t] * outputs(n, water_resource(n))
     )
-    
+
     # produksjon = discharge_segment*virkningsgrad_segment
     Q = range(1,number_of_discharge_points(c)-1)
 
 
     @constraint(m, [t ∈ 𝒯, q ∈  Q],
-    m[:discharge_segment][n, t, q] <= (c.dischargeLevels[q+1] .- c.dischargeLevels[q])*20 #m[:cap_inst[n,t]]
+    m[:discharge_segment][n, t, q] <= (c.discharge_levels[q+1] .- c.discharge_levels[q])*20 #m[:cap_inst[n,t]]
     )
 
     @constraint(m, [t ∈ 𝒯],
@@ -422,10 +422,10 @@ function build_pq_constaints(m, n::HydroGenerator, c::PqEfficiencyCurve, 𝒯::T
     end
 
     # Mm3/timestep --> m3/s  -->10^6/(3600*duration(t))
-    
+
     @constraint(m, [t ∈ 𝒯],
     m[:flow_out][n, t, electricity_resource(n) ] == sum(m[:discharge_segment][n, t, q]*η[q]*10^6/(3600*duration(t))*(1/10^3) for q ∈ Q) #MW
-    ) 
+    )
 
 end
 =#
@@ -450,7 +450,7 @@ function EMB.constraints_flow_out(m, n::HydroGenerator, 𝒯::TimeStructure, mod
     #𝒫ⁱⁿ  = EMB.res_not(inputs(n), co2_instance(modeltype))
     #new_resource = 𝒫ᵒᵘᵗ[𝒫ᵒᵘᵗ .∉ [𝒫ⁱⁿ]] # Power
     #original_resource = 𝒫ᵒᵘᵗ[𝒫ᵒᵘᵗ .∈ [𝒫ⁱⁿ]] # Water
-    
+
     # Since the type of resource is defined by the user it is not convenient to set conditions
     # based on the type (naming conventions or spelling can vary, e.g. water/hydro or power/electricity).
 
