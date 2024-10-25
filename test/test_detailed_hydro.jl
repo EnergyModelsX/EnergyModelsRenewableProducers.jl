@@ -256,11 +256,11 @@ function build_case_generator()
     Water = case[:products][3]
     hydro_generator = HydroGenerator(
         "hydro_generator", # Node ID
-        10,                # Installed discharge capacity
+        FixedProfile(30),                # Installed discharge capacity
         PqPoints(
-            "hydro_generator_curve",
-            [10, 20],
-            [10, 22] * 3.6e-3 # Convert from m3/s to Mm3/h
+            Symbol(),
+            [0, 10, 20],
+            [0, 10, 22]
         ),          # PQ-curve
         FixedProfile(0),   # opex_var
         FixedProfile(0),   # opex_fixed
@@ -268,16 +268,71 @@ function build_case_generator()
         Water
     )
 
-    hydro_reservoir = nodes[1]
-    hydro_ocean = nodes[3]
+    electricty_market = RefSink(
+        "market",
+        FixedProfile(0),
+        Dict(
+            :surplus => OperationalProfile(-[10, 11, 12, 13]),
+            :deficit => FixedProfile(1000)
+        ),
+        Dict(Power => 1.0),
+        Data[]
+    )
+
+    hydro_reservoir = case[:nodes][1]
+    hydro_ocean = case[:nodes][3]
 
     push!(case[:nodes], hydro_generator)
     push!(case[:links], Direct("hydro_res-hydro_gen", hydro_reservoir, hydro_generator))
     push!(case[:links], Direct("hydro_gen-hydro_ocean", hydro_generator, hydro_ocean))
 
+    push!(case[:nodes], electricty_market)
+    push!(case[:links], Direct("hydro_gen-market", hydro_generator, electricty_market))
+
     return case, model
 end
 
-# case, model = build_case_gate()
-# optimizer = optimizer_with_attributes(HiGHS.Optimizer, MOI.Silent() => true)
-# m = EMB.run_model(case, model, optimizer)
+@testset "Test plant production income and PQ relation" begin
+    case, model = build_case_generator()
+    optimizer = optimizer_with_attributes(HiGHS.Optimizer, MOI.Silent() => true)
+    m = EMB.run_model(case, model, optimizer)
+
+    hydro_reservoir = case[:nodes][1]
+    hydro_gate = case[:nodes][2]
+    hydro_ocean = case[:nodes][3]
+    hydro_generator = case[:nodes][4]
+
+    Power = case[:products][2]
+    Water = case[:products][3]
+
+    # Check that production and discharge follows PQ-curve
+    # Check the total costs sums up to the objective
+    # 1. Costs for violating minimum discharge
+    # 2. Production costs (negative since they are income)
+    total_cost = map(strategic_periods(case[:T])) do sp
+        plant_discharge = value.([m[:flow_out][hydro_generator, t, Water] for t in sp])
+        gate_discharge = value.([m[:flow_out][hydro_gate, t, Water] for t in sp])
+        total_discharge = plant_discharge + gate_discharge
+        min_discharge = [hydro_ocean.cap[t] for t in sp]
+        min_discharge_penalty = [hydro_ocean.penalty[:deficit][t] for t in sp]
+        min_discharge_cost = max.(min_discharge - total_discharge, 0) .* min_discharge_penalty
+
+        production = value.([m[:flow_out][hydro_generator, t, Power] for t in sp])
+        discharge = value.([m[:flow_out][hydro_generator, t, Water] for t in sp])
+        prod_to_disch = linear_interpolation(
+            hydro_generator.pq_curve.power_levels,
+            hydro_generator.pq_curve.discharge_levels
+        )
+
+        # Check that points are on curve
+        discharge_estimated = prod_to_disch(production)
+        @test discharge ≈ discharge_estimated atol=1e-12
+
+        price = [case[:nodes][5].penalty[:surplus][t] for t in sp]
+        production_cost = production .* price
+
+        total_cost = (min_discharge_cost + production_cost) .* [duration(t) for t in sp]
+        return sum(total_cost)
+    end
+    @test objective_value(m) + sum(total_cost) ≈ 0 atol=1e-12
+end
