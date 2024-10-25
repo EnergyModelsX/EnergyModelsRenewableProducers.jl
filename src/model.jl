@@ -1,10 +1,11 @@
 
 """
-    EMB.variables_node(m, 𝒩ⁿᵈʳ::Vector{NonDisRES}, 𝒯, modeltype::EnergyModel)
+    EMB.variables_node(m, 𝒩ⁿᵈʳ::Vector{<:AbstractNonDisRES}, 𝒯, modeltype::EnergyModel)
 
-Create the optimization variable `:curtailment` for every NonDisRES node. This method is called
-from `EnergyModelsBase.jl`."""
-function EMB.variables_node(m, 𝒩ⁿᵈʳ::Vector{NonDisRES}, 𝒯, modeltype::EnergyModel)
+Create the optimization variable `:curtailment` for every [`AbstractNonDisRES`](@ref) node.
+This method is called from `EnergyModelsBase.jl`.
+"""
+function EMB.variables_node(m, 𝒩ⁿᵈʳ::Vector{<:AbstractNonDisRES}, 𝒯, modeltype::EnergyModel)
     @variable(m, curtailment[𝒩ⁿᵈʳ, 𝒯] ≥ 0)
 end
 
@@ -62,7 +63,7 @@ end
 """
     EMB.variables_node(m, 𝒩::Vector{HydroGate}, 𝒯, modeltype::EnergyModel)
 
-Create the optimization variable `:penalty_up` or `:penalty_down` for every HydroGate node
+Create the optimization variable `:gate_disch_penalty_up` or `:gate_disch_penalty_down` for every HydroGate node
 that has constraints with penalty variables. This variable enables `HydroGate` nodes to take
 penalty if volume or discharge constraint is violated. Wihtout this penalty variable, too
 strict volume restrictions may lead to an infeasible model.
@@ -70,11 +71,11 @@ strict volume restrictions may lead to an infeasible model.
 function EMB.variables_node(m, 𝒩::Vector{HydroGate}, 𝒯,
     modeltype::EnergyModel)
 
-    @variable(m, penalty_up[
+    @variable(m, gate_disch_penalty_up[
         n ∈ 𝒩,
         t ∈  get_penalty_up_time(filter(is_constraint_data, node_data(n)), 𝒯)
     ] ≥ 0)
-    @variable(m, penalty_down[
+    @variable(m, gate_disch_penalty_down[
         n ∈ 𝒩,
         t ∈  get_penalty_down_time(filter(is_constraint_data, node_data(n)), 𝒯)
     ] ≥ 0)
@@ -84,10 +85,10 @@ end
     EMB.variables_node(m, 𝒩::Vector{HydroReservoir{T}}, 𝒯,
     modeltype::EnergyModel) where {T <: EMB.StorageBehavior}
 
-Create the optimization variable `:penalty_up` or `:penalty_down` for every `HydroReservoir`
-node that has constraints with penalty variables. This variable enables `HydroReservoir`
-nodes to take penalty if volume or discharge constraint is violated. Wihtout this penalty
-variable, too strict volume restrictions may lead to an infeasible model.
+Create the optimization variable `:rsv_vol_penalty_up` or `:rsv_vol_penalty_down` for every
+`HydroReservoir` node that has constraints with penalty variables. This variable enables
+`HydroReservoir` nodes to take penalty if volume or discharge constraint is violated.
+Wihtout this penalty variable, too strict volume restrictions may lead to an infeasible model.
 """
 function EMB.variables_node(m, 𝒩::Vector{HydroReservoir{T}}, 𝒯,
     modeltype::EnergyModel) where {T <: EMB.StorageBehavior}
