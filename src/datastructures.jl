@@ -286,13 +286,22 @@ as `TimeProfile` or in operational period `t`.
 opex_var_pump(n::PumpedHydroStor) = n.opex_var_pump
 opex_var_pump(n::PumpedHydroStor, t) = n.opex_var_pump[t]
 
-""" Declaration of general constraint type as subtype of `EMB.Data`."""
-abstract type AbstractMinMaxConstraint <: EMB.Data end
+""" Abstract constraint type. """
+abstract type AbstractConstraintType end
+
+""" Abstract type to denote that a `Constraint` is a minimum constraint."""
+abstract type MinConstraintType <: AbstractConstraintType end
+
+""" Abstract type to denote that a `Constraint` is a maximum constraint."""
+abstract type MaxConstraintType <: AbstractConstraintType end
+
+""" Abstract type to denote that a `Constraint` is a schedule constraint."""
+abstract type ScheduleConstraintType <: AbstractConstraintType end
 
 """
-    MinConstraint <: AbstractMinMaxConstraint
+    Constraint <: AbstractConstraint where {T<:AbstractConstraintType}
 
-Type for defining minimum constraints.
+Type for defining constraints `T` denots constraint type.
 
 ## Fields
 - **`name::Symbol`** is the name of the constraint and could be used if a node can have different constraint types.
@@ -300,65 +309,54 @@ Type for defining minimum constraints.
 - **`flag::TimeProfile`** is a boolean value indicating if the constraint is active.
 - **`penalty::TimeProfile`** is the penalty for violating the constraint. If penalty is set to `Inf` it will be built as a hard constraint.
 """
-struct MinConstraint <: AbstractMinMaxConstraint
+struct Constraint{T} <: Data where {T<:AbstractConstraintType}
     name::Symbol
     value::TimeProfile{<:Number}
     flag::TimeProfile{Bool}
     penalty::TimeProfile{<:Number}
 end
 
-"""
-    MaxConstraint <: AbstractMinMaxConstraint
+""" Returns true if `Data` input is of type `Constraint`."""
+is_constraint_data(data::Data) = false
+is_constraint_data(data::Constraint) = true
 
-Type for defining maximum constraints.
+""" Returns true if given constraint is active at time step `t`."""
+is_active(s::Constraint, t) = s.flag[t]
 
-## Fields
-- **`name::Symbol`** is the name of the constraint and could be used if a node can have different constraint types.
-- **`value::TimeProfile`** is the constraint value, the limit that should not be violated.
-- **`flag::TimeProfile`** is a boolean value indicating if the constraint is active.
-- **`penalty::TimeProfile`** is the penalty for violating the constraint. If penalty is set to `Inf` it will be built as a hard constraint.
-"""
-struct MaxConstraint <: AbstractMinMaxConstraint
-    name::Symbol
-    value::TimeProfile
-    flag::TimeProfile{Bool}
-    penalty::TimeProfile{<:Number}
-end
+""" Returns the value of a constraint at time step `t`."""
+value(s::Constraint, t) = s.value[t]
 
-"""
-    ScheduleConstraint <: AbstractMinMaxConstraint
+""" Returns true if a constraint has penalty at time step `t`."""
+has_penalty(s::Constraint, t) = !isinf(s.penalty[t])
 
-Type for defining schedule constraints.
+""" Returns true if a constraint has a constraint that might require penalty up variable."""
+has_penalty_up(data::Constraint) = false
+has_penalty_up(data::Constraint{MinConstraintType}) = true
+has_penalty_up(data::Constraint{ScheduleConstraintType}) = true
 
-## Fields
-- **`name::Symbol`** is the name of the constraint and could be used if a node can have different constraint types.
-- **`value::TimeProfile`** is the constraint value, the limit that should not be violated.
-- **`flag::TimeProfile`** is a boolean value indicating if the constraint is active.
-- **`penalty::TimeProfile`** is the penalty for violating the constraint. If penalty is set to `Inf` it will be built as a hard constraint.
-"""
-struct ScheduleConstraint <: AbstractMinMaxConstraint
-    name::Symbol
-    value::TimeProfile
-    flag::TimeProfile{Bool}
-    penalty::TimeProfile{<:Number}
-end
+""" Returns true if a constraint requires a penalty up variable at time step `t`."""
+has_penalty_up(data::Constraint, t) = has_penalty_up(data) & has_penalty(data, t)
 
-is_constraint_data(data::Data) = (typeof(data) <: AbstractMinMaxConstraint)
-is_active(s::AbstractMinMaxConstraint, t) = s.flag[t]
-value(s::AbstractMinMaxConstraint, t) = s.value[t]
-has_penalty(s::AbstractMinMaxConstraint, t) = !isinf(s.penalty[t])
-has_penalty_up(data::AbstractMinMaxConstraint) = (typeof(data) <: Union{MinConstraint, ScheduleConstraint})
-has_penalty_up(data::AbstractMinMaxConstraint, t) = has_penalty_up(data) & has_penalty(data, t)
-has_penalty_down(data::AbstractMinMaxConstraint) = (typeof(data) <: Union{MaxConstraint, ScheduleConstraint})
-has_penalty_down(data::AbstractMinMaxConstraint, t) = has_penalty_down(data) & has_penalty(data, t)
+""" Returns true if a constraint has a constraint that might require penalty down variable."""
+has_penalty_down(data::Constraint) = false
+has_penalty_down(data::Constraint{MaxConstraintType}) = true
+has_penalty_down(data::Constraint{ScheduleConstraintType}) = true
+
+""" Returns true if a constraint requires a penalty down variable at time step `t`."""
+has_penalty_down(data::Constraint, t) = has_penalty_down(data) & has_penalty(data, t)
+
+""" Returns subset of time steps `t ∈ 𝒯` where penalty up variable should be added."""
 function get_penalty_up_time(data::Vector{<:Data}, 𝒯)
     return [t for t in 𝒯 if any(has_penalty_up(c, t) for c in data)]
 end
+
+""" Returns subset of time steps `t ∈ 𝒯` where penalty down variable should be added."""
 function get_penalty_down_time(data::Vector{<:Data}, 𝒯)
     return [t for t in 𝒯 if any(has_penalty_down(c, t) for c in data)]
 end
 
-penalty(s::AbstractMinMaxConstraint, t) = s.penalty[t]
+""" Returns penalty value of constraint."""
+penalty(s::Constraint, t) = s.penalty[t]
 
 """
     HydroReservoir{T} <: EMB.Storage{T}
@@ -366,7 +364,7 @@ penalty(s::AbstractMinMaxConstraint, t) = s.penalty[t]
 A regulated hydropower reservoir, modelled as a `Storage` node. A regulated hydro storage node
 requires a storage volume for the `vol` and volume inflow `vol_inflow`. The `stor_res`
 represents water. Minimum, maximum and schedule volume constraints can be added using `Data`
-input of the composite types `MinConstraint`, `MaxConstraint` and `ScheduleConstraint`.
+input of the composite type `Constraint`.
 These are given relative sizes between 0 and 1 relative to the total storage volume `vol`.
 
 ## Fields
@@ -375,8 +373,6 @@ These are given relative sizes between 0 and 1 relative to the total storage vol
   (typically million cubic meters).
 - **`vol_inflow::TimeProfile`** is the inflow to the reservoir (typically million cubic per time unit).
 - **`stor_res::ResourceCarrier`** is the stored `Resource`.\n
-- **`input::Dict{Resource, Real}`** the stored and used resources.\n
-- **`output::Dict{Resource, Real}`** can only contain one entry, the stored resource.\n
 - **`data::Vector{Data}`** additional data (e.g. for investments). The field \
 `data` is conditional through usage of a constructor.
 """
@@ -388,22 +384,35 @@ struct HydroReservoir{T} <: EMB.Storage{T}
     input::Dict{<:Resource,<:Real} # Water
     output::Dict{<:Resource,<:Real} # Water
     data::Vector{Data}
+    function HydroReservoir{T}(
+        id::Any,
+        vol::EMB.UnionCapacity,
+        vol_inflow::TimeProfile,
+        stor_res::ResourceCarrier,
+        data::Vector{Data}
+    ) where {T<:EMB.StorageBehavior}
+        new{T}(
+            id,
+            vol,
+            vol_inflow,
+            stor_res,
+            Dict(stor_res => 1.0),
+            Dict(stor_res => 1.0),
+            data
+        )
+    end
 end
 function HydroReservoir{T}(
     id::Any,
     vol::EMB.UnionCapacity,
     vol_inflow::TimeProfile,
-    stor_res::ResourceCarrier,
-    input::Dict{<:Resource,<:Real},
-    output::Dict{<:Resource,<:Real}
+    stor_res::ResourceCarrier
     ) where {T<:EMB.StorageBehavior}
     return HydroReservoir{T}(
         id,
         vol,
         vol_inflow,
         stor_res,
-        input,
-        output,
         Data[],
     )
 end
@@ -428,8 +437,7 @@ minimum/maximum requirements for water flow.
 - **`cap::TimeProfile`** is the installed discharge capacity.
 - **`opex_var::TimeProfile`** is the variational operational costs per energy unit produced.
 - **`opex_fixed::TimeProfile`** is the fixed operational costs.
-- **`input::Dict{<:Resource, <:Real}`** are the input `Resource`s with conversion value `Real`.
-- **`output::Dict{<:Resource, <:Real}`** are the generated `Resource`s with conversion value `Real`.
+- **`resource<:Resource`** is the water resource type since gates are only used for dispatching water.
 - **`data::Vector{Data}`** is the additional data (e.g. for investments). The field
   `data` is conditional through usage of a constructor.
 """
@@ -441,16 +449,33 @@ struct HydroGate <: EMB.NetworkNode
     input::Dict{<:Resource,<:Real}
     output::Dict{<:Resource,<:Real}
     data::Vector{Data}
+    function HydroGate(
+        id::Any,
+        cap::TimeProfile,
+        opex_var::TimeProfile,
+        opex_fixed::TimeProfile,
+        resource::ResourceCarrier,
+        data::Vector{Data}
+    )
+        new(
+            id,
+            cap,
+            opex_var,
+            opex_fixed,
+            Dict(resource => 1.0),
+            Dict(resource => 1.0),
+            data
+        )
+    end
 end
 function HydroGate(
     id::Any,
     cap::TimeProfile,
     opex_var::TimeProfile,
     opex_fixed::TimeProfile,
-    input::Dict{<:Resource,<:Real},
-    output::Dict{<:Resource,<:Real},
+    resource::ResourceCarrier,
 )
-    return HydroGate(id, cap, opex_var, opex_fixed, input, output, Data[])
+    return HydroGate(id, cap, opex_var, opex_fixed, resource, Data[])
 end
 
 """ `HydroUnit` node for either pumping or production."""

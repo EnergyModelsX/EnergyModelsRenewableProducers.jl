@@ -9,9 +9,10 @@ Pages = ["types-EMRP.md"]
 ## Types
 
 ```@docs
-EnergyModelsRenewableProducers.AbstractMinMaxConstraint
-EnergyModelsRenewableProducers.MinConstraint
-EnergyModelsRenewableProducers.MaxConstraint
-EnergyModelsRenewableProducers.ScheduleConstraint
+EnergyModelsRenewableProducers.Constraint
+EnergyModelsRenewableProducers.AbstractConstraintType
+EnergyModelsRenewableProducers.MinConstraintType
+EnergyModelsRenewableProducers.MaxConstraintType
+EnergyModelsRenewableProducers.ScheduleConstraintType
 EnergyModelsRenewableProducers.HydroUnit
 ```

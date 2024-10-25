@@ -10,6 +10,16 @@ Pages = ["methods-EMRP.md"]
 
 ```@docs
 EnergyModelsRenewableProducers.build_hydro_reservoir_vol_constraints
+EnergyModelsRenewableProducers.build_hydro_gate_constraints
+EnergyModelsRenewableProducers.is_active
+EnergyModelsRenewableProducers.value
+EnergyModelsRenewableProducers.has_penalty
+EnergyModelsRenewableProducers.is_constraint_data
+EnergyModelsRenewableProducers.get_penalty_up_time
+EnergyModelsRenewableProducers.get_penalty_down_time
+EnergyModelsRenewableProducers.has_penalty_up
+EnergyModelsRenewableProducers.penalty
+EnergyModelsRenewableProducers.has_penalty_down
 EnergyModelsRenewableProducers.water_resource
 EnergyModelsRenewableProducers.electricity_resource
 ```
