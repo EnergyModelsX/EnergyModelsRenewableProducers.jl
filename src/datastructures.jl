@@ -529,7 +529,7 @@ function HydroPump(
 end
 =#
 
-abstract type AbstractPqCurve <: EMB.Data end
+abstract type AbstractPqCurve end
 
 # do we need this or can we use existing functionality in outputs?
 struct EnergyEquivalent <: AbstractPqCurve
