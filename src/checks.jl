@@ -153,22 +153,10 @@ end
 This method checks that the *[`HydroReservoir`](@ref)* node is valid.
 
 ## Checks
- - The `TimeProfile` of the field `capacity` in the type in the field `vol` is required
-  to be non-negative if the chosen composite type has the field `capacity`.
- - The value of the field `vol_init` is required to be in the range
-   ``[0, vol.capacity(t)]`` at the first time step of strategic periods.
- - The value of the field `vol_init` is required to be in the range
-   ``[vol_min(t), vol_max(t)]`` at the first time step of strategic periods.
- - The value of the fields `vol_min` and `vol_max` are required to be in the range
-    ``[0, vol.capacity(t)]`` for all time steps ``t ∈ \\mathcal{T}``.
-- The value of the field `vol_min` is required to be less than or equal to the field `vol_max`
-    for all time steps ``t ∈ \\mathcal{T}``.
- - The field `output` can only include a single `Resource`.
- - The value of the field `output` is required to be smaller or equal to 1.
- - The value of the field `output` is required to be non-negative.
- - The field `input` can only include a single `Resource`.
- - The value of the field `input` is required to be smaller or equal to 1.
- - The value of the field `input` is required to be non-negative.
+ - The `TimeProfile` of the `capacity` of the `HydroReservoir` `level` is required
+  to be non-negative.
+ - The value of constraints are required to be in the range ``[0, 1]`` for all time steps
+ ``t ∈ \\mathcal{T}``.
 """
 function EMB.check_node(n::HydroReservoir, 𝒯, modeltype::EMB.EnergyModel, check_timeprofiles::Bool)
 
@@ -181,58 +169,14 @@ function EMB.check_node(n::HydroReservoir, 𝒯, modeltype::EMB.EnergyModel, che
             "The volume capacity has to be non-negative."
         )
     end
-    # @assert_or_log(
-    #     0 ≤ vol_init(n, first(𝒯ᴵⁿᵛ)) ≤ capacity(par_level, first(𝒯ᴵⁿᵛ)),
-    #     "The initial volume must be between the minimum and the capacity volume."
-    # )
-    # if isa(n.vol_constraint,
-    #     Union{MaxConstraint, MinMaxConstraint, MaxPenaltyConstraint, MinMaxPenaltyConstraint})
-    #     @assert_or_log(
-    #         vol_init(n, first(𝒯)) ≤ n.vol_constraint.max[first(𝒯)],
-    #         "The initial volume must be less than or equal to the maximum volume."
-    #     )
-    #     @assert_or_log(
-    #         sum(n.vol_constraint.max[t] ≤ capacity(par_level, t) for t ∈ 𝒯) == length(𝒯),
-    #         "The maximum volume must be less than or equal to the volume capacity."
-    #     )
-    # end
-    # if isa(n.vol_constraint,
-    #     Union{MinConstraint, MinMaxConstraint, MinPenaltyConstraint, MinMaxPenaltyConstraint})
-    #     @assert_or_log(
-    #         vol_init(n, first(𝒯)) ≥ n.vol_constraint.min[first(𝒯)],
-    #         "The initial volume must be greater than or equal to the minimum volume."
-    #     )
-    #     @assert_or_log(
-    #         sum(n.vol_constraint.min[t] ≤ capacity(par_level, t) for t ∈ 𝒯) == length(𝒯),
-    #         "The minimum volume must be less than or equal to the volume capacity."
-    #     )
-    # end
-    # if isa(n.vol_constraint, Union{MinMaxConstraint, MinMaxPenaltyConstraint})
-    #     @assert_or_log(
-    #         sum(n.vol_constraint.min[t] ≤ n.vol_constraint.max[t] for t ∈ 𝒯) == length(𝒯),
-    #         "The minimum volume must be less than or equal to the maximum volume."
-    #     )
-    # end
-
-    # EMB.check_fixed_opex(n, 𝒯ᴵⁿᵛ, check_timeprofiles)
-    @assert_or_log(
-        length(outputs(n)) == 1,
-        "Only one resource can be stored, so only this one can flow out."
-    )
-    @assert_or_log(
-        sum(0 ≤ outputs(n, p) ≤ 1 for p ∈ outputs(n)) == length(outputs(n)),
-        "The values for the Dictionary `output` must be in the range [0, 1]."
-    )
-
-    @assert_or_log(
-        length(inputs(n)) == 1,
-        "Only one resource can be stored, so only one resource can flow in."
-    )
-
-    @assert_or_log(
-        sum(0 ≤ inputs(n, p) ≤ 1 for p ∈ inputs(n)) == length(inputs(n)),
-        "The values for the Dictionary `inputs` must be in the range [0, 1]."
-    )
+    for d in n.data
+        if isa(d, Constraint{<: AbstractConstraintType})
+            @assert_or_log(
+                sum(0 ≤ d.value[t] ≤ 1 for t ∈ 𝒯) == length(𝒯),
+                "The relative constraint value must be between 0 and 1."
+            )
+        end
+    end
 end
 
 """
