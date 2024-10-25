@@ -1,4 +1,4 @@
-function build_case()
+function build_case_gate()
     # Define the different resources and their emission intensity in tCO2/MWh
     # CO2 has to be defined, even if not used, as it is required for the `EnergyModel` type
     CO2 = ResourceEmit("CO2", 1.0)
@@ -71,7 +71,7 @@ function build_case()
 end
 
 @testset "Test hydro reservoir level_Δ == inflow - discharge" begin
-    case, model = build_case()
+    case, model = build_case_gate()
     optimizer = optimizer_with_attributes(HiGHS.Optimizer, MOI.Silent() => true)
     m = EMB.run_model(case, model, optimizer)
 
@@ -88,7 +88,7 @@ end
 end
 
 @testset "Test hydro reservoir hard Constraint of type MinConstraintType and MaxConstraintType" begin
-    case, model = build_case()
+    case, model = build_case_gate()
     optimizer = optimizer_with_attributes(HiGHS.Optimizer, MOI.Silent() => true)
 
     𝒯 = case[:T]
@@ -135,7 +135,7 @@ end
 end
 
 @testset "Test hydro reservoir Constraint of type MaxConstraintType with penalty cost" begin
-    case, model = build_case()
+    case, model = build_case_gate()
     optimizer = optimizer_with_attributes(HiGHS.Optimizer, MOI.Silent() => true)
 
     𝒯 = case[:T]
@@ -177,7 +177,7 @@ end
 end
 
 @testset "Test hydro gate schedule" begin
-    case, model = build_case()
+    case, model = build_case_gate()
     optimizer = optimizer_with_attributes(HiGHS.Optimizer, MOI.Silent() => true)
 
     𝒯 = case[:T]
@@ -207,7 +207,7 @@ end
 end
 
 @testset "Test hydro gate schedule penalty value" begin
-    case, model = build_case()
+    case, model = build_case_gate()
     optimizer = optimizer_with_attributes(HiGHS.Optimizer, MOI.Silent() => true)
 
     𝒯 = case[:T]
@@ -249,3 +249,35 @@ end
 
     @test objective_value(m) + sum(gate_penalties) + sum(demand_penalties) ≈ 0
 end
+
+function build_case_generator()
+    case, model = build_case_gate()
+    Power = case[:products][2]
+    Water = case[:products][3]
+    hydro_generator = HydroGenerator(
+        "hydro_generator", # Node ID
+        10,                # Installed discharge capacity
+        PqPoints(
+            "hydro_generator_curve",
+            [10, 20],
+            [10, 22] * 3.6e-3 # Convert from m3/s to Mm3/h
+        ),          # PQ-curve
+        FixedProfile(0),   # opex_var
+        FixedProfile(0),   # opex_fixed
+        Power,
+        Water
+    )
+
+    hydro_reservoir = nodes[1]
+    hydro_ocean = nodes[3]
+
+    push!(case[:nodes], hydro_generator)
+    push!(case[:links], Direct("hydro_res-hydro_gen", hydro_reservoir, hydro_generator))
+    push!(case[:links], Direct("hydro_gen-hydro_ocean", hydro_generator, hydro_ocean))
+
+    return case, model
+end
+
+# case, model = build_case_gate()
+# optimizer = optimizer_with_attributes(HiGHS.Optimizer, MOI.Silent() => true)
+# m = EMB.run_model(case, model, optimizer)
