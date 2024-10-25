@@ -292,9 +292,10 @@ function build_hydro_gate_constraints(m, n::HydroGate, c::Constraint{MinConstrai
     for t ∈ 𝒯
         if is_active(c, t)
             if has_penalty(c, t)
-                @constraint(m, m[:flow_out][n, t, p] + m[:gate_disch_penalty_up][n, t] ≥ value(c, t))
+                @constraint(m, m[:flow_out][n, t, p] + m[:gate_disch_penalty_up][n, t] ≥
+                    EMB.capacity(n, t) * value(c, t))
             else
-                @constraint(m, m[:flow_out][n, t, p] ≥ value(c, t))
+                @constraint(m, m[:flow_out][n, t, p] ≥ EMB.capacity(n, t) * value(c, t))
             end
         end
     end
@@ -304,9 +305,10 @@ function build_hydro_gate_constraints(m, n::HydroGate, c::Constraint{MaxConstrai
     for t ∈ 𝒯
         if is_active(c, t)
             if has_penalty(c, t)
-                @constraint(m, m[:flow_out][n, t, p] - m[:gate_disch_penalty_down][n, t] ≤ value(c, t))
+                @constraint(m, m[:flow_out][n, t, p] - m[:gate_disch_penalty_down][n, t] ≤
+                    EMB.capacity(n, t) * value(c, t))
             else
-                @constraint(m, m[:flow_out][n, t, p] ≤ value(c, t))
+                @constraint(m, m[:flow_out][n, t, p] ≤ EMB.capacity(n, t) * value(c, t))
             end
         end
     end
@@ -317,9 +319,9 @@ function build_hydro_gate_constraints(m, n::HydroGate, c::Constraint{ScheduleCon
         if is_active(c, t)
             if has_penalty(c, t)
                 @constraint(m, m[:flow_out][n, t, p] +  m[:gate_disch_penalty_up][n, t] -
-                    m[:gate_disch_penalty_down][n, t] == value(c, t))
+                    m[:gate_disch_penalty_down][n, t] == EMB.capacity(n, t) * value(c, t))
             else
-                JuMP.fix(m[:flow_out][n, t, p], value(c, t); force=true)
+                JuMP.fix(m[:flow_out][n, t, p], EMB.capacity(n, t) * value(c, t); force=true)
             end
         end
     end

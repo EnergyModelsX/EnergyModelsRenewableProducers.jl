@@ -21,7 +21,7 @@ The standard fields are given as:
 - **`resource::Resource`**:\
   The water resource that the node can release.
 - **`data::Vector{Data}`**:\
-  An entry for providing additional data to the model. Could be used to add minimum, maximum and schedule constraints for the discharge using [Constraint{T<:AbstractConstraintType}](@ref EnergyModelsRenewableProducers.Constraint), where [AbstractConstraintType](@ref EnergyModelsRenewableProducers.AbstractConstraintType) has subtypes [MinConstraintType](@ref EnergyModelsRenewableProducers.MinConstraintType), [MaxConstraintType](@ref EnergyModelsRenewableProducers.MaxConstraintType), and [ScheduleConstraintType](@ref EnergyModelsRenewableProducers.ScheduleConstraintType). Such constraints can be used to, for example, enforce minimum discharge due to environmental considerations.
+  An entry for providing additional data to the model. Could be used to add minimum, maximum and schedule constraints for the discharge using [Constraint{T<:AbstractConstraintType}](@ref EnergyModelsRenewableProducers.Constraint), where [AbstractConstraintType](@ref EnergyModelsRenewableProducers.AbstractConstraintType) has subtypes [MinConstraintType](@ref EnergyModelsRenewableProducers.MinConstraintType), [MaxConstraintType](@ref EnergyModelsRenewableProducers.MaxConstraintType), and [ScheduleConstraintType](@ref EnergyModelsRenewableProducers.ScheduleConstraintType). Such constraints can be used to, for example, enforce minimum discharge due to environmental considerations. The constraints values are relative to the gate capacity.
 
 ### [Additional fields](@id nodes-hydro_gate-fields-new)
 [`HydroGate`](@ref) includes a `resource::Resource` field instead of the `Input` and `Output` fields as a a hydro gate can only have one resource type, water, and the scaling is always 1 since water does not arise or disappear.
@@ -62,9 +62,9 @@ The `HydroGate` nodes utilize the majority of the concepts from [NetworkNode](@e
 
 ```math
 \begin{aligned}
-    \texttt{flow\_out}&[n, t, p] \geq value(c, t) \\
-    \texttt{flow\_out}&[n, t, p] \leq value(c, t) \\
-    \texttt{flow\_out}&[n, t, p] = value(c, t)
+    \texttt{flow\_out}&[n, t, p] \geq capacity(n, t) \times value(c, t) \\
+    \texttt{flow\_out}&[n, t, p] \leq capacity(n, t) \times value(c, t) \\
+    \texttt{flow\_out}&[n, t, p] = capacity(n, t) \times value(c, t)
 \end{aligned}
 ```
 
@@ -72,9 +72,11 @@ The `HydroGate` nodes utilize the majority of the concepts from [NetworkNode](@e
 
 ```math
 \begin{aligned}
-    \texttt{flow\_out}&[n, t, p] + \texttt{gate\_disch\_penalty\_up}[n, t] \geq value(c, t) \\
-    \texttt{flow\_out}&[n, t, p] - \texttt{gate\_disch\_penalty\_down}[n, t] \leq value(c, t) \\
+    \texttt{flow\_out}&[n, t, p] + \texttt{gate\_disch\_penalty\_up}[n, t] \geq \\ &
+        capacity(n, t) \times value(c, t) \\
+    \texttt{flow\_out}&[n, t, p] - \texttt{gate\_disch\_penalty\_down}[n, t] \leq \\ &
+        capacity(n, t) \times value(c, t) \\
     \texttt{flow\_out}&[n, t, p] + \texttt{gate\_disch\_penalty\_up}[n, t] - \texttt{gate\_disch\_penalty\_down}[n, t] = \\&
-        value(c, t)
+        capacity(n, t) \times value(c, t)
 \end{aligned}
 ```
