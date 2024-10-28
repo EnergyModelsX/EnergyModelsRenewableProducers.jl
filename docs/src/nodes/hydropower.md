@@ -1,4 +1,4 @@
-# [Hydropower storage node](@id nodes-hydro_power)
+# [Hydro storage node](@id nodes-hydro_power)
 
 The reference storage node, [`RefStorage`](@extref EnergyModelsBase.RefStorage) is quite flexible with respect to the individual storage behaviours, that is cyclic (both representative and strategic) or accumulating as it is included as parametric type using the individual *[storage behaviours](@extref EnergyModelsBase lib-pub-nodes-stor_behav)*.
 In addition, it allows for modelling charge and storage level as different *[storage parameters](@extref EnergyModelsBase lib-pub-nodes-stor_par)*.
