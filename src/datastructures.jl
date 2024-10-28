@@ -304,13 +304,13 @@ abstract type ScheduleConstraintType <: AbstractConstraintType end
 Type for defining constraints `T` denots constraint type.
 
 ## Fields
-- **`name::Symbol`** is the name of the constraint and could be used if a node can have different constraint types.
+- **`resource::{Union{<:Resource, Nothing}}`** is the resource type the constraint applies to if the node can have multiple resources as input/outputs.
 - **`value::TimeProfile`** is the constraint value, the limit that should not be violated.
 - **`flag::TimeProfile`** is a boolean value indicating if the constraint is active.
 - **`penalty::TimeProfile`** is the penalty for violating the constraint. If penalty is set to `Inf` it will be built as a hard constraint.
 """
 struct Constraint{T} <: Data where {T<:AbstractConstraintType}
-    name::Symbol
+    resource::Union{<:Resource, Nothing} # Should be specified for nodes with multiple input/output resources
     value::TimeProfile{<:Number}
     flag::TimeProfile{Bool}
     penalty::TimeProfile{<:Number}
@@ -319,6 +319,9 @@ end
 """ Returns true if `Data` input is of type `Constraint`."""
 is_constraint_data(data::Data) = false
 is_constraint_data(data::Constraint) = true
+
+""" Returns try if `Data` is of type `Constraint` and `Constraint` resource type is `resource`."""
+is_constraint_resource(data::Constraint, resource::Resource) = resource == data.resource
 
 """ Returns true if given constraint is active at time step `t`."""
 is_active(s::Constraint, t) = s.flag[t]
@@ -336,6 +339,7 @@ has_penalty_up(data::Constraint{ScheduleConstraintType}) = true
 
 """ Returns true if a constraint requires a penalty up variable at time step `t`."""
 has_penalty_up(data::Constraint, t) = has_penalty_up(data) & has_penalty(data, t)
+has_penalty_up(data::Constraint, t, resource::Resource) = has_penalty_up(data, t) & data.resource == resource
 
 """ Returns true if a constraint has a constraint that might require penalty down variable."""
 has_penalty_down(data::Constraint) = false
@@ -344,16 +348,15 @@ has_penalty_down(data::Constraint{ScheduleConstraintType}) = true
 
 """ Returns true if a constraint requires a penalty down variable at time step `t`."""
 has_penalty_down(data::Constraint, t) = has_penalty_down(data) & has_penalty(data, t)
+has_penalty_down(data::Constraint, t, resource::Resource) = has_penalty_down(data, t) & data.resource == resource
 
 """ Returns subset of time steps `t ∈ 𝒯` where penalty up variable should be added."""
-function get_penalty_up_time(data::Vector{<:Data}, 𝒯)
-    return [t for t in 𝒯 if any(has_penalty_up(c, t) for c in data)]
-end
+get_penalty_up_time(data::Vector{<:Data}, 𝒯) = [t for t in 𝒯 if any(has_penalty_up(c, t) for c in data)]
+get_penalty_up_time(data::Vector{<:Data}, 𝒯, resource::Resource) = [t for t in 𝒯 if any(has_penalty_up(c, t, resource) for c in data)]
 
 """ Returns subset of time steps `t ∈ 𝒯` where penalty down variable should be added."""
-function get_penalty_down_time(data::Vector{<:Data}, 𝒯)
-    return [t for t in 𝒯 if any(has_penalty_down(c, t) for c in data)]
-end
+get_penalty_down_time(data::Vector{<:Data}, 𝒯) = [t for t in 𝒯 if any(has_penalty_down(c, t) for c in data)]
+get_penalty_down_time(data::Vector{<:Data}, 𝒯, resource::Resource) = [t for t in 𝒯 if any(has_penalty_down(c, t, resource) for c in data)]
 
 """ Returns penalty value of constraint."""
 penalty(s::Constraint, t) = s.penalty[t]

@@ -99,7 +99,7 @@ end
     max_profile = [0.2, 0.8, 0.8, 1]
     push!(hydro_reservoir.data,
         Constraint{MaxConstraintType}(
-            Symbol(),
+            nothing,
             OperationalProfile(max_profile), # value
             FixedProfile(true),              # flag
             FixedProfile(Inf),               # penalty
@@ -108,7 +108,7 @@ end
     min_profile = [0.2, 0.2, 0, 0]
     push!(hydro_reservoir.data,
         Constraint{MinConstraintType}(
-            Symbol(),
+            nothing,
             OperationalProfile(min_profile), # value
             FixedProfile(true),              # flag
             FixedProfile(Inf),               # penalty
@@ -148,7 +148,7 @@ end
     penalty_cost = 57
     push!(hydro_reservoir.data,
         Constraint{MaxConstraintType}(
-            Symbol(),
+            nothing,
             OperationalProfile(max_profile), # value
             OperationalProfile([false, true, false, false]), # flag
             FixedProfile(penalty_cost),                      # penalty
@@ -157,7 +157,7 @@ end
     min_profile = [1, 0, 0, 0]
     push!(hydro_reservoir.data,
         Constraint{MinConstraintType}(
-            Symbol(),
+            nothing,
             OperationalProfile(min_profile), # value
             FixedProfile(true),              # flag
             FixedProfile(Inf),               # penalty
@@ -191,7 +191,7 @@ end
     penalty_cost = 57
     push!(hydro_gate.data,
         Constraint{ScheduleConstraintType}(
-            Symbol(),
+            nothing,
             OperationalProfile(schedule_profile), # value
             OperationalProfile(flags),            # flag
             FixedProfile(penalty_cost),           # penalty
@@ -222,7 +222,7 @@ end
     penalty_cost = [12, 23, 57, 44]
     push!(hydro_gate.data,
         Constraint{ScheduleConstraintType}(
-            Symbol(),
+            nothing,
             OperationalProfile(schedule_profile), # value
             FixedProfile(true),                   # flag
             OperationalProfile(penalty_cost),     # penalty
