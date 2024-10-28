@@ -353,14 +353,12 @@ end
 function build_pq_constaints(m, n::HydroGenerator, c::EnergyEquivalent, 𝒯::TimeStructure)
 
      # water inn = water out
-     @constraint(m, [t ∈ 𝒯],
-     m[:flow_out][n, t, water_resource(n)] == m[:cap_use][n, t] * outputs(n, water_resource(n))
-     )
+     @constraint(m, [t ∈ 𝒯], m[:flow_out][n, t, water_resource(n)] ==
+        m[:cap_use][n, t] * outputs(n, water_resource(n)))
 
      # Relatinship between discharge of water and power generated
      @constraint(m, [t ∈ 𝒯],
-     m[:flow_out][n, t, electricity_resource(n)] == m[:cap_use][n, t] * c.value
-     )
+        m[:flow_out][n, t, electricity_resource(n)] == m[:cap_use][n, t] * c.value)
 
 end
 
@@ -369,29 +367,26 @@ function build_pq_constaints(m, n::HydroGenerator, c::PqPoints, 𝒯::TimeStruct
 
     η = Real[]
     for i in range(2, length(c.discharge_levels))
-        push!(η, (c.power_levels[i] - c.power_levels[i-1]) / (c.discharge_levels[i] - c.discharge_levels[i-1]))
+        push!(η, (c.power_levels[i] - c.power_levels[i-1]) /
+            (c.discharge_levels[i] - c.discharge_levels[i-1]))
     end
 
-    @constraint(m, [t ∈ 𝒯],
-    m[:flow_out][n, t, water_resource(n)] == m[:cap_use][n, t] * outputs(n, water_resource(n))
-    )
+    @constraint(m, [t ∈ 𝒯], m[:flow_out][n, t, water_resource(n)] ==
+        m[:cap_use][n, t] * outputs(n, water_resource(n)))
 
     # produksjon = discharge_segment*virkningsgrad_segment
     Q = range(1,number_of_discharge_points(c)-1)
 
     @constraint(m, [t ∈ 𝒯, q ∈  Q],
-    m[:discharge_segment][n, t, q] <= c.discharge_levels[q+1].- c.discharge_levels[q] #m3/timeunit (or Mm3/timeunit)
-    )
+        m[:discharge_segment][n, t, q] <= c.discharge_levels[q+1].- c.discharge_levels[q])
 
     # max(discharge_levels) == installed_capacity?
     @constraint(m, [t ∈ 𝒯],
-    m[:cap_use][n, t] == sum(m[:discharge_segment][n, t, q] for q ∈ Q)
-    )
+        m[:cap_use][n, t] == sum(m[:discharge_segment][n, t, q] for q ∈ Q))
 
     # discharge_levels må være samme enhet som
-    @constraint(m, [t ∈ 𝒯],
-    m[:flow_out][n, t, electricity_resource(n) ] == sum(m[:discharge_segment][n, t, q]* η[q] for q ∈ Q)
-    )
+    @constraint(m, [t ∈ 𝒯], m[:flow_out][n, t, electricity_resource(n) ] ==
+        sum(m[:discharge_segment][n, t, q]* η[q] for q ∈ Q))
 
 end
 
