@@ -180,6 +180,33 @@ function EMB.check_node(n::HydroReservoir, 𝒯, modeltype::EMB.EnergyModel, che
 end
 
 """
+    EMB.check_node(n::HydroGate, 𝒯, modeltype::EMB.EnergyModel, check_timeprofiles::Bool)
+
+This method checks that the *[`HydroGate`](@ref)* node is valid.
+
+## Checks
+ - The field `cap` is required to be non-negative.
+ - The value of constraints are required to be in the range ``[0, 1]`` for all time steps
+ ``t ∈ \\mathcal{T}``.
+"""
+function EMB.check_node(n::HydroGate, 𝒯, modeltype::EMB.EnergyModel, check_timeprofiles::Bool)
+    𝒯ᴵⁿᵛ = strategic_periods(𝒯)
+
+    @assert_or_log(
+        sum(capacity(n, t) ≥ 0 for t ∈ 𝒯) == length(𝒯),
+        "The capacity must be non-negative."
+    )
+    for d in n.data
+        if isa(d, Constraint{<: AbstractConstraintType})
+            @assert_or_log(
+                sum(0 ≤ d.value[t] ≤ 1 for t ∈ 𝒯) == length(𝒯),
+                "The relative constraint value must be between 0 and 1."
+            )
+        end
+    end
+end
+
+"""
     EMB.check_node(n::HydroGenerator, 𝒯, modeltype::EMB.EnergyModel, check_timeprofiles::Bool)
 
 This method checks that the *[`HydroGenerator`](@ref)* node is valid.

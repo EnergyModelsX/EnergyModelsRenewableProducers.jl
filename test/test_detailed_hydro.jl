@@ -37,7 +37,7 @@ function build_case_gate()
     # Create a hydro reservoir gate
     hydro_gate = HydroGate(
         "hydro_gate",  # Node ID
-        FixedProfile(1000),     # cap, in mm3/timestep
+        FixedProfile(100),     # cap, in mm3/timestep
         FixedProfile(0),      # opex_var, variable OPEX in EUR/(mm3/h?)
         FixedProfile(0),        # opex_fixed, Fixed OPEX in EUR/(mm3/h?)
         Water,
@@ -186,7 +186,7 @@ end
     Water = case[:products][3]
 
     # Verify reservoir minimum/maximum hard constraint
-    schedule_profile = 10 * ones(4)
+    schedule_profile = 0.1 * ones(4)
     flags = [false, true, true, false]
     penalty_cost = 57
     push!(hydro_gate.data,
@@ -201,8 +201,9 @@ end
 
     for sp in strategic_periods(𝒯)
         gate_flow = value.([m[:flow_out][hydro_gate, t, Water] for t in sp])
+        schedule_value = schedule_profile .* [capacity(hydro_gate, t) for t in sp]
         # Verify that schedule equals flow when flag is set
-        @test all(.!flags .| (schedule_profile .== gate_flow))
+        @test all(.!flags .| (schedule_value .== gate_flow))
     end
 end
 
@@ -217,7 +218,7 @@ end
     Water = case[:products][3]
 
     # Verify reservoir minimum/maximum hard constraint
-    schedule_profile = 10 * ones(4)
+    schedule_profile = 0.1 * ones(4)
     penalty_cost = [12, 23, 57, 44]
     push!(hydro_gate.data,
         Constraint{ScheduleConstraintType}(
@@ -232,8 +233,9 @@ end
     # for sp in strategic_periods(𝒯)
     gate_penalties = map(strategic_periods(𝒯)) do sp
         gate_flow = value.([m[:flow_out][hydro_gate, t, Water] for t in sp])
-        deviation_up = max.(gate_flow - schedule_profile, 0)
-        deviation_down = -min.(gate_flow - schedule_profile, 0)
+        schedule_value = schedule_profile .* [capacity(hydro_gate, t) for t in sp]
+        deviation_up = max.(gate_flow - schedule_value, 0)
+        deviation_down = -min.(gate_flow - schedule_value, 0)
         return sum(deviation_down .* [duration(t) for t in sp] .* penalty_cost) +
             sum(deviation_up .* [duration(t) for t in sp] .* penalty_cost)
     end
