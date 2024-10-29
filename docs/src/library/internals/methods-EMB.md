@@ -28,3 +28,8 @@ EnergyModelsBase.constraints_opex_var
 ```@docs
 EnergyModelsBase.check_node
 ```
+
+## Other methods
+```@docs
+EnergyModelsRenewableProducers.capacity
+```
