@@ -412,10 +412,9 @@ function build_pq_constaints(m, n::HydroGenerator, c::PqPoints, 𝒯::TimeStruct
         m[:cap_use][n, t] * outputs(n, electricity_resource(n)))
 
     # Range of discharge segments
-    Q = range(1,number_of_discharge_points(c)-1)
-    @constraint(m, [t ∈ 𝒯, q ∈  Q], m[:discharge_segment][n, t, q] ≤
+    Q = discharge_segments(c)
+    @constraint(m, [t ∈ 𝒯, q ∈ Q], m[:discharge_segment][n, t, q] ≤
         capacity(n, t) * (c.discharge_levels[q+1].- c.discharge_levels[q]))
-
 
     @constraint(m, [t ∈ 𝒯], m[:flow_out][n, t, water_resource(n) ] ==
         sum(m[:discharge_segment][n, t, q] for q ∈ Q))
@@ -503,6 +502,12 @@ function build_hydro_generator_constraints(m, n::HydroGenerator, c::Constraint{S
             end
         end
     end
+end
+
+function EMB.constraints_flow_in(m, n::HydroGenerator, 𝒯::TimeStructure, modeltype::EnergyModel)
+    Q = discharge_segments(pq_curve(n))
+    @constraint(m, [t ∈ 𝒯], m[:flow_in][n, t, water_resource(n) ] ==
+        sum(m[:discharge_segment][n, t, q] for q ∈ Q))
 end
 
 """

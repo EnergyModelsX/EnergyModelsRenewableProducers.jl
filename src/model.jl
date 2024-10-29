@@ -73,11 +73,13 @@ function EMB.variables_node(m, 𝒩::Vector{HydroGate}, 𝒯,
 
     @variable(m, gate_disch_penalty_up[
         n ∈ 𝒩,
-        t ∈  get_penalty_up_time(filter(is_constraint_data, node_data(n)), 𝒯)
+        t ∈ 𝒯;
+        any([has_penalty_up(data, t) for data in node_data(n)])
     ] ≥ 0)
     @variable(m, gate_disch_penalty_down[
         n ∈ 𝒩,
-        t ∈  get_penalty_down_time(filter(is_constraint_data, node_data(n)), 𝒯)
+        t ∈ 𝒯;
+        any([has_penalty_down(data, t) for data in node_data(n)])
     ] ≥ 0)
 end
 
@@ -95,11 +97,13 @@ function EMB.variables_node(m, 𝒩::Vector{HydroReservoir{T}}, 𝒯,
 
     @variable(m, rsv_vol_penalty_up[
         n ∈ 𝒩,
-        t ∈  get_penalty_up_time(filter(is_constraint_data, node_data(n)), 𝒯)
+        t ∈ 𝒯;
+        any([has_penalty_up(data, t) for data in node_data(n)])
     ] ≥ 0)
     @variable(m, rsv_vol_penalty_down[
         n ∈ 𝒩,
-        t ∈  get_penalty_down_time(filter(is_constraint_data, node_data(n)), 𝒯)
+        t ∈ 𝒯;
+        any([has_penalty_down(data, t) for data in node_data(n)])
     ] ≥ 0)
 end
 
@@ -123,7 +127,7 @@ function EMB.variables_node(m, 𝒩::Vector{HydroGenerator}, 𝒯, modeltype::En
             @variable(m, discharge_segment[
                 n ∈ N_seq,
                 t ∈ 𝒯,
-                q ∈ range(1,number_of_discharge_points(pq_curve(n))-1)
+                q ∈ discharge_segments(pq_curve(n))
             ] >= 0)
         end
     #end

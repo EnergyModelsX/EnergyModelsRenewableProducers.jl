@@ -361,7 +361,7 @@ end
     market.penalty[:surplus] = OperationalProfile(-[50, 50, 10, 10])
 
     # Verify power schedule
-    schedule_profile = 1 * ones(4)
+    schedule_profile = 0.8 * ones(4)
     schedule_flag = [false, false, true, true]
     push!(hydro_generator.data,
         Constraint{ScheduleConstraintType}(

@@ -642,8 +642,7 @@ Returns the resources in the PQ-curve of a node `n` of type `HydroGenerator`
 pq_curve(n::HydroGenerator) = n.pq_curve
 
 has_discharge_segments(pq_curve::AbstractPqCurve) = (typeof(pq_curve) <: Union{PqPoints}) #Union{PqEfficiencyCurve, PqPoints})
-number_of_discharge_points(pq_curve::PqPoints) = length(pq_curve.discharge_levels)
-#number_of_discharge_points(pq_curve::PqEfficiencyCurve) = length(pq_curve.discharge_levels)
+discharge_segments(pq_curve::PqPoints) = range(1, length(pq_curve.discharge_levels) - 1)
 
 function get_nodes_with_discharge_segments(𝒩::Vector{HydroGenerator})
     return [n for n in 𝒩 if has_discharge_segments(pq_curve(n))]
