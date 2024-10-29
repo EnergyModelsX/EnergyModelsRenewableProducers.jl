@@ -304,13 +304,13 @@ abstract type ScheduleConstraintType <: AbstractConstraintType end
 Type for defining constraints `T` denots constraint type.
 
 ## Fields
-- **`name::Symbol`** is the name of the constraint and could be used if a node can have different constraint types.
+- **`resource::{Union{<:Resource, Nothing}}`** is the resource type the constraint applies to if the node can have multiple resources as input/outputs.
 - **`value::TimeProfile`** is the constraint value, the limit that should not be violated.
 - **`flag::TimeProfile`** is a boolean value indicating if the constraint is active.
 - **`penalty::TimeProfile`** is the penalty for violating the constraint. If penalty is set to `Inf` it will be built as a hard constraint.
 """
 struct Constraint{T} <: Data where {T<:AbstractConstraintType}
-    name::Symbol
+    resource::Union{<:Resource, Nothing} # Should be specified for nodes with multiple input/output resources
     value::TimeProfile{<:Number}
     flag::TimeProfile{Bool}
     penalty::TimeProfile{<:Number}
@@ -319,6 +319,9 @@ end
 """ Returns true if `Data` input is of type `Constraint`."""
 is_constraint_data(data::Data) = false
 is_constraint_data(data::Constraint) = true
+
+""" Returns try if `Data` is of type `Constraint` and `Constraint` resource type is `resource`."""
+is_constraint_resource(data::Constraint, resource::Resource) = resource == data.resource
 
 """ Returns true if given constraint is active at time step `t`."""
 is_active(s::Constraint, t) = s.flag[t]
@@ -336,6 +339,7 @@ has_penalty_up(data::Constraint{ScheduleConstraintType}) = true
 
 """ Returns true if a constraint requires a penalty up variable at time step `t`."""
 has_penalty_up(data::Constraint, t) = has_penalty_up(data) & has_penalty(data, t)
+has_penalty_up(data::Constraint, t, resource::Resource) = has_penalty_up(data, t) & (data.resource == resource)
 
 """ Returns true if a constraint has a constraint that might require penalty down variable."""
 has_penalty_down(data::Constraint) = false
@@ -344,16 +348,15 @@ has_penalty_down(data::Constraint{ScheduleConstraintType}) = true
 
 """ Returns true if a constraint requires a penalty down variable at time step `t`."""
 has_penalty_down(data::Constraint, t) = has_penalty_down(data) & has_penalty(data, t)
+has_penalty_down(data::Constraint, t, resource::Resource) = has_penalty_down(data, t) & (data.resource == resource)
 
 """ Returns subset of time steps `t ∈ 𝒯` where penalty up variable should be added."""
-function get_penalty_up_time(data::Vector{<:Data}, 𝒯)
-    return [t for t in 𝒯 if any(has_penalty_up(c, t) for c in data)]
-end
+get_penalty_up_time(data::Vector{<:Data}, 𝒯) = [t for t in 𝒯 if any(has_penalty_up(c, t) for c in data)]
+get_penalty_up_time(data::Vector{<:Data}, 𝒯, resource::Resource) = [t for t in 𝒯 if any(has_penalty_up(c, t, resource) for c in data)]
 
 """ Returns subset of time steps `t ∈ 𝒯` where penalty down variable should be added."""
-function get_penalty_down_time(data::Vector{<:Data}, 𝒯)
-    return [t for t in 𝒯 if any(has_penalty_down(c, t) for c in data)]
-end
+get_penalty_down_time(data::Vector{<:Data}, 𝒯) = [t for t in 𝒯 if any(has_penalty_down(c, t) for c in data)]
+get_penalty_down_time(data::Vector{<:Data}, 𝒯, resource::Resource) = [t for t in 𝒯 if any(has_penalty_down(c, t, resource) for c in data)]
 
 """ Returns penalty value of constraint."""
 penalty(s::Constraint, t) = s.penalty[t]
@@ -613,7 +616,8 @@ function HydroGenerator(
     input = Dict(water_resource => 1.0)
     output = Dict(water_resource => 1.0, electricity_resource => 1.0)
 
-    return HydroGenerator(id, cap, pq_curve, opex_var, opex_fixed, electricity_resource, water_resource, input, output, Data[])
+    return HydroGenerator(id, cap, pq_curve, opex_var, opex_fixed,
+        electricity_resource, water_resource, input, output, Data[])
 end
 
 """
@@ -638,13 +642,41 @@ Returns the resources in the PQ-curve of a node `n` of type `HydroGenerator`
 pq_curve(n::HydroGenerator) = n.pq_curve
 
 has_discharge_segments(pq_curve::AbstractPqCurve) = (typeof(pq_curve) <: Union{PqPoints}) #Union{PqEfficiencyCurve, PqPoints})
-number_of_discharge_points(pq_curve::PqPoints) = length(pq_curve.discharge_levels)
-#number_of_discharge_points(pq_curve::PqEfficiencyCurve) = length(pq_curve.discharge_levels)
+discharge_segments(pq_curve::PqPoints) = range(1, length(pq_curve.discharge_levels) - 1)
 
 function get_nodes_with_discharge_segments(𝒩::Vector{HydroGenerator})
     return [n for n in 𝒩 if has_discharge_segments(pq_curve(n))]
 end
 
+""" Returns the maximum power of `HydroGenerator` based on pq_curve input."""
+function max_power(n::HydroGenerator)
+    if pq_curve(n) isa PqPoints
+        return pq_curve(n).power_levels[end]
+    else
+        return 1
+    end
+    throw("Max power for your PQ-curve type has not been implemented.")
+end
+
+""" Returns the maximum discharge of `HydroGenerator` based on pq_curve input."""
+function max_discharge(n::HydroGenerator)
+    if pq_curve(n) isa PqPoints
+        return pq_curve(n).discharge_levels[end]
+    elseif pq_curve(n) isa EnergyEquivalent
+        return 1 / pq_curve(n).value
+    end
+    throw("Max discharge for your PQ-curve type has not been implemented.")
+end
+
+""" Returns the `HydroGenerator` capacity for a given resource (either power or discharge)."""
+function EMB.capacity(n::HydroGenerator, t, p::Resource)
+    if p == electricity_resource(n)
+        return capacity(n, t) * max_power(n)
+    elseif p == water_resource(n)
+        return capacity(n, t) * max_discharge(n)
+    end
+    throw("Hydro generator capacity resource has to be either water or electricity.")
+end
 
 
 # TODO make pump module

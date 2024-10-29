@@ -4,7 +4,7 @@ using HiGHS
 using JuMP
 using Test
 using TimeStruct
-using Interpolations
+import Interpolations
 
 const EMB = EnergyModelsBase
 const EMRP = EnergyModelsRenewableProducers

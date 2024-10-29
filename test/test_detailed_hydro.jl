@@ -99,7 +99,7 @@ end
     max_profile = [0.2, 0.8, 0.8, 1]
     push!(hydro_reservoir.data,
         Constraint{MaxConstraintType}(
-            Symbol(),
+            nothing,
             OperationalProfile(max_profile), # value
             FixedProfile(true),              # flag
             FixedProfile(Inf),               # penalty
@@ -108,7 +108,7 @@ end
     min_profile = [0.2, 0.2, 0, 0]
     push!(hydro_reservoir.data,
         Constraint{MinConstraintType}(
-            Symbol(),
+            nothing,
             OperationalProfile(min_profile), # value
             FixedProfile(true),              # flag
             FixedProfile(Inf),               # penalty
@@ -148,7 +148,7 @@ end
     penalty_cost = 57
     push!(hydro_reservoir.data,
         Constraint{MaxConstraintType}(
-            Symbol(),
+            nothing,
             OperationalProfile(max_profile), # value
             OperationalProfile([false, true, false, false]), # flag
             FixedProfile(penalty_cost),                      # penalty
@@ -157,7 +157,7 @@ end
     min_profile = [1, 0, 0, 0]
     push!(hydro_reservoir.data,
         Constraint{MinConstraintType}(
-            Symbol(),
+            nothing,
             OperationalProfile(min_profile), # value
             FixedProfile(true),              # flag
             FixedProfile(Inf),               # penalty
@@ -191,7 +191,7 @@ end
     penalty_cost = 57
     push!(hydro_gate.data,
         Constraint{ScheduleConstraintType}(
-            Symbol(),
+            nothing,
             OperationalProfile(schedule_profile), # value
             OperationalProfile(flags),            # flag
             FixedProfile(penalty_cost),           # penalty
@@ -222,7 +222,7 @@ end
     penalty_cost = [12, 23, 57, 44]
     push!(hydro_gate.data,
         Constraint{ScheduleConstraintType}(
-            Symbol(),
+            nothing,
             OperationalProfile(schedule_profile), # value
             FixedProfile(true),                   # flag
             OperationalProfile(penalty_cost),     # penalty
@@ -256,13 +256,14 @@ function build_case_generator()
     case, model = build_case_gate()
     Power = case[:products][2]
     Water = case[:products][3]
+    hydro_gen_cap = 20
     hydro_generator = HydroGenerator(
         "hydro_generator", # Node ID
-        FixedProfile(30),                # Installed discharge capacity
+        FixedProfile(hydro_gen_cap),                # Installed discharge capacity
         PqPoints(
             Symbol(),
-            [0, 10, 20],
-            [0, 10, 22]
+            [0, 10, 20] / hydro_gen_cap,
+            [0, 10, 22] / hydro_gen_cap
         ),          # PQ-curve
         FixedProfile(0),   # opex_var
         FixedProfile(0),   # opex_fixed
@@ -321,13 +322,17 @@ end
 
         production = value.([m[:flow_out][hydro_generator, t, Power] for t in sp])
         discharge = value.([m[:flow_out][hydro_generator, t, Water] for t in sp])
-        prod_to_disch = linear_interpolation(
-            hydro_generator.pq_curve.power_levels,
-            hydro_generator.pq_curve.discharge_levels
-        )
+        discharge_estimated = map(sp) do t
+            prod_to_discharge = Interpolations.linear_interpolation(
+                hydro_generator.pq_curve.power_levels * capacity(hydro_generator, t),
+                hydro_generator.pq_curve.discharge_levels * capacity(hydro_generator, t)
+            )
+            discharge_estimated = prod_to_discharge(
+                value(m[:flow_out][hydro_generator, t, Power])
+            )
+        end
 
         # Check that points are on curve
-        discharge_estimated = prod_to_disch(production)
         @test discharge ≈ discharge_estimated atol=1e-12
 
         price = [case[:nodes][5].penalty[:surplus][t] for t in sp]
@@ -337,4 +342,81 @@ end
         return sum(total_cost)
     end
     @test objective_value(m) + sum(total_cost) ≈ 0 atol=1e-12
+end
+
+@testset "Test plant production schedule" begin
+    case, model = build_case_generator()
+    optimizer = optimizer_with_attributes(HiGHS.Optimizer, MOI.Silent() => true)
+
+    hydro_reservoir = case[:nodes][1]
+    hydro_gate = case[:nodes][2]
+    hydro_ocean = case[:nodes][3]
+    hydro_generator = case[:nodes][4]
+    market = case[:nodes][5]
+
+    Power = case[:products][2]
+    Water = case[:products][3]
+
+    # Modify price to increase production in first hours to ensure schedule changes solution
+    market.penalty[:surplus] = OperationalProfile(-[50, 50, 10, 10])
+
+    # Verify power schedule
+    schedule_profile = 0.8 * ones(4)
+    schedule_flag = [false, false, true, true]
+    push!(hydro_generator.data,
+        Constraint{ScheduleConstraintType}(
+            Power,
+            OperationalProfile(schedule_profile),  # value
+            OperationalProfile(schedule_flag),     # flag
+            FixedProfile(Inf),                     # penalty
+        )
+    )
+    m = EMB.run_model(case, model, optimizer)
+
+    res = map(strategic_periods(case[:T])) do sp
+        production = value.([m[:flow_out][hydro_generator, t, Power] for t in sp])
+        discharge = value.([m[:flow_out][hydro_generator, t, Water] for t in sp])
+        production_cap = [capacity(hydro_generator, t) for t in sp]
+        discharge, production, production_cap
+    end
+
+    # Test that production equal capacity * schedule_profile when schedule_flag is set
+    for sp in strategic_periods(case[:T])
+        production = value.([m[:flow_out][hydro_generator, t, Power] for t in sp])
+        discharge = value.([m[:flow_out][hydro_generator, t, Water] for t in sp])
+        production_cap = [capacity(hydro_generator, t) for t in sp]
+        @test all(.!schedule_flag .| (production .≈ production_cap .* schedule_profile))
+    end
+end
+
+@testset "Test plant minimum discharge" begin
+    case, model = build_case_generator()
+    optimizer = optimizer_with_attributes(HiGHS.Optimizer, MOI.Silent() => true)
+
+    hydro_reservoir = case[:nodes][1]
+    hydro_gate = case[:nodes][2]
+    hydro_ocean = case[:nodes][3]
+    hydro_generator = case[:nodes][4]
+    market = case[:nodes][5]
+
+    Power = case[:products][2]
+    Water = case[:products][3]
+
+    # Verify power schedule
+    min_discharge_factor = 0.5
+    push!(hydro_generator.data,
+        Constraint{MinConstraintType}(
+            Water,
+            FixedProfile(min_discharge_factor), # value
+            FixedProfile(true),                 # flag
+            FixedProfile(50),                   # penalty
+        )
+    )
+    m = EMB.run_model(case, model, optimizer)
+
+    for sp in strategic_periods(case[:T])
+        discharge = value.([m[:flow_out][hydro_generator, t, Water] for t in sp])
+        discharge_cap = [capacity(hydro_generator, t, Water) for t in sp]
+        @test discharge ≥ discharge_cap * min_discharge_factor
+    end
 end
