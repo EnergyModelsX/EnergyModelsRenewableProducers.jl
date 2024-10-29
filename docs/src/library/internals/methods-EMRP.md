@@ -24,5 +24,5 @@ EnergyModelsRenewableProducers.water_resource
 EnergyModelsRenewableProducers.electricity_resource
 EnergyModelsRenewableProducers.is_constraint_resource
 EnergyModelsRenewableProducers.max_power
-EnergyModelsRenewableProducers.max_discharge
+EnergyModelsRenewableProducers.max_flow
 ```

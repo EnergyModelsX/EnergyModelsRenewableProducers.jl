@@ -484,54 +484,6 @@ end
 """ `HydroUnit` node for either pumping or production."""
 abstract type HydroUnit <: EMB.NetworkNode end
 
-#=
-"""
-    HydroPump <: EMB.NetworkNode
-
-A regular hydropower pump, modelled as a `NetworkNode` node.
-
-## Fields
-- **`id`** is the name/identifier of the node.\n
-- **`cap::TimeProfile`** is the installed discharge capacity.\n
-- **`pq_curve::Dict{<:Resource, <:Vector{<:Real}}` describes the relationship between power and discharge (water).\
-requires one input resource (usually Water) and two output resources (usually Water and Power) to be defined \
-where the input resource also is an output resource. \n
-- **`opex_var::TimeProfile`** is the variational operational costs per energy unit produced.\n
-- **`opex_fixed::TimeProfile`** is the fixed operational costs.\n
-- **`input::Dict{<:Resource, <:Real}`** are the input `Resource`s with conversion value `Real`.\n
-- **`output::Dict{<:Resource, <:Real}`** are the generated `Resource`s with conversion value `Real`.\n
-- **`data::Vector{Data}`** is the additional data (e.g. for investments). The field \
-`data` is conditional through usage of a constructor.
-"""
-struct HydroPump <: HydroUnit # plant or pump or both?
-    id::Any
-    cap::TimeProfile # maximum pumping in Mm3/timestep
-    pq_curve::AbstractPqCurve# Pumping-power ratio [Mm3/timestep / MW] (?)
-    opex_var::TimeProfile
-    opex_fixed::TimeProfile
-    electricity_resource::Resource
-    water_resource::Resource
-    input::Dict{<:Resource,<:Real}
-    output::Dict{<:Resource,<:Real}
-    data::Vector{Data}
-end
-function HydroPump(
-    id::Any,
-    cap::TimeProfile,
-    pq_curve::Union{Dict{<:Resource, <:Vector{<:Real}}, Nothing}, # Production and discharge ratio [MW / m3/s]
-    opex_var::TimeProfile,
-    opex_fixed::TimeProfile,
-    electricity_resource::Dict{<:Resource,<:Real},
-    water_resource::Dict{<:Resource,<:Real},
-)
-
-    input = Dict(water_resource => 1.0, electricity_resource => 1.0)
-    output = Dict(water_resource => 1.0)
-
-    return HydroPump(id, cap, pq_curve, opex_var, opex_fixed, electricity_resource, water_resource, input, output, Data[])
-end
-=#
-
 abstract type AbstractPqCurve end
 
 # do we need this or can we use existing functionality in outputs?
@@ -620,36 +572,65 @@ function HydroGenerator(
         electricity_resource, water_resource, input, output, Data[])
 end
 
+struct HydroPump <: HydroUnit # plant or pump or both?
+    id::Any
+    cap::TimeProfile # maximum discharge in Mm3/timestep
+    pq_curve::AbstractPqCurve# Production and discharge ratio [MW / Mm3/timestep]
+    opex_var::TimeProfile
+    opex_fixed::TimeProfile
+    electricity_resource::Resource
+    water_resource::Resource
+    input::Dict{<:Resource,<:Real}
+    output::Dict{<:Resource,<:Real}
+    data::Vector{Data}
+end
+function HydroPump(
+    id::Any,
+    cap::TimeProfile,
+    pq_curve::AbstractPqCurve,
+    opex_var::TimeProfile,
+    opex_fixed::TimeProfile,
+    electricity_resource::Resource,
+    water_resource::Resource,
+)
+
+    input = Dict(water_resource => 1.0, electricity_resource => 1.0)
+    output = Dict(water_resource => 1.0)
+
+    return HydroPump(id, cap, pq_curve, opex_var, opex_fixed,
+        electricity_resource, water_resource, input, output, Data[])
+end
+
 """
-    electricity_resource(n::HydroGenerator)
+    electricity_resource(n::HydroUnit)
 
 Returns the resource of the `electricity_resource` field of a node `n`.
 """
-electricity_resource(n::HydroGenerator) = n.electricity_resource
+electricity_resource(n::HydroUnit) = n.electricity_resource
 
 """
-    water_resource(n::HydroGenerator)
+    water_resource(n::HydroUnit)
 
 Returns the resource of the `water_resource` field of a node `n`.
 """
-water_resource(n::HydroGenerator) = n.water_resource
+water_resource(n::HydroUnit) = n.water_resource
 
 """
-    pq_curve(n::HydroGenerator)
+    pq_curve(n::HydroUnit)
 
-Returns the resources in the PQ-curve of a node `n` of type `HydroGenerator`
+Returns the resources in the PQ-curve of a node `n` of type `HydroUnit`
 """
-pq_curve(n::HydroGenerator) = n.pq_curve
+pq_curve(n::HydroUnit) = n.pq_curve
 
 has_discharge_segments(pq_curve::AbstractPqCurve) = (typeof(pq_curve) <: Union{PqPoints}) #Union{PqEfficiencyCurve, PqPoints})
 discharge_segments(pq_curve::PqPoints) = range(1, length(pq_curve.discharge_levels) - 1)
 
-function get_nodes_with_discharge_segments(𝒩::Vector{HydroGenerator})
+function get_nodes_with_discharge_segments(𝒩::Vector{<:HydroUnit})
     return [n for n in 𝒩 if has_discharge_segments(pq_curve(n))]
 end
 
-""" Returns the maximum power of `HydroGenerator` based on pq_curve input."""
-function max_power(n::HydroGenerator)
+""" Returns the maximum power of `HydroUnit` based on pq_curve input."""
+function max_power(n::HydroUnit)
     if pq_curve(n) isa PqPoints
         return pq_curve(n).power_levels[end]
     else
@@ -658,24 +639,24 @@ function max_power(n::HydroGenerator)
     throw("Max power for your PQ-curve type has not been implemented.")
 end
 
-""" Returns the maximum discharge of `HydroGenerator` based on pq_curve input."""
-function max_discharge(n::HydroGenerator)
+""" Returns the maximum flow of `HydroUnit` based on pq_curve input."""
+function max_flow(n::HydroUnit)
     if pq_curve(n) isa PqPoints
         return pq_curve(n).discharge_levels[end]
     elseif pq_curve(n) isa EnergyEquivalent
         return 1 / pq_curve(n).value
     end
-    throw("Max discharge for your PQ-curve type has not been implemented.")
+    throw("Max flow for your PQ-curve type has not been implemented.")
 end
 
-""" Returns the `HydroGenerator` capacity for a given resource (either power or discharge)."""
-function EMB.capacity(n::HydroGenerator, t, p::Resource)
+""" Returns the `HydroUnit` capacity for a given resource (either power or flow)."""
+function EMB.capacity(n::HydroUnit, t, p::Resource)
     if p == electricity_resource(n)
         return capacity(n, t) * max_power(n)
     elseif p == water_resource(n)
-        return capacity(n, t) * max_discharge(n)
+        return capacity(n, t) * max_flow(n)
     end
-    throw("Hydro generator capacity resource has to be either water or electricity.")
+    throw("Hydro HydroUnit capacity resource has to be either water or electricity.")
 end
 
 

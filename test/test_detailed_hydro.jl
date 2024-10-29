@@ -420,3 +420,141 @@ end
         @test discharge ≥ discharge_cap * min_discharge_factor
     end
 end
+
+function build_case_pump()
+    # Define the different resources and their emission intensity in tCO2/MWh
+    # CO2 has to be defined, even if not used, as it is required for the `EnergyModel` type
+    CO2 = ResourceEmit("CO2", 1.0)
+    Power = ResourceCarrier("Power", 0.0)
+    Water = ResourceCarrier("Water", 0.0)
+    products = [CO2, Power, Water]
+
+    # Variables for the individual entries of the time structure
+    op_duration = [1, 1, 2, 4] # Operational period duration
+    op_number = length(op_duration)   # Number of operational periods
+    operational_periods = SimpleTimes(op_number, op_duration) # Assume step length is given i
+
+    # The number of operational periods times the duration of the operational periods.
+    # This implies, that a strategic period is 8 times longer than an operational period,
+    # resulting in the values below as "/8h".
+    op_per_strat = sum(op_duration)
+
+    # Create the time structure and global data
+    T = TwoLevel(2, 1, operational_periods; op_per_strat)
+    model = OperationalModel(
+        Dict(CO2 => FixedProfile(10)),  # Emission cap for CO2 in t/8h
+        Dict(CO2 => FixedProfile(0)),   # Emission price for CO2 in EUR/t
+        CO2,                            # CO2 instance
+    )
+
+    # Create a hydro reservoir
+    reservoir_up = HydroReservoir{CyclicStrategic}(
+        "hydro_reservoir_up",  # Node ID
+        StorCap(
+            FixedProfile(100), # vol, maximum capacity in mm3
+        ),
+        OperationalProfile([0, 0, 0, 0]),   # storage_inflow
+        Water,              # stor_res, stored resource
+    )
+
+    reservoir_down = HydroReservoir{CyclicStrategic}(
+        "hydro_reservoir_down",  # Node ID
+        StorCap(
+            FixedProfile(100), # vol, maximum capacity in mm3
+        ),
+        OperationalProfile([0, 0, 0, 0]),   # storage_inflow
+        Water,              # stor_res, stored resource
+    )
+
+    hydro_gen_cap = 20
+    hydro_generator = HydroGenerator(
+        "hydro_generator",
+        FixedProfile(hydro_gen_cap),                # Installed discharge capacity
+        PqPoints(
+            Symbol(),
+            [0, 10, 20] / hydro_gen_cap,
+            [0, 10, 22] / hydro_gen_cap
+        ),          # PQ-curve
+        FixedProfile(0),   # opex_var
+        FixedProfile(0),   # opex_fixed
+        Power,
+        Water
+    )
+
+    hydro_pump_cap = 30
+    hydro_pump = HydroPump(
+        "hydro_pump",
+        FixedProfile(hydro_pump_cap),                # Installed discharge capacity
+        PqPoints(
+            Symbol(),
+            [0, 15, 30] / hydro_pump_cap,
+            [0, 12, 20] / hydro_pump_cap
+        ),          # PQ-curve
+        FixedProfile(0),   # opex_var
+        FixedProfile(0),   # opex_fixed
+        Power,
+        Water
+    )
+
+    market_sale = RefSink(
+        "market",
+        FixedProfile(0),
+        Dict(
+            :surplus => OperationalProfile(-[10, 60, 15, 65]),
+            :deficit => FixedProfile(1000)
+        ),
+        Dict(Power => 1.0),
+        Data[]
+    )
+
+    market_buy = RefSource(
+        "market_buy",
+        FixedProfile(1000),
+        OperationalProfile([10, 60, 15, 65]),
+        FixedProfile(0),
+        Dict(Power => 1.0),
+        Data[]
+    )
+
+    # Create the array of ndoes
+    nodes = [reservoir_up, reservoir_down, hydro_generator, hydro_pump, market_sale, market_buy]
+    links = [
+        Direct("res_up-gen", reservoir_up, hydro_generator),
+        Direct("gen-res_down", hydro_generator, reservoir_down),
+        Direct("res_down-pump", reservoir_down, hydro_pump),
+        Direct("pump-res_up", hydro_pump, reservoir_up),
+        Direct("gen-market", hydro_generator, market_sale),
+        Direct("market-pump", market_buy, hydro_pump),
+    ]
+
+    case = Dict(
+        :nodes => nodes,
+        :links => links,
+        :products => products,
+        :T => T
+    )
+    return case, model
+end
+
+@testset "Test generator and pump" begin
+    case, model = build_case_pump()
+    optimizer = optimizer_with_attributes(HiGHS.Optimizer, MOI.Silent() => true)
+
+    reservoir_up = case[:nodes][1]
+    reservoir_down = case[:nodes][2]
+    hydro_generator = case[:nodes][3]
+    hydro_pump = case[:nodes][4]
+    market = case[:nodes][5]
+
+    Power = case[:products][2]
+    Water = case[:products][3]
+
+    m = EMB.run_model(case, model, optimizer)
+
+    # Verify that sum upflow and discharge is equal
+    for sp in strategic_periods(case[:T])
+        discharge = value.([m[:flow_out][hydro_generator, t, Water] for t in sp]) .* [duration(t) for t in sp]
+        upflow = value.([m[:flow_in][hydro_pump, t, Water] for t in sp]) .* [duration(t) for t in sp]
+        @test sum(discharge) ≈ sum(upflow) atol=1e-12
+    end
+end

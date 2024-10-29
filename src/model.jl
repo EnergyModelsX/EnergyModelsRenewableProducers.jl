@@ -114,7 +114,7 @@ end
 Create the optimization variable `:discharge_segment` for every HydroGenerator node. This variable
 enables the use of a concave PQ-curve. The sum of the utilisation of the discharge_sements has to
 equal the cap_use. """
-function EMB.variables_node(m, 𝒩::Vector{HydroGenerator}, 𝒯, modeltype::EnergyModel)
+function EMB.variables_node(m, 𝒩::Vector{<:HydroUnit}, 𝒯, modeltype::EnergyModel)
 
     #𝒫ᵒᵘᵗ = EMB.res_not(outputs(first(𝒩)), co2_instance(modeltype))
     #𝒫ⁱⁿ  = EMB.res_not(inputs(first(𝒩)), co2_instance(modeltype))
@@ -146,31 +146,4 @@ function EMB.variables_node(m, 𝒩::Vector{HydroGenerator}, 𝒯, modeltype::En
         p ∈ [water_resource(n), electricity_resource(n)];
         any([has_penalty_down(data, t, p) for data in node_data(n)])
     ] ≥ 0)
-end
-
-"""
-    create_node(m, n::HydroGenerator, 𝒯, 𝒫, modeltype::EnergyModel)
-
-Set all constraints for a `HydroGenerator`.
-"""
-function EMB.create_node(m, n::HydroGenerator, 𝒯, 𝒫, modeltype::EnergyModel)
-
-    # Declaration of the required subsets
-    𝒯ᴵⁿᵛ = strategic_periods(𝒯)
-
-    # Iterate through all data and set up the constraints corresponding to the data
-    for data ∈ node_data(n)
-        constraints_data(m, n, 𝒯, 𝒫, modeltype, data)
-    end
-
-    # Call of the function for the inlet flow to and outlet flow from the `NetworkNode` node
-    constraints_flow_in(m, n, 𝒯, modeltype)
-    constraints_flow_out(m, n, 𝒯, modeltype)
-
-    # Call of the function for limiting the capacity to the maximum installed capacity
-    constraints_capacity(m, n, 𝒯, modeltype)
-
-    # Call of the functions for both fixed and variable OPEX constraints introduction
-    constraints_opex_fixed(m, n, 𝒯ᴵⁿᵛ, modeltype)
-    constraints_opex_var(m, n, 𝒯ᴵⁿᵛ, modeltype)
 end
