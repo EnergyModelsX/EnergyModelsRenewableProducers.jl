@@ -127,6 +127,21 @@ function EMB.variables_node(m, 𝒩::Vector{HydroGenerator}, 𝒯, modeltype::En
             ] >= 0)
         end
     #end
+
+    # Add discharge/production constraint penalty variables
+    @variable(m, gen_penalty_up[
+        n ∈ 𝒩,
+        t ∈ 𝒯,
+        p ∈ [water_resource(n), electricity_resource(n)];
+        any([has_penalty_up(data, t, p) for data in node_data(n)])
+    ] ≥ 0)
+
+    @variable(m, gen_penalty_down[
+        n ∈ 𝒩,
+        t ∈ 𝒯,
+        p ∈ [water_resource(n), electricity_resource(n)];
+        any([has_penalty_down(data, t, p) for data in node_data(n)])
+    ] ≥ 0)
 end
 
 """

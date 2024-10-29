@@ -339,7 +339,7 @@ has_penalty_up(data::Constraint{ScheduleConstraintType}) = true
 
 """ Returns true if a constraint requires a penalty up variable at time step `t`."""
 has_penalty_up(data::Constraint, t) = has_penalty_up(data) & has_penalty(data, t)
-has_penalty_up(data::Constraint, t, resource::Resource) = has_penalty_up(data, t) & data.resource == resource
+has_penalty_up(data::Constraint, t, resource::Resource) = has_penalty_up(data, t) & (data.resource == resource)
 
 """ Returns true if a constraint has a constraint that might require penalty down variable."""
 has_penalty_down(data::Constraint) = false
@@ -348,7 +348,7 @@ has_penalty_down(data::Constraint{ScheduleConstraintType}) = true
 
 """ Returns true if a constraint requires a penalty down variable at time step `t`."""
 has_penalty_down(data::Constraint, t) = has_penalty_down(data) & has_penalty(data, t)
-has_penalty_down(data::Constraint, t, resource::Resource) = has_penalty_down(data, t) & data.resource == resource
+has_penalty_down(data::Constraint, t, resource::Resource) = has_penalty_down(data, t) & (data.resource == resource)
 
 """ Returns subset of time steps `t ∈ 𝒯` where penalty up variable should be added."""
 get_penalty_up_time(data::Vector{<:Data}, 𝒯) = [t for t in 𝒯 if any(has_penalty_up(c, t) for c in data)]
@@ -616,7 +616,8 @@ function HydroGenerator(
     input = Dict(water_resource => 1.0)
     output = Dict(water_resource => 1.0, electricity_resource => 1.0)
 
-    return HydroGenerator(id, cap, pq_curve, opex_var, opex_fixed, electricity_resource, water_resource, input, output, Data[])
+    return HydroGenerator(id, cap, pq_curve, opex_var, opex_fixed,
+        electricity_resource, water_resource, input, output, Data[])
 end
 
 """
@@ -648,6 +649,35 @@ function get_nodes_with_discharge_segments(𝒩::Vector{HydroGenerator})
     return [n for n in 𝒩 if has_discharge_segments(pq_curve(n))]
 end
 
+""" Returns the maximum power of `HydroGenerator` based on pq_curve input."""
+function max_power(n::HydroGenerator)
+    if pq_curve(n) isa PqPoints
+        return pq_curve(n).power_levels[end]
+    else
+        return 1
+    end
+    throw("Max power for your PQ-curve type has not been implemented.")
+end
+
+""" Returns the maximum discharge of `HydroGenerator` based on pq_curve input."""
+function max_discharge(n::HydroGenerator)
+    if pq_curve(n) isa PqPoints
+        return pq_curve(n).discharge_levels[end]
+    elseif pq_curve(n) isa EnergyEquivalent
+        return 1 / pq_curve(n).value
+    end
+    throw("Max discharge for your PQ-curve type has not been implemented.")
+end
+
+""" Returns the `HydroGenerator` capacity for a given resource (either power or discharge)."""
+function EMB.capacity(n::HydroGenerator, t, p::Resource)
+    if p == electricity_resource(n)
+        return capacity(n, t) * max_power(n)
+    elseif p == water_resource(n)
+        return capacity(n, t) * max_discharge(n)
+    end
+    throw("Hydro generator capacity resource has to be either water or electricity.")
+end
 
 
 # TODO make pump module
