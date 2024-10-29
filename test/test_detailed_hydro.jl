@@ -323,7 +323,7 @@ end
         production = value.([m[:flow_out][hydro_generator, t, Power] for t in sp])
         discharge = value.([m[:flow_out][hydro_generator, t, Water] for t in sp])
         discharge_estimated = map(sp) do t
-            prod_to_discharge = linear_interpolation(
+            prod_to_discharge = Interpolations.linear_interpolation(
                 hydro_generator.pq_curve.power_levels * capacity(hydro_generator, t),
                 hydro_generator.pq_curve.discharge_levels * capacity(hydro_generator, t)
             )
