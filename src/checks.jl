@@ -207,22 +207,22 @@ function EMB.check_node(n::HydroGate, 𝒯, modeltype::EMB.EnergyModel, check_ti
 end
 
 """
-    EMB.check_node(n::HydroGenerator, 𝒯, modeltype::EMB.EnergyModel, check_timeprofiles::Bool)
+    EMB.check_node(n::HydroUnit, 𝒯, modeltype::EMB.EnergyModel, check_timeprofiles::Bool)
 
-This method checks that the *[`HydroGenerator`](@ref)* node is valid.
+This method checks that the *[`HydroUnit`](@ref)* and *[`HydroPump`](@ref)* node is valid.
 
 ## Checks
  - The field `cap` is required to be non-negative.
- - The values of the dictionary `input` are required to be non-negative.
- - The values of the dictionary `output` are required to be non-negative.
+ - The PqPoints vectors are required to have the same length.
+ - The PqPoint vectors should start at 0.
+ - The PqPoints vectors are required to be increasing.
+ - One of the PqPoints vectors should have values between 0 and 1.
+ - The PqPoints curve should be concave for generators and convex for pumps.
  - The value of the field `fixed_opex` is required to be non-negative and
    accessible through a `StrategicPeriod` as outlined in the function
    `check_fixed_opex(n, 𝒯ᴵⁿᵛ, check_timeprofiles)`.
-- The field `pq_curve` is required to be `nothing` or a dict with values for two resources \
-in the form of two vectors of equal size with non-negative values.
-- the field `η` must be nothing if the field `pq_curve` is nothing.
 """
-function EMB.check_node(n::HydroGenerator, 𝒯, modeltype::EnergyModel, check_timeprofiles::Bool)
+function EMB.check_node(n::HydroUnit, 𝒯, modeltype::EnergyModel, check_timeprofiles::Bool)
 
     𝒯ᴵⁿᵛ = strategic_periods(𝒯)
 
@@ -231,48 +231,48 @@ function EMB.check_node(n::HydroGenerator, 𝒯, modeltype::EnergyModel, check_t
         "The capacity must be non-negative."
     )
 
-    @assert_or_log(
-        sum(inputs(n, p) ≥ 0 for p ∈ inputs(n)) == length(inputs(n)),
-        "The values for the Dictionary `input` must be non-negative."
-    )
-
- #=
-    @assert_or_log(
-        sum(outputs(n, p) ≥ 0 for p ∈ outputs(n)) == length(outputs(n)),
-        "The values for the Dictionary `output` must be non-negative."
-    )
-
-    if !isnothing(pq_curve(n))
+    pq = pq_curve(n)
+    if pq isa PqPoints
         @assert_or_log(
-
-            length(pq_curve(n)) == 2,
-            "There must be 2 resources given in the Dictionary `pq_curve`."
+            length(pq.power_levels) == length(pq.discharge_levels),
+            "The PqPoint vectors must have the same length."
         )
 
-        for p ∈ pq_curve(n)
-            values = pq_curve(n, p)
-            @assert_or_log(
-                sum(v < 0 for v in values)==0,
-                "All the values in Dictionary `pq_curve` must be non-negative."
-                 )
+        @assert_or_log(
+            (pq.power_levels[begin] ≈ 0) & (pq.discharge_levels[begin] ≈ 0),
+            "The PqPoint vectors should start at 0."
+        )
 
+        @assert_or_log(
+            issorted(pq.power_levels, lt= <=) & issorted(pq.discharge_levels, lt= <=),
+            "The PqPoint vectors must be increasing."
+        )
+
+        @assert_or_log(
+            ((pq.power_levels[begin] ≈ 0) & (pq.power_levels[end] ≈ 1)) |
+            ((pq.discharge_levels[begin] ≈ 0) & (pq.discharge_levels[end] ≈ 1)),
+            "One of the PqPoint vectors should be from 0 to 1."
+        )
+
+        if n isa HydroGenerator
             @assert_or_log(
-            length(pq_curve(n, p)) == length(pq_curve(n, pq_curve(n)[1])),
-            "Equal number of values must be provided for all resources in the Dictionary `pq_curve`."
+                issorted(
+                    (pq.power_levels[begin+1:end] - pq.power_levels[begin:end-1]) ./
+                        (pq.discharge_levels[begin+1:end] - pq.discharge_levels[begin:end-1]),
+                    rev=true, lt= <=
+                ),
+                "The PqPoint curve should be concave for generators."
+            )
+        else
+            @assert_or_log(
+                issorted(
+                    (pq.power_levels[begin+1:end] - pq.power_levels[begin:end-1]) ./
+                        (pq.discharge_levels[begin+1:end] - pq.discharge_levels[begin:end-1]),
+                    rev=false, lt= <=
+                ),
+                "The PqPoint curve should be convex for pumps."
             )
         end
-
-
-    else
-        @assert_or_log(
-            (isempty(efficiency(n))),
-             "The efficiency `η` must be empty if the `pq_curve` is `nothing`."
-             )
-
     end
-|| =#
-   #TODO add test for concave PQ-curve
-
-
     EMB.check_fixed_opex(n, 𝒯ᴵⁿᵛ, check_timeprofiles)
 end
