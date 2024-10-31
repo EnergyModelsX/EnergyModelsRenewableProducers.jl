@@ -317,52 +317,54 @@ function EMB.constraints_opex_var(m, n::HydroUnit, 𝒯ᴵⁿᵛ, modeltype::Ene
 end
 
 """
-    build_hydro_gate_constraints(m, n::HydroGate, c::Constraint, 𝒯::TimeStructure, p::ResourceCarrier)
+    build_constraint(m, n::HydroGate, c::Constraint, 𝒯::TimeStructure, p::ResourceCarrier)
 
 Create minimum/maximum/schedule discharge constraints for the `HydroGate` node. The
 `Constraint{T}` can have types `T <: AbstractConstraintType` that defines the direction of
 the constraint.
 Penalty variables are included unless penalty value is not set or `Inf``.
 """
-function build_hydro_gate_constraints(m, n::HydroGate, c::Constraint{MinConstraintType},
-    𝒯::TimeStructure, p::ResourceCarrier)
+function build_constraint(m, n::Union{HydroGate}, c::Constraint{MinConstraintType},
+    𝒯::TimeStructure, p::ResourceCarrier, var_name, penalty_name)
     for t ∈ 𝒯
         if is_active(c, t)
             if has_penalty(c, t)
-                @constraint(m, m[:flow_out][n, t, p] + m[:gate_disch_penalty_up][n, t] ≥
+                @constraint(m, m[Symbol(var_name)][n, t, p] + m[Symbol(penalty_name * "_up")][n, t] ≥
                     EMB.capacity(n, t) * value(c, t))
             else
-                @constraint(m, m[:flow_out][n, t, p] ≥ EMB.capacity(n, t) * value(c, t))
+                @constraint(m, m[Symbol(var_name)][n, t, p] ≥ EMB.capacity(n, t) * value(c, t))
             end
         end
     end
 end
-function build_hydro_gate_constraints(m, n::HydroGate, c::Constraint{MaxConstraintType},
-    𝒯::TimeStructure, p::ResourceCarrier)
+function build_constraint(m, n::Union{HydroGate}, c::Constraint{MaxConstraintType},
+    𝒯::TimeStructure, p::ResourceCarrier, var_name, penalty_name)
     for t ∈ 𝒯
         if is_active(c, t)
             if has_penalty(c, t)
-                @constraint(m, m[:flow_out][n, t, p] - m[:gate_disch_penalty_down][n, t] ≤
+                @constraint(m, m[Symbol(var_name)][n, t, p] - m[Symbol(penalty_name * "_down")][n, t] ≤
                     EMB.capacity(n, t) * value(c, t))
             else
-                @constraint(m, m[:flow_out][n, t, p] ≤ EMB.capacity(n, t) * value(c, t))
+                @constraint(m, m[Symbol(var_name)][n, t, p] ≤ EMB.capacity(n, t) * value(c, t))
             end
         end
     end
 end
-function build_hydro_gate_constraints(m, n::HydroGate, c::Constraint{ScheduleConstraintType},
-    𝒯::TimeStructure, p::ResourceCarrier)
+function build_constraint(m, n::Union{HydroGate}, c::Constraint{ScheduleConstraintType},
+    𝒯::TimeStructure, p::ResourceCarrier, var_name, penalty_name)
     for t ∈ 𝒯
         if is_active(c, t)
             if has_penalty(c, t)
-                @constraint(m, m[:flow_out][n, t, p] +  m[:gate_disch_penalty_up][n, t] -
-                    m[:gate_disch_penalty_down][n, t] == EMB.capacity(n, t) * value(c, t))
+                @constraint(m, m[Symbol(var_name)][n, t, p] + m[Symbol(penalty_name * "_up")][n, t] -
+                    m[Symbol(penalty_name * "_down")][n, t] == EMB.capacity(n, t) * value(c, t))
             else
-                JuMP.fix(m[:flow_out][n, t, p], EMB.capacity(n, t) * value(c, t); force=true)
+                JuMP.fix(m[Symbol(var_name)][n, t, p], EMB.capacity(n, t) * value(c, t); force=true)
             end
         end
     end
 end
+
+
 
 """
     constraints_flow_out(m, n::HydroGate, 𝒯::TimeStructure, modeltype::EnergyModel)
@@ -382,7 +384,7 @@ function EMB.constraints_flow_out(m, n::HydroGate, 𝒯::TimeStructure, modeltyp
     # If HydroGate has constraint data, build the required constraints
     constraints = filter(is_constraint_data, node_data(n))
     for c in constraints
-        build_hydro_gate_constraints(m, n, c, 𝒯, p)
+        build_constraint(m, n, c, 𝒯, p, "flow_out", "gate_disch_penalty")
     end
 end
 
