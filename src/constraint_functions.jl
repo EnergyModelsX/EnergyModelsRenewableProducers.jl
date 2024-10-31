@@ -357,14 +357,13 @@ function EMB.constraints_flow_out(m, n::HydroGate, 𝒯::TimeStructure, modeltyp
 end
 
 function build_pq_constaints(m, n::HydroUnit, c::PqPoints, 𝒯::TimeStructure)
-    η = Real[]
-    for i in range(2, length(c.discharge_levels))
-        push!(η, (c.power_levels[i] - c.power_levels[i-1]) /
-            (c.discharge_levels[i] - c.discharge_levels[i-1]))
-    end
+
+    Q = discharge_segments(c)
+    η = [(c.power_levels[q+1] - c.power_levels[q]) /
+            (c.discharge_levels[q+1] - c.discharge_levels[q])
+            for q ∈ Q]
 
     # Range of discharge segments
-    Q = discharge_segments(c)
     @constraint(m, [t ∈ 𝒯, q ∈ Q], m[:discharge_segment][n, t, q] ≤
         capacity(n, t) * (c.discharge_levels[q+1].- c.discharge_levels[q]))
 
