@@ -329,8 +329,11 @@ is_active(s::Constraint, t) = s.flag[t]
 """ Returns the value of a constraint at time step `t`."""
 value(s::Constraint, t) = s.value[t]
 
+""" Returns penalty value of constraint."""
+penalty(s::Constraint, t) = s.penalty[t]
+
 """ Returns true if a constraint has penalty at time step `t`."""
-has_penalty(s::Constraint, t) = !isinf(s.penalty[t]) & is_active(s, t)
+has_penalty(s::Constraint, t) = !isinf(penalty(s, t)) & is_active(s, t)
 
 """ Returns true if a constraint has a constraint that might require penalty up variable."""
 has_penalty_up(data::Constraint) = false
@@ -349,17 +352,6 @@ has_penalty_down(data::Constraint{ScheduleConstraintType}) = true
 """ Returns true if a constraint requires a penalty down variable at time step `t`."""
 has_penalty_down(data::Constraint, t) = has_penalty_down(data) & has_penalty(data, t)
 has_penalty_down(data::Constraint, t, resource::Resource) = has_penalty_down(data, t) & (data.resource == resource)
-
-""" Returns subset of time steps `t ∈ 𝒯` where penalty up variable should be added."""
-get_penalty_up_time(data::Vector{<:Data}, 𝒯) = [t for t in 𝒯 if any(has_penalty_up(c, t) for c in data)]
-get_penalty_up_time(data::Vector{<:Data}, 𝒯, resource::Resource) = [t for t in 𝒯 if any(has_penalty_up(c, t, resource) for c in data)]
-
-""" Returns subset of time steps `t ∈ 𝒯` where penalty down variable should be added."""
-get_penalty_down_time(data::Vector{<:Data}, 𝒯) = [t for t in 𝒯 if any(has_penalty_down(c, t) for c in data)]
-get_penalty_down_time(data::Vector{<:Data}, 𝒯, resource::Resource) = [t for t in 𝒯 if any(has_penalty_down(c, t, resource) for c in data)]
-
-""" Returns penalty value of constraint."""
-penalty(s::Constraint, t) = s.penalty[t]
 
 """
     HydroReservoir{T} <: EMB.Storage{T}
