@@ -558,3 +558,47 @@ end
         @test sum(discharge) ≈ sum(upflow) atol=1e-12
     end
 end
+
+@testset "Test generator and pump constraints" begin
+    case, model = build_case_pump()
+    optimizer = optimizer_with_attributes(HiGHS.Optimizer, MOI.Silent() => true)
+
+    reservoir_up = case[:nodes][1]
+    reservoir_down = case[:nodes][2]
+    hydro_generator = case[:nodes][3]
+    hydro_pump = case[:nodes][4]
+    market = case[:nodes][5]
+
+    Power = case[:products][2]
+    Water = case[:products][3]
+
+    gen_flag = [true, false, false, false]
+    push!(hydro_generator.data,
+        Constraint{MinConstraintType}(
+            Water,
+            FixedProfile(0.6),                               # value
+            OperationalProfile(gen_flag), # flag
+            FixedProfile(Inf),                               # penalty
+        )
+    )
+
+    pump_flag = [false, true, false, false]
+    push!(hydro_pump.data,
+        Constraint{MinConstraintType}(
+            Water,
+            FixedProfile(0.4),                               # value
+            OperationalProfile(pump_flag), # flag
+            FixedProfile(Inf),                               # penalty
+        )
+    )
+
+    m = EMB.run_model(case, model, optimizer)
+
+    # Verify that minimum constraint is respected
+    for sp in strategic_periods(case[:T])
+        gen_discharge = value.([m[:flow_out][hydro_generator, t, Water] for t in sp])
+        @test (gen_discharge[1] ≥ 0.6 * 20) | (gen_discharge[1] ≈ 0.6 * 20)
+        pump_discharge = value.([m[:flow_out][hydro_pump, t, Water] for t in sp])
+        @test (pump_discharge[2] ≥ 0.4 * 20) | (pump_discharge[2] ≈ 0.4 * 20)
+    end
+end

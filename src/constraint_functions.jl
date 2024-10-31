@@ -278,7 +278,7 @@ function EMB.constraints_opex_var(m, n::HydroReservoir{T}, 𝒯ᴵⁿᵛ,
     )
 end
 
-function EMB.constraints_opex_var(m, n::HydroGenerator, 𝒯ᴵⁿᵛ, modeltype::EnergyModel)
+function EMB.constraints_opex_var(m, n::HydroUnit, 𝒯ᴵⁿᵛ, modeltype::EnergyModel)
     constraints = filter(is_constraint_data, node_data(n))
 
     opex_var = @expression(m, [t_inv ∈ 𝒯ᴵⁿᵛ], sum(m[:cap_use][n, t] * EMB.opex_var(n, t) *
@@ -485,6 +485,49 @@ function build_hydro_generator_constraints(m, n::HydroGenerator, c::Constraint{S
     end
 end
 
+function build_hydro_generator_constraints(m, n::HydroPump, c::Constraint{MinConstraintType},
+    𝒯::TimeStructure)
+    p = c.resource
+    for t ∈ 𝒯
+        if is_active(c, t)
+            if has_penalty(c, t)
+                @constraint(m, m[:flow_in][n, t, p] + m[:gen_penalty_up][n, t, p] ≥
+                    EMB.capacity(n, t, p) * value(c, t))
+            else
+                @constraint(m, m[:flow_in][n, t, p] ≥ EMB.capacity(n, t, p) * value(c, t))
+            end
+        end
+    end
+end
+function build_hydro_generator_constraints(m, n::HydroPump, c::Constraint{MaxConstraintType},
+    𝒯::TimeStructure)
+    p = c.resource
+    for t ∈ 𝒯
+        if is_active(c, t)
+            if has_penalty(c, t)
+                @constraint(m, m[:flow_in][n, t, p] - m[:gen_penalty_down][n, t, p] ≤
+                    EMB.capacity(n, t, p) * value(c, t))
+            else
+                @constraint(m, m[:flow_in][n, t, p] ≤ EMB.capacity(n, t, p) * value(c, t))
+            end
+        end
+    end
+end
+function build_hydro_generator_constraints(m, n::HydroPump, c::Constraint{ScheduleConstraintType},
+    𝒯::TimeStructure)
+    p = c.resource
+    for t ∈ 𝒯
+        if is_active(c, t)
+            if has_penalty(c, t)
+                @constraint(m, m[:flow_in][n, t, p] +  m[:gen_penalty_up][n, t, p] -
+                    m[:gen_penalty_down][n, t, p] == EMB.capacity(n, t, p) * value(c, t))
+            else
+                JuMP.fix(m[:flow_in][n, t, p], EMB.capacity(n, t, p) * value(c, t); force=true)
+            end
+        end
+    end
+end
+
 function EMB.constraints_flow_in(m, n::HydroGenerator, 𝒯::TimeStructure, modeltype::EnergyModel)
     Q = discharge_segments(pq_curve(n))
     @constraint(m, [t ∈ 𝒯], m[:flow_in][n, t, water_resource(n) ] ==
@@ -493,6 +536,11 @@ end
 
 function EMB.constraints_flow_in(m, n::HydroPump, 𝒯::TimeStructure, modeltype::EnergyModel)
     build_pq_constaints(m, n, pq_curve(n), 𝒯)
+
+    constraints = filter(is_constraint_data, node_data(n))
+    for c in constraints
+        build_hydro_generator_constraints(m, n, c, 𝒯)
+    end
 end
 
 """
