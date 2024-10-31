@@ -517,9 +517,8 @@ function build_hydro_generator_constraints(m, n::HydroPump, c::Constraint{Schedu
 end
 
 function EMB.constraints_flow_in(m, n::HydroGenerator, 𝒯::TimeStructure, modeltype::EnergyModel)
-    Q = discharge_segments(pq_curve(n))
     @constraint(m, [t ∈ 𝒯], m[:flow_in][n, t, water_resource(n) ] ==
-        sum(m[:discharge_segment][n, t, q] for q ∈ Q))
+        m[:flow_out][n, t, water_resource(n)])
 end
 
 function EMB.constraints_flow_in(m, n::HydroPump, 𝒯::TimeStructure, modeltype::EnergyModel)
@@ -548,7 +547,6 @@ function EMB.constraints_flow_out(m, n::HydroGenerator, 𝒯::TimeStructure, mod
 end
 
 function EMB.constraints_flow_out(m, n::HydroPump, 𝒯::TimeStructure, modeltype::EnergyModel)
-    Q = discharge_segments(pq_curve(n))
     @constraint(m, [t ∈ 𝒯], m[:flow_out][n, t, water_resource(n) ] ==
-        sum(m[:discharge_segment][n, t, q] for q ∈ Q))
+        m[:flow_in][n, t, water_resource(n)])
 end
