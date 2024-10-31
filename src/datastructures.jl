@@ -620,6 +620,9 @@ function EMB.capacity(n::HydroUnit, t, p::Resource)
     end
     throw("Hydro HydroUnit capacity resource has to be either water or electricity.")
 end
+function EMB.capacity(n::EMB.Node, t, p::Resource)
+    return EMB.capacity(n, t)
+end
 
 
 # TODO make pump module
