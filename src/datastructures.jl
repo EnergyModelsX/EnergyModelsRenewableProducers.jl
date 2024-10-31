@@ -330,7 +330,7 @@ is_active(s::Constraint, t) = s.flag[t]
 value(s::Constraint, t) = s.value[t]
 
 """ Returns true if a constraint has penalty at time step `t`."""
-has_penalty(s::Constraint, t) = !isinf(s.penalty[t])
+has_penalty(s::Constraint, t) = !isinf(s.penalty[t]) & is_active(s, t)
 
 """ Returns true if a constraint has a constraint that might require penalty up variable."""
 has_penalty_up(data::Constraint) = false
