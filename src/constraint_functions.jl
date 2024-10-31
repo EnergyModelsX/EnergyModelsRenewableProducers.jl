@@ -273,28 +273,22 @@ function EMB.constraints_opex_var(m, n::HydroUnit, 𝒯ᴵⁿᵛ, modeltype::Ene
     penalty_up_var = Dict(t_inv => AffExpr(0) for t_inv ∈ 𝒯ᴵⁿᵛ)
     penalty_down_var = Dict(t_inv => AffExpr(0) for t_inv ∈ 𝒯ᴵⁿᵛ)
 
-    for c in constraints
-        for t_inv ∈ 𝒯ᴵⁿᵛ
+    penalty_up_var = @expression(m, [t_inv ∈ 𝒯ᴵⁿᵛ],
+        sum(penalty(c, t) * scale_op_sp(t_inv, t) * m[:gen_penalty_up][n, t, p]
             for t ∈ t_inv
-                for p ∈ [water_resource(n), electricity_resource(n)]
-                    if has_penalty_up(c, t, p)
-                        add_to_expression!(
-                            penalty_up_var[t_inv],
-                            penalty(c, t) * scale_op_sp(t_inv, t),
-                            m[:gen_penalty_up][n, t, p]
-                        )
-                    end
-                    if has_penalty_down(c, t, p)
-                        add_to_expression!(
-                            penalty_down_var[t_inv],
-                            penalty(c, t) * scale_op_sp(t_inv, t),
-                            m[:gen_penalty_down][n, t, p]
-                        )
-                    end
-                end
-            end
-        end
-    end
+            for p ∈ [water_resource(n), electricity_resource(n)]
+            for c in constraints
+            if has_penalty_up(c, t, p)
+        )
+    )
+    penalty_down_var = @expression(m, [t_inv ∈ 𝒯ᴵⁿᵛ],
+        sum(penalty(c, t) * scale_op_sp(t_inv, t) * m[:gen_penalty_down][n, t, p]
+            for t ∈ t_inv
+            for p ∈ [water_resource(n), electricity_resource(n)]
+            for c in constraints
+            if has_penalty_down(c, t, p)
+        )
+    )
 
     @constraint(m, [t_inv ∈ 𝒯ᴵⁿᵛ],
         m[:opex_var][n, t_inv] == opex_var[t_inv] + penalty_up_var[t_inv] +
