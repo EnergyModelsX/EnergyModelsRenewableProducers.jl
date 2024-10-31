@@ -550,8 +550,12 @@ end
 
     # Verify that sum upflow and discharge is equal
     for sp in strategic_periods(case[:T])
-        discharge = value.([m[:flow_out][hydro_generator, t, Water] for t in sp]) .* [duration(t) for t in sp]
-        upflow = value.([m[:flow_in][hydro_pump, t, Water] for t in sp]) .* [duration(t) for t in sp]
+        discharge = map(sp) do t
+            value(m[:flow_out][hydro_generator, t, Water]) * duration(t)
+        end
+        upflow = map(sp) do t
+            value(m[:flow_in][hydro_pump, t, Water]) * duration(t)
+        end
         @test sum(discharge) ≈ sum(upflow) atol=1e-12
     end
 end
