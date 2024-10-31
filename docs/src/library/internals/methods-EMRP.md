@@ -23,4 +23,5 @@ EnergyModelsRenewableProducers.electricity_resource
 EnergyModelsRenewableProducers.is_constraint_resource
 EnergyModelsRenewableProducers.max_power
 EnergyModelsRenewableProducers.max_flow
+EnergyModelsRenewableProducers.EnergyEquivalent
 ```
