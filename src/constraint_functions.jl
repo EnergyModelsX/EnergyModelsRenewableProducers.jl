@@ -67,8 +67,6 @@ The change in storage level in the reservoir at operational periods `t` is the i
 and the spillage of water due to overflow `:hydro_spill`.
 """
 function EMB.constraints_level_aux(m, n::HydroStorage, 𝒯, 𝒫, modeltype::EnergyModel)
-    # Declaration of the required subsets
-    p_stor = storage_resource(n)
 
     # Constraint for the change in the level in a given operational period
     @constraint(m, [t ∈ 𝒯],
@@ -103,41 +101,26 @@ Penalty variables are included unless penalty value is not set or `Inf``.
 """
 function build_hydro_reservoir_vol_constraints(m, n::HydroReservoir, c::Constraint{MinConstraintType}, 𝒯)
     p = storage_resource(n)
-    for t ∈ 𝒯
-        if is_active(c, t)
-            if has_penalty(c, t)
-                @constraint(m, m[:stor_level][n, t] + m[:rsv_penalty_up][n, t, p] ≥
-                    EMB.capacity(EMB.level(n), t) * value(c, t))
-            else
-                @constraint(m, m[:stor_level][n, t] ≥ EMB.capacity(EMB.level(n), t) * value(c, t))
-            end
-        end
-    end
+    @constraint(m, [t ∈ 𝒯; is_active(c, t) & has_penalty(c, t)],
+        m[:stor_level][n, t] + m[:rsv_penalty_up][n, t, p] ≥ EMB.capacity(EMB.level(n), t) * value(c, t))
+    @constraint(m, [t ∈ 𝒯; is_active(c, t) & !has_penalty(c, t)],
+        m[:stor_level][n, t] ≥ EMB.capacity(EMB.level(n), t) * value(c, t))
 end
 function build_hydro_reservoir_vol_constraints(m, n::HydroReservoir, c::Constraint{MaxConstraintType}, 𝒯)
     p = storage_resource(n)
-    for t ∈ 𝒯
-        if is_active(c, t)
-            if has_penalty(c, t)
-                @constraint(m, m[:stor_level][n, t] - m[:rsv_penalty_down][n, t, p] ≤
-                    EMB.capacity(EMB.level(n), t) * value(c, t))
-            else
-                @constraint(m, m[:stor_level][n, t] ≤ EMB.capacity(EMB.level(n), t) * value(c, t))
-            end
-        end
-    end
+    @constraint(m, [t ∈ 𝒯; is_active(c, t) & has_penalty(c, t)],
+        m[:stor_level][n, t] - m[:rsv_penalty_down][n, t, p] ≤ EMB.capacity(EMB.level(n), t) * value(c, t))
+    @constraint(m, [t ∈ 𝒯; is_active(c, t) & !has_penalty(c, t)],
+        m[:stor_level][n, t] ≤ EMB.capacity(EMB.level(n), t) * value(c, t))
 end
 function build_hydro_reservoir_vol_constraints(m, n::HydroReservoir, c::Constraint{ScheduleConstraintType}, 𝒯)
     p = storage_resource(n)
+    @constraint(m, [t ∈ 𝒯; is_active(c, t) & has_penalty(c, t)],
+        m[:stor_level][n, t] + m[:rsv_penalty_up][n, t, p] - m[:rsv_penalty_down][n, t, p] ==
+        EMB.capacity(EMB.level(n), t) * value(c, t))
     for t ∈ 𝒯
-        if is_active(c, t)
-            if has_penalty(c, t)
-                @constraint(m, m[:stor_level][n, t] +
-                    m[:rsv_penalty_up][n, t, p] - m[:rsv_penalty_down][n, t, p] ==
-                    EMB.capacity(EMB.level(n), t) * value(c, t))
-            else
-                JuMP.fix(m[:stor_level][n, t], EMB.capacity(EMB.level(n), t) * value(c, t))
-            end
+        if is_active(c, t) & !has_penalty(c, t)
+            JuMP.fix(m[:stor_level][n, t], EMB.capacity(EMB.level(n), t) * value(c, t))
         end
     end
 end
@@ -155,8 +138,6 @@ through the output `flow_out`.
 """
 function EMB.constraints_level_aux(m, n::HydroReservoir{T} where T<:EMB.StorageBehavior,
     𝒯, 𝒫, modeltype::EnergyModel)
-    # Declaration of the required subsets
-    p_stor = storage_resource(n)
 
     # Constraint for the change in the level in a given operational period
     @constraint(
