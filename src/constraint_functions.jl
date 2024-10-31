@@ -102,10 +102,11 @@ the constraint.
 Penalty variables are included unless penalty value is not set or `Inf``.
 """
 function build_hydro_reservoir_vol_constraints(m, n::HydroReservoir, c::Constraint{MinConstraintType}, 𝒯)
+    p = storage_resource(n)
     for t ∈ 𝒯
         if is_active(c, t)
             if has_penalty(c, t)
-                @constraint(m, m[:stor_level][n, t] + m[:rsv_vol_penalty_up][n, t] ≥
+                @constraint(m, m[:stor_level][n, t] + m[:rsv_penalty_up][n, t, p] ≥
                     EMB.capacity(EMB.level(n), t) * value(c, t))
             else
                 @constraint(m, m[:stor_level][n, t] ≥ EMB.capacity(EMB.level(n), t) * value(c, t))
@@ -114,10 +115,11 @@ function build_hydro_reservoir_vol_constraints(m, n::HydroReservoir, c::Constrai
     end
 end
 function build_hydro_reservoir_vol_constraints(m, n::HydroReservoir, c::Constraint{MaxConstraintType}, 𝒯)
+    p = storage_resource(n)
     for t ∈ 𝒯
         if is_active(c, t)
             if has_penalty(c, t)
-                @constraint(m, m[:stor_level][n, t] - m[:rsv_vol_penalty_down][n, t] ≤
+                @constraint(m, m[:stor_level][n, t] - m[:rsv_penalty_down][n, t, p] ≤
                     EMB.capacity(EMB.level(n), t) * value(c, t))
             else
                 @constraint(m, m[:stor_level][n, t] ≤ EMB.capacity(EMB.level(n), t) * value(c, t))
@@ -126,11 +128,12 @@ function build_hydro_reservoir_vol_constraints(m, n::HydroReservoir, c::Constrai
     end
 end
 function build_hydro_reservoir_vol_constraints(m, n::HydroReservoir, c::Constraint{ScheduleConstraintType}, 𝒯)
+    p = storage_resource(n)
     for t ∈ 𝒯
         if is_active(c, t)
             if has_penalty(c, t)
                 @constraint(m, m[:stor_level][n, t] +
-                    m[:rsv_vol_penalty_up][n, t] - m[:rsv_vol_penalty_down][n, t] ==
+                    m[:rsv_penalty_up][n, t, p] - m[:rsv_penalty_down][n, t, p] ==
                     EMB.capacity(EMB.level(n), t) * value(c, t))
             else
                 JuMP.fix(m[:stor_level][n, t], EMB.capacity(EMB.level(n), t) * value(c, t))
@@ -185,9 +188,10 @@ function EMB.constraints_opex_var(m, n::HydroGate, 𝒯ᴵⁿᵛ, modeltype::Ene
     opex_var = @expression(m, [t_inv ∈ 𝒯ᴵⁿᵛ], sum(m[:cap_use][n, t] * EMB.opex_var(n, t) *
         scale_op_sp(t_inv, t) for t ∈ t_inv))
 
+    p = first(inputs(n))
     if length(constraints_up) > 0
         c_up = first(constraints_up)
-        penalty_up_var = @expression(m, [t_inv ∈ 𝒯ᴵⁿᵛ], sum(m[:gate_disch_penalty_up][n, t] *
+        penalty_up_var = @expression(m, [t_inv ∈ 𝒯ᴵⁿᵛ], sum(m[:gate_penalty_up][n, t, p] *
             penalty(c_up, t) * scale_op_sp(t_inv, t) for t ∈ t_inv if has_penalty(c_up, t)))
     else
         penalty_up_var = @expression(m, [t_inv ∈ 𝒯ᴵⁿᵛ], 0)
@@ -195,7 +199,7 @@ function EMB.constraints_opex_var(m, n::HydroGate, 𝒯ᴵⁿᵛ, modeltype::Ene
 
     if length(constraints_down) > 0
         c_down = first(constraints_down)
-        penalty_down_var = @expression(m, [t_inv ∈ 𝒯ᴵⁿᵛ], sum(m[:gate_disch_penalty_down][n, t] *
+        penalty_down_var = @expression(m, [t_inv ∈ 𝒯ᴵⁿᵛ], sum(m[:gate_penalty_down][n, t, p] *
             penalty(c_down, t) * scale_op_sp(t_inv, t) for t ∈ t_inv if has_penalty(c_down, t)))
     else
         penalty_down_var = @expression(m, [t_inv ∈ 𝒯ᴵⁿᵛ], 0)
@@ -255,9 +259,10 @@ function EMB.constraints_opex_var(m, n::HydroReservoir{T}, 𝒯ᴵⁿᵛ,
     constraints_up = filter(has_penalty_up, constraints) # Max and schedule
     constraints_down = filter(has_penalty_down, constraints) # Min and schedule
 
+    p = storage_resource(n)
     if length(constraints_up) > 0
         c_up = first(constraints_up)
-        penalty_up_var = @expression(m, [t_inv ∈ 𝒯ᴵⁿᵛ], sum(m[:rsv_vol_penalty_up][n, t] *
+        penalty_up_var = @expression(m, [t_inv ∈ 𝒯ᴵⁿᵛ], sum(m[:rsv_penalty_up][n, t, p] *
             penalty(c_up, t) * scale_op_sp(t_inv, t) for t ∈ t_inv if has_penalty(c_up, t)))
     else
         penalty_up_var = @expression(m, [t_inv ∈ 𝒯ᴵⁿᵛ], 0)
@@ -265,7 +270,7 @@ function EMB.constraints_opex_var(m, n::HydroReservoir{T}, 𝒯ᴵⁿᵛ,
 
     if length(constraints_down) > 0
         c_down = first(constraints_down)
-        penalty_down_var = @expression(m, [t_inv ∈ 𝒯ᴵⁿᵛ], sum(m[:rsv_vol_penalty_down][n, t] *
+        penalty_down_var = @expression(m, [t_inv ∈ 𝒯ᴵⁿᵛ], sum(m[:rsv_penalty_down][n, t, p] *
             penalty(c_down, t) * scale_op_sp(t_inv, t) for t ∈ t_inv if has_penalty(c_down, t)))
     else
         penalty_down_var = @expression(m, [t_inv ∈ 𝒯ᴵⁿᵛ], 0)
@@ -329,7 +334,7 @@ function build_constraint(m, n::Union{HydroGate}, c::Constraint{MinConstraintTyp
     for t ∈ 𝒯
         if is_active(c, t)
             if has_penalty(c, t)
-                @constraint(m, m[Symbol(var_name)][n, t, p] + m[Symbol(penalty_name * "_up")][n, t] ≥
+                @constraint(m, m[Symbol(var_name)][n, t, p] + m[Symbol(penalty_name * "_up")][n, t, p] ≥
                     EMB.capacity(n, t) * value(c, t))
             else
                 @constraint(m, m[Symbol(var_name)][n, t, p] ≥ EMB.capacity(n, t) * value(c, t))
@@ -342,7 +347,7 @@ function build_constraint(m, n::Union{HydroGate}, c::Constraint{MaxConstraintTyp
     for t ∈ 𝒯
         if is_active(c, t)
             if has_penalty(c, t)
-                @constraint(m, m[Symbol(var_name)][n, t, p] - m[Symbol(penalty_name * "_down")][n, t] ≤
+                @constraint(m, m[Symbol(var_name)][n, t, p] - m[Symbol(penalty_name * "_down")][n, t, p] ≤
                     EMB.capacity(n, t) * value(c, t))
             else
                 @constraint(m, m[Symbol(var_name)][n, t, p] ≤ EMB.capacity(n, t) * value(c, t))
@@ -355,8 +360,8 @@ function build_constraint(m, n::Union{HydroGate}, c::Constraint{ScheduleConstrai
     for t ∈ 𝒯
         if is_active(c, t)
             if has_penalty(c, t)
-                @constraint(m, m[Symbol(var_name)][n, t, p] + m[Symbol(penalty_name * "_up")][n, t] -
-                    m[Symbol(penalty_name * "_down")][n, t] == EMB.capacity(n, t) * value(c, t))
+                @constraint(m, m[Symbol(var_name)][n, t, p] + m[Symbol(penalty_name * "_up")][n, t, p] -
+                    m[Symbol(penalty_name * "_down")][n, t, p] == EMB.capacity(n, t) * value(c, t))
             else
                 JuMP.fix(m[Symbol(var_name)][n, t, p], EMB.capacity(n, t) * value(c, t); force=true)
             end
@@ -384,7 +389,7 @@ function EMB.constraints_flow_out(m, n::HydroGate, 𝒯::TimeStructure, modeltyp
     # If HydroGate has constraint data, build the required constraints
     constraints = filter(is_constraint_data, node_data(n))
     for c in constraints
-        build_constraint(m, n, c, 𝒯, p, "flow_out", "gate_disch_penalty")
+        build_constraint(m, n, c, 𝒯, p, "flow_out", "gate_penalty")
     end
 end
 

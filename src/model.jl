@@ -63,7 +63,7 @@ end
 """
     EMB.variables_node(m, 𝒩::Vector{HydroGate}, 𝒯, modeltype::EnergyModel)
 
-Create the optimization variable `:gate_disch_penalty_up` or `:gate_disch_penalty_down` for every HydroGate node
+Create the optimization variable `:gate_penalty_up` or `:gate_penalty_down` for every HydroGate node
 that has constraints with penalty variables. This variable enables `HydroGate` nodes to take
 penalty if volume or discharge constraint is violated. Wihtout this penalty variable, too
 strict volume restrictions may lead to an infeasible model.
@@ -71,14 +71,16 @@ strict volume restrictions may lead to an infeasible model.
 function EMB.variables_node(m, 𝒩::Vector{HydroGate}, 𝒯,
     modeltype::EnergyModel)
 
-    @variable(m, gate_disch_penalty_up[
+    @variable(m, gate_penalty_up[
         n ∈ 𝒩,
-        t ∈ 𝒯;
+        t ∈ 𝒯,
+        p ∈ inputs(n);
         any([has_penalty_up(data, t) for data in node_data(n)])
     ] ≥ 0)
-    @variable(m, gate_disch_penalty_down[
+    @variable(m, gate_penalty_down[
         n ∈ 𝒩,
-        t ∈ 𝒯;
+        t ∈ 𝒯,
+        p ∈ inputs(n);
         any([has_penalty_down(data, t) for data in node_data(n)])
     ] ≥ 0)
 end
@@ -87,7 +89,7 @@ end
     EMB.variables_node(m, 𝒩::Vector{HydroReservoir{T}}, 𝒯,
     modeltype::EnergyModel) where {T <: EMB.StorageBehavior}
 
-Create the optimization variable `:rsv_vol_penalty_up` or `:rsv_vol_penalty_down` for every
+Create the optimization variable `:rsv_penalty_up` or `:rsv_penalty_down` for every
 `HydroReservoir` node that has constraints with penalty variables. This variable enables
 `HydroReservoir` nodes to take penalty if volume or discharge constraint is violated.
 Wihtout this penalty variable, too strict volume restrictions may lead to an infeasible model.
@@ -95,14 +97,16 @@ Wihtout this penalty variable, too strict volume restrictions may lead to an inf
 function EMB.variables_node(m, 𝒩::Vector{HydroReservoir{T}}, 𝒯,
     modeltype::EnergyModel) where {T <: EMB.StorageBehavior}
 
-    @variable(m, rsv_vol_penalty_up[
+    @variable(m, rsv_penalty_up[
         n ∈ 𝒩,
-        t ∈ 𝒯;
+        t ∈ 𝒯,
+        p ∈ [storage_resource(n)];
         any([has_penalty_up(data, t) for data in node_data(n)])
     ] ≥ 0)
-    @variable(m, rsv_vol_penalty_down[
+    @variable(m, rsv_penalty_down[
         n ∈ 𝒩,
-        t ∈ 𝒯;
+        t ∈ 𝒯,
+        p ∈ [storage_resource(n)];
         any([has_penalty_down(data, t) for data in node_data(n)])
     ] ≥ 0)
 end
