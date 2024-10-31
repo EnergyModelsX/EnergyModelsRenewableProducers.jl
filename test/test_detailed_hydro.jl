@@ -261,7 +261,6 @@ function build_case_generator()
         "hydro_generator", # Node ID
         FixedProfile(hydro_gen_cap),                # Installed discharge capacity
         PqPoints(
-            Symbol(),
             [0, 10, 20] / hydro_gen_cap,
             [0, 10, 22] / hydro_gen_cap
         ),          # PQ-curve
@@ -471,7 +470,6 @@ function build_case_pump()
         "hydro_generator",
         FixedProfile(hydro_gen_cap),                # Installed discharge capacity
         PqPoints(
-            Symbol(),
             [0, 10, 20] / hydro_gen_cap,
             [0, 10, 22] / hydro_gen_cap
         ),          # PQ-curve
@@ -486,7 +484,6 @@ function build_case_pump()
         "hydro_pump",
         FixedProfile(hydro_pump_cap),                # Installed discharge capacity
         PqPoints(
-            Symbol(),
             [0, 15, 30] / hydro_pump_cap,
             [0, 12, 20] / hydro_pump_cap
         ),          # PQ-curve

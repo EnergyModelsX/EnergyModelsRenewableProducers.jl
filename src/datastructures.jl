@@ -480,16 +480,10 @@ abstract type AbstractPqCurve end
 
 # do we need this or can we use existing functionality in outputs?
 struct EnergyEquivalent <: AbstractPqCurve
-    name::Symbol
     value::Real # MW / m3/s
 end
 
 struct PqPoints <: AbstractPqCurve
-    # requiremets: equal size vectors
-    #              0-0 as first point
-    #              concave function
-    #              max discharge = max capacity
-    name::Symbol
     power_levels::Vector{Real}  # MW / m3/s
     discharge_levels::Vector{Real} #share of total discharege capacity (0,1)
     function PqPoints(name, power_levels, discharge_levels)
@@ -500,27 +494,10 @@ struct PqPoints <: AbstractPqCurve
     end
 end
 
-#=
-struct PqEfficiencyCurve <: AbstractPqCurve
-    # requiremets: non-decreasing efficiency
-    #              0 as first discharge level
-    #              max discharge = max capacity
-    #              length(efficiency) == length(discharge_levels)-1
-    name::Symbol
-    efficiency::Vector{Real}  # MW / m3/s
-    discharge_levels::Vector{Real} #share of total discharege capacity (0,1)
-    refHead::Real
-end
-=#
+"""
+    HydroGenerator <: HydroUnit
 
-
-#struct PqCurveHeadDependen <: AbstractPqCurve
-#    name::Symbol
-#    value::Real
-#end
-
-
-""" A regular hydropower plant, modelled as a `NetworkNode` node.
+A regular hydropower plant, modelled as a `NetworkNode` node.
 
 ## Fields
 - **`id`** is the name/identifier of the node.\n
