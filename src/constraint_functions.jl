@@ -386,15 +386,12 @@ function EMB.constraints_flow_out(m, n::HydroGate, 𝒯::TimeStructure, modeltyp
     end
 end
 
-function build_pq_constaints(m, n::HydroGenerator, c::PqPoints, 𝒯::TimeStructure)
+function build_pq_constaints(m, n::HydroUnit, c::PqPoints, 𝒯::TimeStructure)
     η = Real[]
     for i in range(2, length(c.discharge_levels))
         push!(η, (c.power_levels[i] - c.power_levels[i-1]) /
             (c.discharge_levels[i] - c.discharge_levels[i-1]))
     end
-
-    @constraint(m, [t ∈ 𝒯], m[:flow_out][n, t, electricity_resource(n)] ==
-        m[:cap_use][n, t] * outputs(n, electricity_resource(n)))
 
     # Range of discharge segments
     Q = discharge_segments(c)
@@ -402,28 +399,6 @@ function build_pq_constaints(m, n::HydroGenerator, c::PqPoints, 𝒯::TimeStruct
         capacity(n, t) * (c.discharge_levels[q+1].- c.discharge_levels[q]))
 
     @constraint(m, [t ∈ 𝒯], m[:flow_out][n, t, water_resource(n) ] ==
-        sum(m[:discharge_segment][n, t, q] for q ∈ Q))
-
-    @constraint(m, [t ∈ 𝒯], m[:cap_use][n, t] ==
-        sum(m[:discharge_segment][n, t, q]* η[q] for q ∈ Q))
-end
-
-function build_pq_constaints(m, n::HydroPump, c::PqPoints, 𝒯::TimeStructure)
-    η = Real[]
-    for i in range(2, length(c.discharge_levels))
-        push!(η, (c.power_levels[i] - c.power_levels[i-1]) /
-            (c.discharge_levels[i] - c.discharge_levels[i-1]))
-    end
-
-    @constraint(m, [t ∈ 𝒯], m[:flow_in][n, t, electricity_resource(n)] ==
-        m[:cap_use][n, t] * inputs(n, electricity_resource(n)))
-
-    # Range of discharge segments
-    Q = discharge_segments(c)
-    @constraint(m, [t ∈ 𝒯, q ∈ Q], m[:discharge_segment][n, t, q] ≤
-        capacity(n, t) * (c.discharge_levels[q+1].- c.discharge_levels[q]))
-
-    @constraint(m, [t ∈ 𝒯], m[:flow_in][n, t, water_resource(n) ] ==
         sum(m[:discharge_segment][n, t, q] for q ∈ Q))
 
     @constraint(m, [t ∈ 𝒯], m[:cap_use][n, t] ==
@@ -522,7 +497,10 @@ function EMB.constraints_flow_in(m, n::HydroGenerator, 𝒯::TimeStructure, mode
 end
 
 function EMB.constraints_flow_in(m, n::HydroPump, 𝒯::TimeStructure, modeltype::EnergyModel)
+
     build_pq_constaints(m, n, pq_curve(n), 𝒯)
+    @constraint(m, [t ∈ 𝒯], m[:flow_in][n, t, electricity_resource(n)] ==
+        m[:cap_use][n, t] * inputs(n, electricity_resource(n)))
 
     constraints = filter(is_constraint_data, node_data(n))
     for c in constraints
@@ -538,6 +516,8 @@ Function for creating the constraint on the outlet flow from a HydroGenerator No
 function EMB.constraints_flow_out(m, n::HydroGenerator, 𝒯::TimeStructure, modeltype::EnergyModel)
 
     build_pq_constaints(m, n, pq_curve(n), 𝒯)
+    @constraint(m, [t ∈ 𝒯], m[:flow_out][n, t, electricity_resource(n)] ==
+        m[:cap_use][n, t] * outputs(n, electricity_resource(n)))
 
     constraints = filter(is_constraint_data, node_data(n))
     for c in constraints
