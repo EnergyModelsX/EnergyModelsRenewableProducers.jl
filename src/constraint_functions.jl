@@ -312,40 +312,30 @@ Penalty variables are included unless penalty value is not set or `Inf``.
 """
 function build_constraint(m, n::EMB.Node, c::Constraint{MinConstraintType},
     𝒯::TimeStructure, p::ResourceCarrier, var_name, penalty_name)
-    for t ∈ 𝒯
-        if is_active(c, t)
-            if has_penalty(c, t)
-                @constraint(m, m[Symbol(var_name)][n, t, p] + m[Symbol(penalty_name * "_up")][n, t, p] ≥
-                    EMB.capacity(n, t, p) * value(c, t))
-            else
-                @constraint(m, m[Symbol(var_name)][n, t, p] ≥ EMB.capacity(n, t, p) * value(c, t))
-            end
-        end
-    end
+
+    @constraint(m, [t ∈ 𝒯; is_active(c, t) & has_penalty(c, t)],
+        m[Symbol(var_name)][n, t, p] + m[Symbol(penalty_name * "_up")][n, t, p] ≥
+        EMB.capacity(n, t, p) * value(c, t))
+    @constraint(m, [t ∈ 𝒯; is_active(c, t) & !has_penalty(c, t)],
+        m[Symbol(var_name)][n, t, p] ≥ EMB.capacity(n, t, p) * value(c, t))
 end
 function build_constraint(m, n::EMB.Node, c::Constraint{MaxConstraintType},
     𝒯::TimeStructure, p::ResourceCarrier, var_name, penalty_name)
-    for t ∈ 𝒯
-        if is_active(c, t)
-            if has_penalty(c, t)
-                @constraint(m, m[Symbol(var_name)][n, t, p] - m[Symbol(penalty_name * "_down")][n, t, p] ≤
-                    EMB.capacity(n, t, p) * value(c, t))
-            else
-                @constraint(m, m[Symbol(var_name)][n, t, p] ≤ EMB.capacity(n, t, p) * value(c, t))
-            end
-        end
-    end
+
+    @constraint(m, [t ∈ 𝒯; is_active(c, t) & has_penalty(c, t)],
+        m[Symbol(var_name)][n, t, p] - m[Symbol(penalty_name * "_down")][n, t, p] ≤
+        EMB.capacity(n, t, p) * value(c, t))
+    @constraint(m, [t ∈ 𝒯; is_active(c, t) & !has_penalty(c, t)],
+        m[Symbol(var_name)][n, t, p] ≤ EMB.capacity(n, t, p) * value(c, t))
 end
 function build_constraint(m, n::EMB.Node, c::Constraint{ScheduleConstraintType},
     𝒯::TimeStructure, p::ResourceCarrier, var_name, penalty_name)
+    @constraint(m, [t ∈ 𝒯; is_active(c, t) & has_penalty(c, t)],
+        m[Symbol(var_name)][n, t, p] + m[Symbol(penalty_name * "_up")][n, t, p] -
+        m[Symbol(penalty_name * "_down")][n, t, p] == EMB.capacity(n, t, p) * value(c, t))
     for t ∈ 𝒯
-        if is_active(c, t)
-            if has_penalty(c, t)
-                @constraint(m, m[Symbol(var_name)][n, t, p] + m[Symbol(penalty_name * "_up")][n, t, p] -
-                    m[Symbol(penalty_name * "_down")][n, t, p] == EMB.capacity(n, t, p) * value(c, t))
-            else
-                JuMP.fix(m[Symbol(var_name)][n, t, p], EMB.capacity(n, t, p) * value(c, t); force=true)
-            end
+        if is_active(c, t) & !has_penalty(c, t)
+            JuMP.fix(m[Symbol(var_name)][n, t, p], EMB.capacity(n, t, p) * value(c, t); force=true)
         end
     end
 end
