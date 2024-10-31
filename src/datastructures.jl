@@ -478,20 +478,17 @@ abstract type HydroUnit <: EMB.NetworkNode end
 
 abstract type AbstractPqCurve end
 
-# do we need this or can we use existing functionality in outputs?
-struct EnergyEquivalent <: AbstractPqCurve
-    value::Real # MW / m3/s
-end
-
 struct PqPoints <: AbstractPqCurve
     power_levels::Vector{Real}  # MW / m3/s
     discharge_levels::Vector{Real} #share of total discharege capacity (0,1)
-    function PqPoints(name, power_levels, discharge_levels)
-        if length(power_levels) != length(discharge_levels)
-            throw("Power levels and discharge levels arrays have different length.")
-        end
-        return new(name, power_levels, discharge_levels)
-    end
+end
+
+""" Construct a PqPoints description based on energy equivalent input."""
+function EnergyEquivalent(value::Real)
+    return PqPoints(
+        [0.0, value],
+        [0.0, 1.0]
+    )
 end
 
 """
@@ -602,8 +599,6 @@ end
 function max_power(n::HydroUnit)
     if pq_curve(n) isa PqPoints
         return pq_curve(n).power_levels[end]
-    else
-        return 1
     end
     throw("Max power for your PQ-curve type has not been implemented.")
 end
@@ -612,8 +607,6 @@ end
 function max_flow(n::HydroUnit)
     if pq_curve(n) isa PqPoints
         return pq_curve(n).discharge_levels[end]
-    elseif pq_curve(n) isa EnergyEquivalent
-        return 1 / pq_curve(n).value
     end
     throw("Max flow for your PQ-curve type has not been implemented.")
 end

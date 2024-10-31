@@ -386,18 +386,6 @@ function EMB.constraints_flow_out(m, n::HydroGate, 𝒯::TimeStructure, modeltyp
     end
 end
 
-
-function build_pq_constaints(m, n::HydroGenerator, c::EnergyEquivalent, 𝒯::TimeStructure)
-     # water inn = water out
-     @constraint(m, [t ∈ 𝒯], m[:flow_out][n, t, water_resource(n)] ==
-        m[:cap_use][n, t] * outputs(n, water_resource(n)))
-
-     # Relatinship between discharge of water and power generated
-     @constraint(m, [t ∈ 𝒯],
-        m[:flow_out][n, t, electricity_resource(n)] == m[:cap_use][n, t] * c.value)
-end
-
-
 function build_pq_constaints(m, n::HydroGenerator, c::PqPoints, 𝒯::TimeStructure)
     η = Real[]
     for i in range(2, length(c.discharge_levels))
