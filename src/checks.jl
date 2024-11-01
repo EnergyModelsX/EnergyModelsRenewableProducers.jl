@@ -153,22 +153,10 @@ end
 This method checks that the *[`HydroReservoir`](@ref)* node is valid.
 
 ## Checks
- - The `TimeProfile` of the field `capacity` in the type in the field `vol` is required
-  to be non-negative if the chosen composite type has the field `capacity`.
- - The value of the field `vol_init` is required to be in the range
-   ``[0, vol.capacity(t)]`` at the first time step of strategic periods.
- - The value of the field `vol_init` is required to be in the range
-   ``[vol_min(t), vol_max(t)]`` at the first time step of strategic periods.
- - The value of the fields `vol_min` and `vol_max` are required to be in the range
-    ``[0, vol.capacity(t)]`` for all time steps ``t ∈ \\mathcal{T}``.
-- The value of the field `vol_min` is required to be less than or equal to the field `vol_max`
-    for all time steps ``t ∈ \\mathcal{T}``.
- - The field `output` can only include a single `Resource`.
- - The value of the field `output` is required to be smaller or equal to 1.
- - The value of the field `output` is required to be non-negative.
- - The field `input` can only include a single `Resource`.
- - The value of the field `input` is required to be smaller or equal to 1.
- - The value of the field `input` is required to be non-negative.
+ - The `TimeProfile` of the `capacity` of the `HydroReservoir` `level` is required
+  to be non-negative.
+ - The value of constraints are required to be in the range ``[0, 1]`` for all time steps
+ ``t ∈ \\mathcal{T}``.
 """
 function EMB.check_node(n::HydroReservoir, 𝒯, modeltype::EMB.EnergyModel, check_timeprofiles::Bool)
 
@@ -181,58 +169,14 @@ function EMB.check_node(n::HydroReservoir, 𝒯, modeltype::EMB.EnergyModel, che
             "The volume capacity has to be non-negative."
         )
     end
-    # @assert_or_log(
-    #     0 ≤ vol_init(n, first(𝒯ᴵⁿᵛ)) ≤ capacity(par_level, first(𝒯ᴵⁿᵛ)),
-    #     "The initial volume must be between the minimum and the capacity volume."
-    # )
-    # if isa(n.vol_constraint,
-    #     Union{MaxConstraint, MinMaxConstraint, MaxPenaltyConstraint, MinMaxPenaltyConstraint})
-    #     @assert_or_log(
-    #         vol_init(n, first(𝒯)) ≤ n.vol_constraint.max[first(𝒯)],
-    #         "The initial volume must be less than or equal to the maximum volume."
-    #     )
-    #     @assert_or_log(
-    #         sum(n.vol_constraint.max[t] ≤ capacity(par_level, t) for t ∈ 𝒯) == length(𝒯),
-    #         "The maximum volume must be less than or equal to the volume capacity."
-    #     )
-    # end
-    # if isa(n.vol_constraint,
-    #     Union{MinConstraint, MinMaxConstraint, MinPenaltyConstraint, MinMaxPenaltyConstraint})
-    #     @assert_or_log(
-    #         vol_init(n, first(𝒯)) ≥ n.vol_constraint.min[first(𝒯)],
-    #         "The initial volume must be greater than or equal to the minimum volume."
-    #     )
-    #     @assert_or_log(
-    #         sum(n.vol_constraint.min[t] ≤ capacity(par_level, t) for t ∈ 𝒯) == length(𝒯),
-    #         "The minimum volume must be less than or equal to the volume capacity."
-    #     )
-    # end
-    # if isa(n.vol_constraint, Union{MinMaxConstraint, MinMaxPenaltyConstraint})
-    #     @assert_or_log(
-    #         sum(n.vol_constraint.min[t] ≤ n.vol_constraint.max[t] for t ∈ 𝒯) == length(𝒯),
-    #         "The minimum volume must be less than or equal to the maximum volume."
-    #     )
-    # end
-
-    # EMB.check_fixed_opex(n, 𝒯ᴵⁿᵛ, check_timeprofiles)
-    @assert_or_log(
-        length(outputs(n)) == 1,
-        "Only one resource can be stored, so only this one can flow out."
-    )
-    @assert_or_log(
-        sum(0 ≤ outputs(n, p) ≤ 1 for p ∈ outputs(n)) == length(outputs(n)),
-        "The values for the Dictionary `output` must be in the range [0, 1]."
-    )
-
-    @assert_or_log(
-        length(inputs(n)) == 1,
-        "Only one resource can be stored, so only one resource can flow in."
-    )
-
-    @assert_or_log(
-        sum(0 ≤ inputs(n, p) ≤ 1 for p ∈ inputs(n)) == length(inputs(n)),
-        "The values for the Dictionary `inputs` must be in the range [0, 1]."
-    )
+    for d in n.data
+        if isa(d, Constraint{<: AbstractConstraintType})
+            @assert_or_log(
+                sum(0 ≤ d.value[t] ≤ 1 for t ∈ 𝒯) == length(𝒯),
+                "The relative constraint value must be between 0 and 1."
+            )
+        end
+    end
 end
 
 """
@@ -263,22 +207,22 @@ function EMB.check_node(n::HydroGate, 𝒯, modeltype::EMB.EnergyModel, check_ti
 end
 
 """
-    EMB.check_node(n::HydroGenerator, 𝒯, modeltype::EMB.EnergyModel, check_timeprofiles::Bool)
+    EMB.check_node(n::HydroUnit, 𝒯, modeltype::EMB.EnergyModel, check_timeprofiles::Bool)
 
-This method checks that the *[`HydroGenerator`](@ref)* node is valid.
+This method checks that the *[`HydroUnit`](@ref)* and *[`HydroPump`](@ref)* node is valid.
 
 ## Checks
  - The field `cap` is required to be non-negative.
- - The values of the dictionary `input` are required to be non-negative.
- - The values of the dictionary `output` are required to be non-negative.
+ - The PqPoints vectors are required to have the same length.
+ - The PqPoint vectors should start at 0.
+ - The PqPoints vectors are required to be increasing.
+ - One of the PqPoints vectors should have values between 0 and 1.
+ - The PqPoints curve should be concave for generators and convex for pumps.
  - The value of the field `fixed_opex` is required to be non-negative and
    accessible through a `StrategicPeriod` as outlined in the function
    `check_fixed_opex(n, 𝒯ᴵⁿᵛ, check_timeprofiles)`.
-- The field `pq_curve` is required to be `nothing` or a dict with values for two resources \
-in the form of two vectors of equal size with non-negative values.
-- the field `η` must be nothing if the field `pq_curve` is nothing.
 """
-function EMB.check_node(n::HydroGenerator, 𝒯, modeltype::EnergyModel, check_timeprofiles::Bool)
+function EMB.check_node(n::HydroUnit, 𝒯, modeltype::EnergyModel, check_timeprofiles::Bool)
 
     𝒯ᴵⁿᵛ = strategic_periods(𝒯)
 
@@ -287,47 +231,48 @@ function EMB.check_node(n::HydroGenerator, 𝒯, modeltype::EnergyModel, check_t
         "The capacity must be non-negative."
     )
 
-    @assert_or_log(
-        sum(inputs(n, p) ≥ 0 for p ∈ inputs(n)) == length(inputs(n)),
-        "The values for the Dictionary `input` must be non-negative."
-    )
-
-    @assert_or_log(
-        sum(outputs(n, p) ≥ 0 for p ∈ outputs(n)) == length(outputs(n)),
-        "The values for the Dictionary `output` must be non-negative."
-    )
-
-    if !isnothing(pq_curve(n))
+    pq = pq_curve(n)
+    if pq isa PqPoints
         @assert_or_log(
-
-            length(pq_curve(n)) == 2,
-            "There must be 2 resources given in the Dictionary `pq_curve`."
+            length(pq.power_levels) == length(pq.discharge_levels),
+            "The PqPoint vectors must have the same length."
         )
 
-        for p ∈ pq_curve(n)
-            values = pq_curve(n, p)
-            @assert_or_log(
-                sum(v < 0 for v in values)==0,
-                "All the values in Dictionary `pq_curve` must be non-negative."
-                 )
+        @assert_or_log(
+            (pq.power_levels[begin] ≈ 0) & (pq.discharge_levels[begin] ≈ 0),
+            "The PqPoint vectors should start at 0."
+        )
 
+        @assert_or_log(
+            issorted(pq.power_levels, lt= <=) & issorted(pq.discharge_levels, lt= <=),
+            "The PqPoint vectors must be increasing."
+        )
+
+        @assert_or_log(
+            ((pq.power_levels[begin] ≈ 0) & (pq.power_levels[end] ≈ 1)) |
+            ((pq.discharge_levels[begin] ≈ 0) & (pq.discharge_levels[end] ≈ 1)),
+            "One of the PqPoint vectors should be from 0 to 1."
+        )
+
+        if n isa HydroGenerator
             @assert_or_log(
-            length(pq_curve(n, p)) == length(pq_curve(n, pq_curve(n)[1])),
-            "Equal number of values must be provided for all resources in the Dictionary `pq_curve`."
+                issorted(
+                    (pq.power_levels[begin+1:end] - pq.power_levels[begin:end-1]) ./
+                        (pq.discharge_levels[begin+1:end] - pq.discharge_levels[begin:end-1]),
+                    rev=true, lt= <=
+                ),
+                "The PqPoint curve should be concave for generators."
+            )
+        else
+            @assert_or_log(
+                issorted(
+                    (pq.power_levels[begin+1:end] - pq.power_levels[begin:end-1]) ./
+                        (pq.discharge_levels[begin+1:end] - pq.discharge_levels[begin:end-1]),
+                    rev=false, lt= <=
+                ),
+                "The PqPoint curve should be convex for pumps."
             )
         end
-
-
-    else
-        @assert_or_log(
-            (isempty(efficiency(n))),
-             "The efficiency `η` must be empty if the `pq_curve` is `nothing`."
-             )
-
     end
-
-   #TODO add test for concave PQ-curve
-
-
     EMB.check_fixed_opex(n, 𝒯ᴵⁿᵛ, check_timeprofiles)
 end

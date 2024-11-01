@@ -304,13 +304,13 @@ abstract type ScheduleConstraintType <: AbstractConstraintType end
 Type for defining constraints `T` denots constraint type.
 
 ## Fields
-- **`name::Symbol`** is the name of the constraint and could be used if a node can have different constraint types.
+- **`resource::{Union{<:Resource, Nothing}}`** is the resource type the constraint applies to if the node can have multiple resources as input/outputs.
 - **`value::TimeProfile`** is the constraint value, the limit that should not be violated.
 - **`flag::TimeProfile`** is a boolean value indicating if the constraint is active.
 - **`penalty::TimeProfile`** is the penalty for violating the constraint. If penalty is set to `Inf` it will be built as a hard constraint.
 """
 struct Constraint{T} <: Data where {T<:AbstractConstraintType}
-    name::Symbol
+    resource::Union{<:Resource, Nothing} # Should be specified for nodes with multiple input/output resources
     value::TimeProfile{<:Number}
     flag::TimeProfile{Bool}
     penalty::TimeProfile{<:Number}
@@ -320,14 +320,20 @@ end
 is_constraint_data(data::Data) = false
 is_constraint_data(data::Constraint) = true
 
+""" Returns try if `Data` is of type `Constraint` and `Constraint` resource type is `resource`."""
+is_constraint_resource(data::Constraint, resource::Resource) = resource == data.resource
+
 """ Returns true if given constraint is active at time step `t`."""
 is_active(s::Constraint, t) = s.flag[t]
 
 """ Returns the value of a constraint at time step `t`."""
 value(s::Constraint, t) = s.value[t]
 
+""" Returns penalty value of constraint."""
+penalty(s::Constraint, t) = s.penalty[t]
+
 """ Returns true if a constraint has penalty at time step `t`."""
-has_penalty(s::Constraint, t) = !isinf(s.penalty[t])
+has_penalty(s::Constraint, t) = !isinf(penalty(s, t)) & is_active(s, t)
 
 """ Returns true if a constraint has a constraint that might require penalty up variable."""
 has_penalty_up(data::Constraint) = false
@@ -336,6 +342,7 @@ has_penalty_up(data::Constraint{ScheduleConstraintType}) = true
 
 """ Returns true if a constraint requires a penalty up variable at time step `t`."""
 has_penalty_up(data::Constraint, t) = has_penalty_up(data) & has_penalty(data, t)
+has_penalty_up(data::Constraint, t, resource::Resource) = has_penalty_up(data, t) & (data.resource == resource)
 
 """ Returns true if a constraint has a constraint that might require penalty down variable."""
 has_penalty_down(data::Constraint) = false
@@ -344,19 +351,7 @@ has_penalty_down(data::Constraint{ScheduleConstraintType}) = true
 
 """ Returns true if a constraint requires a penalty down variable at time step `t`."""
 has_penalty_down(data::Constraint, t) = has_penalty_down(data) & has_penalty(data, t)
-
-""" Returns subset of time steps `t ∈ 𝒯` where penalty up variable should be added."""
-function get_penalty_up_time(data::Vector{<:Data}, 𝒯)
-    return [t for t in 𝒯 if any(has_penalty_up(c, t) for c in data)]
-end
-
-""" Returns subset of time steps `t ∈ 𝒯` where penalty down variable should be added."""
-function get_penalty_down_time(data::Vector{<:Data}, 𝒯)
-    return [t for t in 𝒯 if any(has_penalty_down(c, t) for c in data)]
-end
-
-""" Returns penalty value of constraint."""
-penalty(s::Constraint, t) = s.penalty[t]
+has_penalty_down(data::Constraint, t, resource::Resource) = has_penalty_down(data, t) & (data.resource == resource)
 
 """
     HydroReservoir{T} <: EMB.Storage{T}
@@ -478,15 +473,33 @@ function HydroGate(
     return HydroGate(id, cap, opex_var, opex_fixed, resource, Data[])
 end
 
-"""
-    HydroPump <: EMB.NetworkNode
+""" `HydroUnit` node for either pumping or production."""
+abstract type HydroUnit <: EMB.NetworkNode end
 
-A regular hydropower pump, modelled as a `NetworkNode` node.
+abstract type AbstractPqCurve end
+
+struct PqPoints <: AbstractPqCurve
+    power_levels::Vector{Real}  # MW / m3/s
+    discharge_levels::Vector{Real} #share of total discharege capacity (0,1)
+end
+
+""" Construct a PqPoints description based on energy equivalent input."""
+function EnergyEquivalent(value::Real)
+    return PqPoints(
+        [0.0, value],
+        [0.0, 1.0]
+    )
+end
+
+"""
+    HydroGenerator <: HydroUnit
+
+A regular hydropower plant, modelled as a `NetworkNode` node.
 
 ## Fields
 - **`id`** is the name/identifier of the node.\n
 - **`cap::TimeProfile`** is the installed discharge capacity.\n
-- **`pq_curve::Dict{<:Resource, <:Vector{<:Real}}` describes the relationship between power and discharge (water).\
+- **`pq_curve::AbstractPqCurve` describes the relationship between power and discharge (water).\
 requires one input resource (usually Water) and two output resources (usually Water and Power) to be defined \
 where the input resource also is an output resource. \n
 - **`opex_var::TimeProfile`** is the variational operational costs per energy unit produced.\n
@@ -496,12 +509,43 @@ where the input resource also is an output resource. \n
 - **`data::Vector{Data}`** is the additional data (e.g. for investments). The field \
 `data` is conditional through usage of a constructor.
 """
-struct HydroPump <: EMB.NetworkNode # plant or pump or both?
+struct HydroGenerator <: HydroUnit # plant or pump or both?
     id::Any
-    cap::TimeProfile # maximum discharge mm3/(time unit)
-    pq_curve::Union{Dict{<:Resource, <:Vector{<:Real}}, Nothing}# Production and discharge ratio [MW / m3/s]
+    cap::TimeProfile # maximum discharge in Mm3/timestep
+    pq_curve::AbstractPqCurve# Production and discharge ratio [MW / Mm3/timestep]
     opex_var::TimeProfile
     opex_fixed::TimeProfile
+    electricity_resource::Resource
+    water_resource::Resource
+    input::Dict{<:Resource,<:Real}
+    output::Dict{<:Resource,<:Real}
+    data::Vector{Data}
+end
+function HydroGenerator(
+    id::Any,
+    cap::TimeProfile,
+    pq_curve::AbstractPqCurve,
+    opex_var::TimeProfile,
+    opex_fixed::TimeProfile,
+    electricity_resource::Resource,
+    water_resource::Resource,
+)
+
+    input = Dict(water_resource => 1.0)
+    output = Dict(water_resource => 1.0, electricity_resource => 1.0)
+
+    return HydroGenerator(id, cap, pq_curve, opex_var, opex_fixed,
+        electricity_resource, water_resource, input, output, Data[])
+end
+
+struct HydroPump <: HydroUnit # plant or pump or both?
+    id::Any
+    cap::TimeProfile # maximum discharge in Mm3/timestep
+    pq_curve::AbstractPqCurve# Production and discharge ratio [MW / Mm3/timestep]
+    opex_var::TimeProfile
+    opex_fixed::TimeProfile
+    electricity_resource::Resource
+    water_resource::Resource
     input::Dict{<:Resource,<:Real}
     output::Dict{<:Resource,<:Real}
     data::Vector{Data}
@@ -509,12 +553,76 @@ end
 function HydroPump(
     id::Any,
     cap::TimeProfile,
-    pq_curve::Union{Dict{<:Resource, <:Vector{<:Real}}, Nothing},# Production and discharge ratio [MW / m3/s]
+    pq_curve::AbstractPqCurve,
     opex_var::TimeProfile,
     opex_fixed::TimeProfile,
-    input::Dict{<:Resource,<:Real},
-    output::Dict{<:Resource,<:Real}
+    electricity_resource::Resource,
+    water_resource::Resource,
 )
 
-    return HydroPump(id, cap, pq_curve, opex_var, opex_fixed, input, output, Data[])
+    input = Dict(water_resource => 1.0, electricity_resource => 1.0)
+    output = Dict(water_resource => 1.0)
+
+    return HydroPump(id, cap, pq_curve, opex_var, opex_fixed,
+        electricity_resource, water_resource, input, output, Data[])
 end
+
+"""
+    electricity_resource(n::HydroUnit)
+
+Returns the resource of the `electricity_resource` field of a node `n`.
+"""
+electricity_resource(n::HydroUnit) = n.electricity_resource
+
+"""
+    water_resource(n::HydroUnit)
+
+Returns the resource of the `water_resource` field of a node `n`.
+"""
+water_resource(n::HydroUnit) = n.water_resource
+
+"""
+    pq_curve(n::HydroUnit)
+
+Returns the resources in the PQ-curve of a node `n` of type `HydroUnit`
+"""
+pq_curve(n::HydroUnit) = n.pq_curve
+
+has_discharge_segments(pq_curve::AbstractPqCurve) = (typeof(pq_curve) <: Union{PqPoints}) #Union{PqEfficiencyCurve, PqPoints})
+discharge_segments(pq_curve::PqPoints) = range(1, length(pq_curve.discharge_levels) - 1)
+
+function get_nodes_with_discharge_segments(𝒩::Vector{<:HydroUnit})
+    return [n for n in 𝒩 if has_discharge_segments(pq_curve(n))]
+end
+
+""" Returns the maximum power of `HydroUnit` based on pq_curve input."""
+function max_power(n::HydroUnit)
+    if pq_curve(n) isa PqPoints
+        return pq_curve(n).power_levels[end]
+    end
+    throw("Max power for your PQ-curve type has not been implemented.")
+end
+
+""" Returns the maximum flow of `HydroUnit` based on pq_curve input."""
+function max_flow(n::HydroUnit)
+    if pq_curve(n) isa PqPoints
+        return pq_curve(n).discharge_levels[end]
+    end
+    throw("Max flow for your PQ-curve type has not been implemented.")
+end
+
+""" Returns the `HydroUnit` capacity for a given resource (either power or flow)."""
+function EMB.capacity(n::HydroUnit, t, p::Resource)
+    if p == electricity_resource(n)
+        return capacity(n, t) * max_power(n)
+    elseif p == water_resource(n)
+        return capacity(n, t) * max_flow(n)
+    end
+    throw("Hydro HydroUnit capacity resource has to be either water or electricity.")
+end
+function EMB.capacity(n::EMB.Node, t, p::Resource)
+    return EMB.capacity(n, t)
+end
+
+
+# TODO make pump module
