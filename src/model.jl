@@ -119,22 +119,11 @@ Create the optimization variable `:discharge_segment` for every HydroGenerator n
 enables the use of a concave PQ-curve. The sum of the utilisation of the discharge_sements has to
 equal the cap_use. """
 function EMB.variables_node(m, 𝒩::Vector{<:HydroUnit}, 𝒯, modeltype::EnergyModel)
-
-    #𝒫ᵒᵘᵗ = EMB.res_not(outputs(first(𝒩)), co2_instance(modeltype))
-    #𝒫ⁱⁿ  = EMB.res_not(inputs(first(𝒩)), co2_instance(modeltype))
-    #original_resource = 𝒫ᵒᵘᵗ[𝒫ᵒᵘᵗ .∈ [𝒫ⁱⁿ]]
-
-    N_seq = get_nodes_with_discharge_segments(𝒩)
-
-    #for n in 𝒩
-         if  !isempty(N_seq)
-            @variable(m, discharge_segment[
-                n ∈ N_seq,
-                t ∈ 𝒯,
-                q ∈ discharge_segments(pq_curve(n))
-            ] >= 0)
-        end
-    #end
+    @variable(m, discharge_segment[
+        n ∈ 𝒩,
+        t ∈ 𝒯,
+        q ∈ discharge_segments(pq_curve(n))
+    ] >= 0)
 
     # Add discharge/production constraint penalty variables
     @variable(m, gen_penalty_up[

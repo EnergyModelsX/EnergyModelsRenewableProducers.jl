@@ -588,12 +588,7 @@ Returns the resources in the PQ-curve of a node `n` of type `HydroUnit`
 """
 pq_curve(n::HydroUnit) = n.pq_curve
 
-has_discharge_segments(pq_curve::AbstractPqCurve) = (typeof(pq_curve) <: Union{PqPoints}) #Union{PqEfficiencyCurve, PqPoints})
 discharge_segments(pq_curve::PqPoints) = range(1, length(pq_curve.discharge_levels) - 1)
-
-function get_nodes_with_discharge_segments(𝒩::Vector{<:HydroUnit})
-    return [n for n in 𝒩 if has_discharge_segments(pq_curve(n))]
-end
 
 """ Returns the maximum power of `HydroUnit` based on pq_curve input."""
 function max_power(n::HydroUnit)
@@ -620,9 +615,5 @@ function EMB.capacity(n::HydroUnit, t, p::Resource)
     end
     throw("Hydro HydroUnit capacity resource has to be either water or electricity.")
 end
-function EMB.capacity(n::EMB.Node, t, p::Resource)
-    return EMB.capacity(n, t)
-end
+EMB.capacity(n::EMB.Node, t, p::Resource) = EMB.capacity(n, t)
 
-
-# TODO make pump module
