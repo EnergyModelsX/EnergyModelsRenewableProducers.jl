@@ -22,6 +22,7 @@ include("datastructures.jl")
 include("model.jl")
 include("checks.jl")
 include("constraint_functions.jl")
+include("wind_power_resource.jl")
 
 # Legacy constructors for node types
 include("legacy_constructor.jl")
