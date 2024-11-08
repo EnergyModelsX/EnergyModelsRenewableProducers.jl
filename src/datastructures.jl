@@ -473,17 +473,39 @@ function HydroGate(
     return HydroGate(id, cap, opex_var, opex_fixed, resource, Data[])
 end
 
-""" `HydroUnit` node for either pumping or production."""
+""" 
+    HydroUnit <: EMB.NetworkNode
+
+A Hydropower unit node for either pumping or production, modelled as a `NetworkNode` node.
+"""
 abstract type HydroUnit <: EMB.NetworkNode end
 
+""" `AbstractPqCurve` type used to represent the relatioship between discharge of water and generation of electricity."""
 abstract type AbstractPqCurve end
 
+""" 
+    PqPoints <: AbstractPqCurve
+
+The relationship between discharge of water and power geenration represented \
+by a set of discharge and power values (PQ-points).
+
+## Fields
+- **`power_levels::Vector{Real}`** is a vector of power values.
+- **`discharge_levels::Vector{Real}`** is a vector of discharge values.
+
+The two vectors muct be of equal size and ordered so that the power and discharge values \
+ describes the convertion from energy (stored in the water) to electricity (power). \
+ The first value in each vector should be zero. Furthermore, the vectors should be scaled with the installed capacity, \
+ so that either the power-vector or the discharge vector is in the range [0, 1].  
+ The described power-discharge relationship should be concave.
+"""
 struct PqPoints <: AbstractPqCurve
     power_levels::Vector{Real}  # MW / m3/s
     discharge_levels::Vector{Real} #share of total discharege capacity (0,1)
 end
 
-""" Construct a PqPoints description based on energy equivalent input."""
+""" Construct a PqPoints description based on energy equivalent input. If this function is used the installed capacity of \
+the node must refer to the discharge capacity of the `HydroGenerator` node. """
 function EnergyEquivalent(value::Real)
     return PqPoints(
         [0.0, value],
@@ -504,8 +526,9 @@ requires one input resource (usually Water) and two output resources (usually Wa
 where the input resource also is an output resource. \n
 - **`opex_var::TimeProfile`** is the variational operational costs per energy unit produced.\n
 - **`opex_fixed::TimeProfile`** is the fixed operational costs.\n
-- **`input::Dict{<:Resource, <:Real}`** are the input `Resource`s with conversion value `Real`.\n
-- **`output::Dict{<:Resource, <:Real}`** are the generated `Resource`s with conversion value `Real`.\n
+- **`electricity_resource::Resource`** are the input `Resource`s with conversion value `Real`.\n
+- **`water_resource::Resource`** are the generated `Resource`s with conversion value `Real`.\n
+
 - **`data::Vector{Data}`** is the additional data (e.g. for investments). The field \
 `data` is conditional through usage of a constructor.
 """

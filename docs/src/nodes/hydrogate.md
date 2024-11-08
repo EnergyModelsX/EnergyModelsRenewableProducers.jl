@@ -36,13 +36,13 @@ The [`HydroGate`](@ref) utilizes the standard variables from the `NetworkNode`, 
 The variables that are used in the additional constraints are:
 
 #### [Additional variables](@id nodes-hydro_gate-math-add)
-- ``\texttt{gate\_disch\_penalty\_up}[n, t]``: Variable for penalizing violation of the discharge constraint in direction up in `HydroGate` node ``n`` in operational period ``t`` with unit volume per time unit.
-- ``\texttt{gate\_disch\_penalty\_down}[n, t]``: Variable for penalizing violation of the discharge constraint in direction down in `HydroGate` node ``n`` in operational period ``t`` with unit volume per time unit.
+- ``\texttt{gate\_penalty\_up}[n, t]``: Variable for penalizing violation of the discharge constraint in direction up in `HydroGate` node ``n`` in operational period ``t`` with unit volume per time unit.
+- ``\texttt{gate\_penalty\_down}[n, t]``: Variable for penalizing violation of the discharge constraint in direction down in `HydroGate` node ``n`` in operational period ``t`` with unit volume per time unit.
 
 ### [Constraints](@id nodes-hydro_gate-math-con)
 The following sections omit the direct inclusion of the vector of `HydroGate` nodes.
 Instead, it is implicitly assumed that the constraints are valid ``\forall n ∈ N`` for all [`HydroGate`](@ref) types if not stated differently.
-In addition, all constraints are valid ``\forall t \in T`` (that is in all operational periods) or ``\forall t_{inv} \in T^{Inv}`` (that is in all strategic periods). The ``\texttt{gate\_disch\_penalty\_up}[n, t]`` and ``\texttt{gate\_disch\_penalty\_down}[n, t]`` variables are only added if required in a constraint, where ``c_{up}`` denotes constraint requiring up penalty, and ``c_{down}`` denotes constraint requiring down penalty.
+In addition, all constraints are valid ``\forall t \in T`` (that is in all operational periods) or ``\forall t_{inv} \in T^{Inv}`` (that is in all strategic periods). The ``\texttt{gate\_penalty\_up}[n, t]`` and ``\texttt{gate\_penalty\_down}[n, t]`` variables are only added if required in a constraint, where ``c_{up}`` denotes constraint requiring up penalty, and ``c_{down}`` denotes constraint requiring down penalty.
 
 #### [Standard constraints](@id nodes-hydro_gate-math-con-stand)
 `HydroGate` nodes utilize in general the standard constraints described in *[Constraint functions for `NetworkNode`](@extref EnergyModelsBase nodes-network_node-math-con)*. In addition, it includes the penalty variables when required for constraints when dispatching `constraints_opex_var`:
@@ -50,8 +50,8 @@ In addition, all constraints are valid ``\forall t \in T`` (that is in all opera
 \begin{aligned}
   \texttt{opex\_var}&[n, t_{inv}] = \\
     \sum_{t \in t_{inv}} \Big( &opex\_var(n, t) \times \texttt{cap\_use}[n, t] + \\&
-    penalty(c_{up}, t) \times \texttt{gate\_disch\_penalty\_up}[n, t] + \\&
-    penalty(c_{down}, t) \times \texttt{gate\_disch\_penalty\_down}[n, t] \Big) \times scale\_op\_sp(t_{inv}, t)
+    penalty(c_{up}, t) \times \texttt{gate\_penalty\_up}[n, t] + \\&
+    penalty(c_{down}, t) \times \texttt{gate\_penalty\_down}[n, t] \Big) \times scale\_op\_sp(t_{inv}, t)
 \end{aligned}
 ```
 
@@ -72,11 +72,11 @@ The `HydroGate` nodes utilize the majority of the concepts from [NetworkNode](@e
 
 ```math
 \begin{aligned}
-    \texttt{flow\_out}&[n, t, p] + \texttt{gate\_disch\_penalty\_up}[n, t] \geq \\ &
+    \texttt{flow\_out}&[n, t, p] + \texttt{gate\_penalty\_up}[n, t] \geq \\ &
         capacity(n, t) \times value(c, t) \\
-    \texttt{flow\_out}&[n, t, p] - \texttt{gate\_disch\_penalty\_down}[n, t] \leq \\ &
+    \texttt{flow\_out}&[n, t, p] - \texttt{gate\_penalty\_down}[n, t] \leq \\ &
         capacity(n, t) \times value(c, t) \\
-    \texttt{flow\_out}&[n, t, p] + \texttt{gate\_disch\_penalty\_up}[n, t] - \texttt{gate\_disch\_penalty\_down}[n, t] = \\&
+    \texttt{flow\_out}&[n, t, p] + \texttt{gate\_penalty\_up}[n, t] - \texttt{gate\_disch\_penalty\_down}[n, t] = \\&
         capacity(n, t) \times value(c, t)
 \end{aligned}
 ```
