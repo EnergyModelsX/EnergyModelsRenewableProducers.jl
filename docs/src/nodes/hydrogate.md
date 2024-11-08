@@ -76,7 +76,7 @@ The `HydroGate` nodes utilize the majority of the concepts from [NetworkNode](@e
         capacity(n, t) \times value(c, t) \\
     \texttt{flow\_out}&[n, t, p] - \texttt{gate\_penalty\_down}[n, t] \leq \\ &
         capacity(n, t) \times value(c, t) \\
-    \texttt{flow\_out}&[n, t, p] + \texttt{gate\_penalty\_up}[n, t] - \texttt{gate\_disch\_penalty\_down}[n, t] = \\&
+    \texttt{flow\_out}&[n, t, p] + \texttt{gate\_penalty\_up}[n, t] - \texttt{gate\\_penalty\_down}[n, t] = \\&
         capacity(n, t) \times value(c, t)
 \end{aligned}
 ```
