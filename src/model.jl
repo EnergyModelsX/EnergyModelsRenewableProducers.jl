@@ -113,11 +113,12 @@ end
 
 
 """
-    EMB.variables_node(m, 𝒩::Vector{HydroGenerator}, 𝒯, modeltype::EnergyModel)
+    EMB.variables_node(m, 𝒩::Vector{HydroUnit}, 𝒯, modeltype::EnergyModel)
 
-Create the optimization variable `:discharge_segment` for every HydroGenerator node. This variable
-enables the use of a concave PQ-curve. The sum of the utilisation of the discharge_sements has to
-equal the cap_use. """
+Create the optimization variable `:discharge_segment` for every HydroUnit node. This variable
+enables the use of a concave PQ-curve. The capacity of the discharge_sements sums up to the total discharge capacity. \
+ In addition, the variables `gen_penalty_up` and `gen_penalty_down` are created if penalties for voilating \
+ the maximum discharge or generation capacity are provided.  """
 function EMB.variables_node(m, 𝒩::Vector{<:HydroUnit}, 𝒯, modeltype::EnergyModel)
     @variable(m, discharge_segment[
         n ∈ 𝒩,
