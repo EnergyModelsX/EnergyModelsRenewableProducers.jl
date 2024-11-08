@@ -356,6 +356,23 @@ function EMB.constraints_flow_out(m, n::HydroGate, 𝒯::TimeStructure, modeltyp
     end
 end
 
+"""
+    constraints_capacity(m, n::HydroUnit, 𝒯::TimeStructure, modeltype::EnergyModel)
+
+Function for creating the constraints on the maximum capacity of a [`HydroUnit`](@ref) node.
+
+!!! warning "Dispatching on this function"
+    If you create a new method for this function, it is crucial to call within said function
+    the function `constraints_capacity_installed(m, n, 𝒯, modeltype)` if you want to include
+    investment options.
+"""
+function EMB.constraints_capacity(m, n::HydroUnit, 𝒯::TimeStructure, modeltype::EnergyModel)
+    @constraint(m, [t ∈ 𝒯], m[:cap_use][n, t] <= m[:cap_inst][n, t] * max_power(n))
+
+    constraints_capacity_installed(m, n, 𝒯, modeltype)
+end
+
+
 function build_pq_constaints(m, n::HydroUnit, c::PqPoints, 𝒯::TimeStructure)
 
     Q = discharge_segments(c)
