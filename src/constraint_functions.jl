@@ -417,7 +417,7 @@ function EMB.constraints_flow_out(m, n::HydroGenerator, 𝒯::TimeStructure, mod
 
     build_pq_constaints(m, n, pq_curve(n), 𝒯)
     @constraint(m, [t ∈ 𝒯], m[:flow_out][n, t, electricity_resource(n)] ==
-        m[:cap_use][n, t] * outputs(n, electricity_resource(n)))
+        m[:cap_use][n, t])
 
     constraints = filter(is_constraint_data, node_data(n))
     for c in constraints
