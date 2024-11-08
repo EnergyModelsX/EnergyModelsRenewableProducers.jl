@@ -15,4 +15,7 @@ EnergyModelsRenewableProducers.MinConstraintType
 EnergyModelsRenewableProducers.MaxConstraintType
 EnergyModelsRenewableProducers.ScheduleConstraintType
 EnergyModelsRenewableProducers.HydroUnit
+EnergyModelsRenewableProducers.AbstractPqCurve
+EnergyModelsRenewableProducers.PqPoints
+EnergyModelsRenewableProducers.HydroUnit
 ```
