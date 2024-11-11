@@ -36,10 +36,8 @@ EnergyModelsBase.level
 
 ## `HydroGenerator`
 
-```@docs
-EnergyModelsRenewableProducers.pq_curve
-```
 
 ## `HydroPump`
+
 
 ## `HydroGate`

@@ -23,6 +23,7 @@ HydroStor
 PumpedHydroStor
 HydroReservoir
 HydroGenerator
+HydroPump
 HydroGate
 ```
 

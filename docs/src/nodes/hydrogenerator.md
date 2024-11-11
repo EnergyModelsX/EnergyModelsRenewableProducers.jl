@@ -117,32 +117,30 @@ The discharge segments are constrained by the ``\texttt{discharge\_levels}`` pro
 
 
 
-
-
 #### [Additional constraints](@id nodes-hydro_generator-math-con-add)
 
-The discharge or power capacity can be restricted by adding additional minimum og maximum constraints. This is included in the dispatch of the  `constraints_flow_in` and `constraints_flow_out` constaints for `HydroUnit` nodes, and can thereby be added to both `HydroGenerator` and `HydroPump` nodes. The constraints are optional and only added to the problem if given as input in the `Data` field of the nodes.
+The discharge or power capacity can be restricted by adding additional minimum og maximum constraints. This is included in the dispatch of the  `constraints_flow_out` constaints for `HydroGenerator` nodes. The constraints are optional and only added to the problem if given as input in the `Data` field of the nodes. The constraints can be defined for the resources defined in the `electricity_resource` and `water_resource` fields and limits the flow out of the node.   
 
-1. the discharge constraints if additional constraints exist on the `Data` field,
+1. the flow out constraints if additional constraints exist on the `Data` field,
 
 ```math
 \begin{aligned}
-    \texttt{flow\_out}&[n, t, p] \geq capacity(n, t) \times value(c, t) \\
-    \texttt{flow\_out}&[n, t, p] \leq capacity(n, t) \times value(c, t) \\
-    \texttt{flow\_out}&[n, t, p] = capacity(n, t) \times value(c, t)
+    \texttt{flow\_out}&[n, t, p] \geq capacity(n, t, p) \times value(c, t) \\
+    \texttt{flow\_out}&[n, t, p] \leq capacity(n, t, p) \times value(c, t) \\
+    \texttt{flow\_out}&[n, t, p] = capacity(n, t, p) \times value(c, t)
 \end{aligned}
 ```
 
-2. the discharge constraints including penalty if the constraints has non-infinite penalty value.
+2. the flow out constraints including penalty if the constraints has non-infinite penalty value.
 
 ```math
 \begin{aligned}
     \texttt{flow\_out}&[n, t, p] + \texttt{gen\_penalty\_up}[n, t, p] \geq \\ &
-        capacity(n, t) \times value(c, t) \\
+        capacity(n, t, p) \times value(c, t) \\
     \texttt{flow\_out}&[n, t, p] - \texttt{gen\_penalty\_down}[n, t, p] \leq \\ &
-        capacity(n, t) \times value(c, t) \\
+        capacity(n, t, p) \times value(c, t) \\
     \texttt{flow\_out}&[n, t, p] + \texttt{gen\_penalty\_up}[n, t, p] - \texttt{gen\_penalty\_down}[n, t] = \\&
-        capacity(n, t) \times value(c, t)
+        capacity(n, t, p) \times value(c, t)
 \end{aligned}
 ```
 

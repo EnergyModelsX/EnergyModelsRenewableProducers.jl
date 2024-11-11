@@ -24,4 +24,6 @@ EnergyModelsRenewableProducers.is_constraint_resource
 EnergyModelsRenewableProducers.max_power
 EnergyModelsRenewableProducers.max_flow
 EnergyModelsRenewableProducers.EnergyEquivalent
+EnergyModelsRenewableProducers.build_pq_constaints
+EnergyModelsRenewableProducers.pq_curve
 ```

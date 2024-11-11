@@ -103,7 +103,32 @@ The discharge segments are constrained by the ``\texttt{discharge\_levels}`` pro
 
 #### [Additional constraints](@id nodes-hydro_pump-math-con-add)
 
-The discharge or power capacity can be restricted by adding additional minimum og maximum constraints. This is included in the dispatch of the  `constraints_flow_in` and `constraints_flow_out` constaints for `HydroUnit` nodes, and can thereby be added to both `HydroGenerator` and `HydroPump` nodes. The constraints are optional and only added to the problem if given as input in the `Data` field of the nodes. The constraints are described further in the [HydroGenerator constraints](@ref nodes-hydro_generator-math-con-add) section.
+The pumping capacity can be restricted by adding additional minimum og maximum constraints. This is included in the dispatch of the  `constraints_flow_in` constaints for `HydroPump` nodes. The constraints are optional and only added to the problem if given as input in the `Data` field of the nodes. The constraints can be defined for the resources defined in the `electricity_resource` and `water_resource` fields and limits the flow into of the node.   
+
+1. the flow in constraints if additional constraints exist on the `Data` field,
+
+```math
+\begin{aligned}
+    \texttt{flow\_in}&[n, t, p] \geq capacity(n, t, p) \times value(c, t) \\
+    \texttt{flow\_in}&[n, t, p] \leq capacity(n, t, p) \times value(c, t) \\
+    \texttt{flow\_in}&[n, t, p] = capacity(n, t, p) \times value(c, t)
+\end{aligned}
+```
+
+2. the flow in constraints including penalty if the constraints has non-infinite penalty value.
+
+```math
+\begin{aligned}
+    \texttt{flow\_in}&[n, t, p] + \texttt{gen\_penalty\_up}[n, t, p] \geq \\ &
+        capacity(n, t, p) \times value(c, t) \\
+    \texttt{flow\_in}&[n, t, p] - \texttt{gen\_penalty\_down}[n, t, p] \leq \\ &
+        capacity(n, t, p) \times value(c, t) \\
+    \texttt{flow\_in}&[n, t, p] + \texttt{gen\_penalty\_up}[n, t, p] - \texttt{gen\_penalty\_down}[n, t] = \\&
+        capacity(n, t, p) \times value(c, t)
+\end{aligned}
+```
+
+The ``\texttt{gen\_penalty\_up}[n, t, p]`` and ``\texttt{gen\_penalty\_down}[n, t, p]`` variables are only added if required in a constraint, where ``c_{up}`` denotes constraint requiring up penalty, and ``c_{down}`` denotes constraint requiring down penalty.
 
 
 ##### [Constraints calculated in `create_node`](@id nodes-hydro_pump-math-con-add-node)
