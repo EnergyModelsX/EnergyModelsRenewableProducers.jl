@@ -530,10 +530,10 @@ A regular hydropower plant, modelled as a `HydroUnit` node.
 - **`data::Vector{Data}`** is the additional data (e.g. for investments). The field \
 `data` is conditional through usage of a constructor.
 """
-struct HydroGenerator <: HydroUnit # plant or pump or both?
+struct HydroGenerator <: HydroUnit 
     id::Any
-    cap::TimeProfile # maximum discharge in Mm3/timestep
-    pq_curve::AbstractPqCurve# Production and discharge ratio [MW / Mm3/timestep]
+    cap::TimeProfile 
+    pq_curve::AbstractPqCurve
     opex_var::TimeProfile
     opex_fixed::TimeProfile
     electricity_resource::Resource
@@ -575,10 +575,10 @@ A regular hydropower pump, modelled as a `HydroUnit` node.
 - **`data::Vector{Data}`** is the additional data (e.g. for investments). The field \
 `data` is conditional through usage of a constructor.
 """
-struct HydroPump <: HydroUnit # plant or pump or both?
+struct HydroPump <: HydroUnit 
     id::Any
-    cap::TimeProfile # maximum discharge in Mm3/timestep
-    pq_curve::AbstractPqCurve# Production and discharge ratio [MW / Mm3/timestep]
+    cap::TimeProfile 
+    pq_curve::AbstractPqCurve
     opex_var::TimeProfile
     opex_fixed::TimeProfile
     electricity_resource::Resource
