@@ -264,6 +264,12 @@ function EMB.constraints_opex_var(m, n::HydroReservoir{T}, 𝒯ᴵⁿᵛ,
     )
 end
 
+"""
+EMB.constraints_opex_var(m, n::HydroUnit, 𝒯ᴵⁿᵛ, modeltype::EnergyModel)
+
+Function for creating the constraint on the variable OPEX of a `HydroUnit`.
+This function relates the penalty costs for violating constraints to the objective.
+"""
 function EMB.constraints_opex_var(m, n::HydroUnit, 𝒯ᴵⁿᵛ, modeltype::EnergyModel)
     constraints = filter(is_constraint_data, node_data(n))
 
@@ -297,9 +303,9 @@ function EMB.constraints_opex_var(m, n::HydroUnit, 𝒯ᴵⁿᵛ, modeltype::Ene
 end
 
 """
-    build_constraint(m, n::HydroGate, c::Constraint, 𝒯::TimeStructure, p::ResourceCarrier)
+    build_constraint(m, n::Node, c::Constraint, 𝒯::TimeStructure, p::ResourceCarrier)
 
-Create minimum/maximum/schedule discharge constraints for the `HydroGate` node. The
+Create minimum/maximum/schedule discharge constraints for the generic `Node` type. The
 `Constraint{T}` can have types `T <: AbstractConstraintType` that defines the direction of
 the constraint.
 Penalty variables are included unless penalty value is not set or `Inf``.
@@ -372,7 +378,12 @@ function EMB.constraints_capacity(m, n::HydroUnit, 𝒯::TimeStructure, modeltyp
     constraints_capacity_installed(m, n, 𝒯, modeltype)
 end
 
+"""
+    build_pq_constaints(m, n::HydroUnit, c::PqPoints, 𝒯::TimeStructure)
 
+Function for creating the constraints on the flow_out, cap_use and discharge_segments 
+    variables definedrelated by the pq_curve for a `HydroUnit`node.
+"""
 function build_pq_constaints(m, n::HydroUnit, c::PqPoints, 𝒯::TimeStructure)
 
     Q = discharge_segments(c)
@@ -391,11 +402,21 @@ function build_pq_constaints(m, n::HydroUnit, c::PqPoints, 𝒯::TimeStructure)
         sum(m[:discharge_segment][n, t, q]* η[q] for q ∈ Q))
 end
 
+"""
+    constraints_flow_in(m, n::HydroGenerator, 𝒯::TimeStructure, modeltype::EnergyModel)
+
+Function for creating the constraint on the inlet flow from a HydroGenerator Node.
+"""
 function EMB.constraints_flow_in(m, n::HydroGenerator, 𝒯::TimeStructure, modeltype::EnergyModel)
     @constraint(m, [t ∈ 𝒯], m[:flow_in][n, t, water_resource(n) ] ==
         m[:flow_out][n, t, water_resource(n)])
 end
 
+"""
+    constraints_flow_in(m, n::HydroPump, 𝒯::TimeStructure, modeltype::EnergyModel)
+
+Function for creating the constraint on the inlet flow from a HydroPump Node.
+"""
 function EMB.constraints_flow_in(m, n::HydroPump, 𝒯::TimeStructure, modeltype::EnergyModel)
 
     build_pq_constaints(m, n, pq_curve(n), 𝒯)
@@ -425,6 +446,11 @@ function EMB.constraints_flow_out(m, n::HydroGenerator, 𝒯::TimeStructure, mod
     end
 end
 
+"""
+    constraints_flow_out(m, n::HydroPump, 𝒯::TimeStructure, modeltype::EnergyModel)
+
+Function for creating the constraint on the outlet flow from a HydroPump Node.
+"""
 function EMB.constraints_flow_out(m, n::HydroPump, 𝒯::TimeStructure, modeltype::EnergyModel)
     @constraint(m, [t ∈ 𝒯], m[:flow_out][n, t, water_resource(n) ] ==
         m[:flow_in][n, t, water_resource(n)])

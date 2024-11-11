@@ -486,7 +486,7 @@ abstract type AbstractPqCurve end
 """ 
     PqPoints <: AbstractPqCurve
 
-The relationship between discharge of water and power geenration represented \
+The relationship between discharge/pumping of water and power generation/consumption represented \
 by a set of discharge and power values (PQ-points).
 
 ## Fields
@@ -494,10 +494,11 @@ by a set of discharge and power values (PQ-points).
 - **`discharge_levels::Vector{Real}`** is a vector of discharge values.
 
 The two vectors muct be of equal size and ordered so that the power and discharge values \
- describes the convertion from energy (stored in the water) to electricity (power). \
- The first value in each vector should be zero. Furthermore, the vectors should be scaled with the installed capacity, \
+ describes the convertion from energy (stored in the water) to electricity (power) for a `HydroGenerator` node \
+    or the convertion from electric energy to energy stored as water in the reservoirs for a `HydroPump` node. \
+ The first value in each vector should be zero. Furthermore, the vectors should relative to the installed capacity, \
  so that either the power-vector or the discharge vector is in the range [0, 1].  
- The described power-discharge relationship should be concave.
+ The described power-discharge relationship should be concave for a `HydroGenerator` node and convex for a `HydroPump` node.
 """
 struct PqPoints <: AbstractPqCurve
     power_levels::Vector{Real}  # MW / m3/s
@@ -505,7 +506,7 @@ struct PqPoints <: AbstractPqCurve
 end
 
 """ Construct a PqPoints description based on energy equivalent input. If this function is used the installed capacity of \
-the node must refer to the discharge capacity of the `HydroGenerator` node. """
+the node must refer to the discharge capacity of the `HydroGenerator`/`HydroPump` node. """
 function EnergyEquivalent(value::Real)
     return PqPoints(
         [0.0, value],
@@ -516,19 +517,16 @@ end
 """
     HydroGenerator <: HydroUnit
 
-A regular hydropower plant, modelled as a `NetworkNode` node.
+A regular hydropower plant, modelled as a `HydroUnit` node.
 
 ## Fields
 - **`id`** is the name/identifier of the node.\n
-- **`cap::TimeProfile`** is the installed discharge capacity.\n
+- **`cap::TimeProfile`** is the installed discharge or power capacity.\n
 - **`pq_curve::AbstractPqCurve` describes the relationship between power and discharge (water).\
-requires one input resource (usually Water) and two output resources (usually Water and Power) to be defined \
-where the input resource also is an output resource. \n
-- **`opex_var::TimeProfile`** is the variational operational costs per energy unit produced.\n
+- **`opex_var::TimeProfile`** is the variable operational costs per energy unit produced.\n
 - **`opex_fixed::TimeProfile`** is the fixed operational costs.\n
-- **`electricity_resource::Resource`** are the input `Resource`s with conversion value `Real`.\n
-- **`water_resource::Resource`** are the generated `Resource`s with conversion value `Real`.\n
-
+- **`electricity_resource::Resource`** is the electricity resource generated as output.\n
+- **`water_resource::Resource`** is the water resource taken as input and discharged as output.\n
 - **`data::Vector{Data}`** is the additional data (e.g. for investments). The field \
 `data` is conditional through usage of a constructor.
 """
@@ -561,6 +559,22 @@ function HydroGenerator(
         electricity_resource, water_resource, input, output, Data[])
 end
 
+"""
+    HydroPump <: HydroUnit
+
+A regular hydropower pump, modelled as a `HydroUnit` node.
+
+## Fields
+- **`id`** is the name/identifier of the node.\n
+- **`cap::TimeProfile`** is the installed pumping capacity in piwer or volume per time unit.\n
+- **`pq_curve::AbstractPqCurve` describes the relationship between power and pumping of water.\
+- **`opex_var::TimeProfile`** is the variable operational costs per energy unit produced.\n
+- **`opex_fixed::TimeProfile`** is the fixed operational costs.\n
+- **`electricity_resource::Resource`** is the electricity resource taken as input (consumed).\n
+- **`water_resource::Resource`** is the water resource taken as input and discharged (pumped) as output.\n
+- **`data::Vector{Data}`** is the additional data (e.g. for investments). The field \
+`data` is conditional through usage of a constructor.
+"""
 struct HydroPump <: HydroUnit # plant or pump or both?
     id::Any
     cap::TimeProfile # maximum discharge in Mm3/timestep
