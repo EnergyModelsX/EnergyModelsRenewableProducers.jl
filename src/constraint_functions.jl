@@ -400,7 +400,7 @@ function EMB.constraints_flow_in(m, n::HydroPump, 𝒯::TimeStructure, modeltype
 
     build_pq_constaints(m, n, pq_curve(n), 𝒯)
     @constraint(m, [t ∈ 𝒯], m[:flow_in][n, t, electricity_resource(n)] ==
-        m[:cap_use][n, t] * inputs(n, electricity_resource(n)))
+        m[:cap_use][n, t])
 
     constraints = filter(is_constraint_data, node_data(n))
     for c in constraints
