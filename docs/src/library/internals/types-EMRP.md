@@ -17,5 +17,4 @@ EnergyModelsRenewableProducers.ScheduleConstraintType
 EnergyModelsRenewableProducers.HydroUnit
 EnergyModelsRenewableProducers.AbstractPqCurve
 EnergyModelsRenewableProducers.PqPoints
-EnergyModelsRenewableProducers.HydroUnit
 ```
