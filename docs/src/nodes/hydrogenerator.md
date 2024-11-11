@@ -9,13 +9,12 @@ Likewise, [`HydroPump`](@ref) can consume electricity by moving water to a highe
 ## [Introduced type and its field](@id nodes-hydro_generator-fields)
 The [`HydroGenerator`](@ref) node represents a hydropower unit used to generate electricity in a hydropower system. In its simplest form, the [`HydroGenerator`](@ref) can convert potential energy stored in the reservoirs to electricity by discharging water between reservoirs at different head levels under the assumption that the reservoirs has constant head level. The conversion to electric energy can be described by an power-discharge realtionship referred to as the PQ-curve.
 
-### [Fields](@id nodes-hydro_generator-fields-stand)
+### [Fields](@id nodes-hydro_generator-fields-stand)      
 [`HydroGenerator`](@ref) nodes builds on the [`HydroUnit`](@ref EnergyModelsRenewableProducers.HydroUnit) and the  [`RefNetworkNode` ](@extref EnergyModelsBase.RefNetworkNode) nodes, but add additional fields. The following gives the fields of the [`HydroGenerator`](@ref) node and describes the differences from standard fields. See [`RefNetworkNode`](@extref EnergyModelsBase.RefNetworkNode) for information about the standard fields.
 
 - **`id`**\
 - **`cap::TimeProfile`**: Can refer to either the installed power or discharge capactiy of the hydropower unit. 
-- **`pq_curve::AbstractPqCurve`**: Describes the relationship between generater power (electricity) and discharge of water. 
-
+- **`pq_curve::AbstractPqCurve`**: Describes the relationship between generated power (electricity) and discharge of water. 
 - **`opex_var::TimeProfile`**\
 - **`opex_fixed::TimeProfile`**\
 - **`water_resource::Resource`**: The water resource that the node discharge to generate electricity.
@@ -23,7 +22,7 @@ The [`HydroGenerator`](@ref) node represents a hydropower unit used to generate 
 - **`data::Vector{Data}`**: An entry for providing additional data to the model. 
 
 
-**`pq_curve::AbstractPqCurve`**. There is currently two options to provide input to the `pq_curve` field: either by using the subtype [`PqPoints`](@ref), a struct that takes vectors of related power and discharge values as input, or by using the [EnergyEquivalent](@ref EnergyModelsRenewableProducers.EnergyEquivalent) function that takes a single energy equivalent as input. The  [`PqPoints`](@ref) are defined so that either the maximum discharge or the maximum power value given by the [`PqPoints`](@ref) equals 1. This approach makes if possible to freely chose the capacity of the node (provided in the **`cap::TimeProfile`** field) to represent the power capacity or the discharge capacity of the node when setting up det hydropower system. NB: If an energy equivalent is used the **`cap::TimeProfile`** must refer to the discharge capacity of the [`HydroGenerator`](@ref) node.
+**`pq_curve::AbstractPqCurve`**. There are currently two options to provide input to the `pq_curve` field: either by using the subtype [`PqPoints`](@ref), a struct that takes vectors of related power and discharge values as input, or by using the [EnergyEquivalent](@ref EnergyModelsRenewableProducers.EnergyEquivalent) function that takes a single energy equivalent as input. The  [`PqPoints`](@ref) are relative to the installed capacity, so that either the maximum discharge or the maximum power value given by the [`PqPoints`](@ref) equals 1. This approach allows the insatlled capacity of the node (provided in the **`cap::TimeProfile`** field) to represent either the power capacity or the discharge capacity of the node, depending on the input used when setting up det hydropower system. NB: If an energy equivalent is used the **`cap::TimeProfile`** must refer to the discharge capacity of the [`HydroGenerator`](@ref) node.
 
 **`data::Vector{Data}`** could be used to add minimum, maximum and schedule constraints for the discharge using [Constraint{T<:AbstractConstraintType}](@ref EnergyModelsRenewableProducers.Constraint), where [AbstractConstraintType](@ref EnergyModelsRenewableProducers.AbstractConstraintType) has subtypes [MinConstraintType](@ref EnergyModelsRenewableProducers.MinConstraintType), [MaxConstraintType](@ref EnergyModelsRenewableProducers.MaxConstraintType), and [ScheduleConstraintType](@ref EnergyModelsRenewableProducers.ScheduleConstraintType). Such constraints can be used to, for example, enforce minimum discharge due to environmental considerations. The constraints values are relative to the gate capacity.
 
@@ -58,7 +57,9 @@ In addition, all constraints are valid ``\forall t \in T`` (that is in all opera
 
 #### [Standard constraints](@id nodes-hydro_generator-math-con-stand)
 
-The `HydroGenerator` nodes utilize the majority of the concepts from `EnergyModelsBase`. Some adjustments are required in the constraints to restrict the variables ``\texttt{cap\_use}``, ``\texttt{flow\_in}`` and ``\texttt{flow\_out}``. This is achieved through dispatching on the following standard constraints for `HydroUnit` nodes (used for both `HydroGenerator` and `HydroPump` nodes):
+The `HydroGenerator` nodes utilize the majority of the concepts from `EnergyModelsBase`. Some adjustments are required in the constraints to restrict the variables ``\texttt{opex\_var}``,``\texttt{cap\_use}``, ``\texttt{flow\_in}`` and ``\texttt{flow\_out}``. 
+
+This is achieved through dispatching on the following standard constraints for `HydroUnit` nodes (used for both `HydroGenerator` and `HydroPump` nodes):
 
 - the capacity constraint `constraints_capacity`,
 
@@ -68,6 +69,19 @@ The `HydroGenerator` nodes utilize the majority of the concepts from `EnergyMode
 \end{aligned}
 ```
 Where `capacity(n, t)` is the installed capacity of node `n` in operational period `t` and ``P^{MAX}`` is the maximum power capacity.
+
+- `constraints_opex_var`
+
+```math
+\begin{aligned}
+  \texttt{opex\_var}&[n, t_{inv}] = \\
+    \sum_{t \in t_{inv}}  \Big( &opex\_var(n, t) \times \texttt{cap\_use}[n, t] + \\&
+    \sum_{p \in P_{res}} \Big( penalty(c_{up}, t) \times \texttt{gen\_penalty\_up}[n, t, p] + \\&
+    penalty(c_{down}, t) \times \texttt{gen\_penalty\_down}[n, t, p] \Big) \Big) \times scale\_op\_sp(t_{inv}, t)
+\end{aligned}
+```
+
+where, ``P_{res}`` is the a set containing the water and power resources of node `n` and ``scale\_op\_sp(t_{inv}, t)`` is a scaling factor. The dispatch of the `constraints_opex_var` constraints allows penalty variables for violating maximum and minimum discharge/power constraints to be included when required.
 
 Furthermore, we dispatche on the flow constraints for `HydroGenerator` nodes:
 
@@ -102,21 +116,12 @@ The discharge segments are constrained by the ``\texttt{discharge\_levels}`` pro
  The  [`PqPoints`](@ref) are defined so that either the maximum discharge or the maximum power value given by the [`PqPoints`](@ref) equals 1. This approach makes if possible to freely chose the capacity of the node (provided in the **`cap::TimeProfile`** field) to represent the power capacity or the discharge capacity of the node when setting up det hydropower system. NB: If an energy equivalent is provided as input to the **`pq_curve::AbstractPqCurve`** field, the capacity of the node has to refer to the discharge capacity. 
 
 
--`constraints_opex_var`
 
-```math
-\begin{aligned}
-  \texttt{opex\_var}&[n, t_{inv}] = \\
-    \sum_{t \in t_{inv}} \Big( &opex\_var(n, t) \times \texttt{cap\_use}[n, t] + \\&
-    penalty(c_{up}, t) \times \texttt{gen\_penalty\_up}[n, t] + \\&
-    penalty(c_{down}, t) \times \texttt{gen\_penalty\_down}[n, t] \Big) \times scale\_op\_sp(t_{inv}, t)
-\end{aligned}
-```
-
-We dispatch on the `constraints_opex_var` constraints for `HydroUnit` nodes to include penalty variables for violating maximum and minimum discharge constraints when required.
 
 
 #### [Additional constraints](@id nodes-hydro_generator-math-con-add)
+
+The discharge or power capacity can be restricted by adding additional minimum og maximum constraints. This is included in the dispatch of the  `constraints_flow_in` and `constraints_flow_out` constaints for `HydroUnit` nodes, and can thereby be added to both `HydroGenerator` and `HydroPump` nodes. The constraints are optional and only added to the problem if given as input in the `Data` field of the nodes.
 
 1. the discharge constraints if additional constraints exist on the `Data` field,
 
@@ -132,16 +137,16 @@ We dispatch on the `constraints_opex_var` constraints for `HydroUnit` nodes to i
 
 ```math
 \begin{aligned}
-    \texttt{flow\_out}&[n, t, p] + \texttt{gen\_penalty\_up}[n, t] \geq \\ &
+    \texttt{flow\_out}&[n, t, p] + \texttt{gen\_penalty\_up}[n, t, p] \geq \\ &
         capacity(n, t) \times value(c, t) \\
-    \texttt{flow\_out}&[n, t, p] - \texttt{gen\_penalty\_down}[n, t] \leq \\ &
+    \texttt{flow\_out}&[n, t, p] - \texttt{gen\_penalty\_down}[n, t, p] \leq \\ &
         capacity(n, t) \times value(c, t) \\
-    \texttt{flow\_out}&[n, t, p] + \texttt{gen\_penalty\_up}[n, t] - \texttt{gen\_penalty\_down}[n, t] = \\&
+    \texttt{flow\_out}&[n, t, p] + \texttt{gen\_penalty\_up}[n, t, p] - \texttt{gen\_penalty\_down}[n, t] = \\&
         capacity(n, t) \times value(c, t)
 \end{aligned}
 ```
 
-The ``\texttt{gen\_penalty\_up}[n, t]`` and ``\texttt{gen\_penalty\_down}[n, t]`` variables are only added if required in a constraint, where ``c_{up}`` denotes constraint requiring up penalty, and ``c_{down}`` denotes constraint requiring down penalty.
+The ``\texttt{gen\_penalty\_up}[n, t, p]`` and ``\texttt{gen\_penalty\_down}[n, t, p]`` variables are only added if required in a constraint, where ``c_{up}`` denotes constraint requiring up penalty, and ``c_{down}`` denotes constraint requiring down penalty.
 
 ##### [Constraints calculated in `create_node`](@id nodes-hydro_generator-math-con-add-node)
 
