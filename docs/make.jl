@@ -42,6 +42,7 @@ makedocs(
         "Nodes" => Any[
             "Non-dispatchable RES" => "nodes/nondisres.md",
             "Hydropower" => "nodes/hydropower.md",
+            "Detailed hydropower" => "nodes/detailed-hydropower.md",
             "Hydro reservoir" => "nodes/hydroreservoir.md",
             "Hydro generator" => "nodes/hydrogenerator.md",
             "Hydro pump" => "nodes/hydropump.md",
