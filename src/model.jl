@@ -75,13 +75,13 @@ function EMB.variables_node(m, 𝒩::Vector{HydroGate}, 𝒯,
         n ∈ 𝒩,
         t ∈ 𝒯,
         p ∈ inputs(n);
-        any([has_penalty_up(data, t) for data in node_data(n)])
+        any([has_penalty_up(c, t) for c in constraint_data(n)])
     ] ≥ 0)
     @variable(m, gate_penalty_down[
         n ∈ 𝒩,
         t ∈ 𝒯,
         p ∈ inputs(n);
-        any([has_penalty_down(data, t) for data in node_data(n)])
+        any([has_penalty_down(c, t) for c in constraint_data(n)])
     ] ≥ 0)
 end
 
@@ -101,13 +101,13 @@ function EMB.variables_node(m, 𝒩::Vector{HydroReservoir{T}}, 𝒯,
         n ∈ 𝒩,
         t ∈ 𝒯,
         p ∈ [storage_resource(n)];
-        any([has_penalty_up(data, t) for data in node_data(n)])
+        any([has_penalty_up(c, t) for c in constraint_data(n)])
     ] ≥ 0)
     @variable(m, rsv_penalty_down[
         n ∈ 𝒩,
         t ∈ 𝒯,
         p ∈ [storage_resource(n)];
-        any([has_penalty_down(data, t) for data in node_data(n)])
+        any([has_penalty_down(c, t) for c in constraint_data(n)])
     ] ≥ 0)
 end
 
@@ -131,13 +131,13 @@ function EMB.variables_node(m, 𝒩::Vector{<:HydroUnit}, 𝒯, modeltype::Energ
         n ∈ 𝒩,
         t ∈ 𝒯,
         p ∈ [water_resource(n), electricity_resource(n)];
-        any([has_penalty_up(data, t, p) for data in node_data(n)])
+        any([has_penalty_up(c, t, p) for c in constraint_data(n)])
     ] ≥ 0)
 
     @variable(m, gen_penalty_down[
         n ∈ 𝒩,
         t ∈ 𝒯,
         p ∈ [water_resource(n), electricity_resource(n)];
-        any([has_penalty_down(data, t, p) for data in node_data(n)])
+        any([has_penalty_down(c, t, p) for c in constraint_data(n)])
     ] ≥ 0)
 end

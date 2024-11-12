@@ -320,6 +320,9 @@ end
 is_constraint_data(data::Data) = false
 is_constraint_data(data::Constraint) = true
 
+""" Returns vector of `Data` that are of type `Constraint`."""
+constraint_data(n::EMB.Node) = filter(is_constraint_data, node_data(n))
+
 """ Returns try if `Data` is of type `Constraint` and `Constraint` resource type is `resource`."""
 is_constraint_resource(data::Constraint, resource::Resource) = resource == data.resource
 
@@ -653,4 +656,3 @@ function EMB.capacity(n::HydroUnit, t, p::Resource)
     throw("Hydro HydroUnit capacity resource has to be either water or electricity.")
 end
 EMB.capacity(n::EMB.Node, t, p::Resource) = EMB.capacity(n, t)
-

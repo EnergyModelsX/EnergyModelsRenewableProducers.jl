@@ -148,8 +148,7 @@ function EMB.constraints_level_aux(m, n::HydroReservoir{T} where T<:EMB.StorageB
     )
 
     # The minimum and maximum contents of the reservoir is bounded below and above.
-    constraint_data = filter(is_constraint_data, node_data(n))
-    for c in constraint_data
+    for c in constraint_data(n)
         build_hydro_reservoir_vol_constraints(m, n, c, 𝒯)
     end
 end
@@ -162,7 +161,7 @@ This function relates the penalty costs for violating constraints to the objecti
 """
 function EMB.constraints_opex_var(m, n::HydroGate, 𝒯ᴵⁿᵛ, modeltype::EnergyModel)
 
-    constraints = filter(is_constraint_data, node_data(n))
+    constraints = constraint_data(n)
     constraints_up = filter(has_penalty_up, constraints) # Max and schedule
     constraints_down = filter(has_penalty_down, constraints) # Min and schedule
 
@@ -236,7 +235,7 @@ function EMB.constraints_opex_var(m, n::HydroReservoir{T}, 𝒯ᴵⁿᵛ,
     end
 
     # Create the constraint penalty constraint
-    constraints = filter(is_constraint_data, node_data(n))
+    constraints = constraint_data(n)
     constraints_up = filter(has_penalty_up, constraints) # Max and schedule
     constraints_down = filter(has_penalty_down, constraints) # Min and schedule
 
@@ -271,7 +270,7 @@ Function for creating the constraint on the variable OPEX of a `HydroUnit`.
 This function relates the penalty costs for violating constraints to the objective.
 """
 function EMB.constraints_opex_var(m, n::HydroUnit, 𝒯ᴵⁿᵛ, modeltype::EnergyModel)
-    constraints = filter(is_constraint_data, node_data(n))
+    constraints = constraint_data(n)
 
     opex_var = @expression(m, [t_inv ∈ 𝒯ᴵⁿᵛ], sum(m[:cap_use][n, t] * EMB.opex_var(n, t) *
         scale_op_sp(t_inv, t) for t ∈ t_inv))
@@ -356,8 +355,7 @@ function EMB.constraints_flow_out(m, n::HydroGate, 𝒯::TimeStructure, modeltyp
     @constraint(m, [t ∈ 𝒯], m[:flow_out][n, t, p] == m[:cap_use][n, t] * outputs(n, p))
 
     # If HydroGate has constraint data, build the required constraints
-    constraints = filter(is_constraint_data, node_data(n))
-    for c in constraints
+    for c in constraint_data(n)
         build_constraint(m, n, c, 𝒯, p, "flow_out", "gate_penalty")
     end
 end
@@ -423,8 +421,7 @@ function EMB.constraints_flow_in(m, n::HydroPump, 𝒯::TimeStructure, modeltype
     @constraint(m, [t ∈ 𝒯], m[:flow_in][n, t, electricity_resource(n)] ==
         m[:cap_use][n, t])
 
-    constraints = filter(is_constraint_data, node_data(n))
-    for c in constraints
+    for c in constraint_data(n)
         build_constraint(m, n, c, 𝒯, c.resource, "flow_in", "gen_penalty")
     end
 end
@@ -440,8 +437,7 @@ function EMB.constraints_flow_out(m, n::HydroGenerator, 𝒯::TimeStructure, mod
     @constraint(m, [t ∈ 𝒯], m[:flow_out][n, t, electricity_resource(n)] ==
         m[:cap_use][n, t])
 
-    constraints = filter(is_constraint_data, node_data(n))
-    for c in constraints
+    for c in constraint_data(n)
         build_constraint(m, n, c, 𝒯, c.resource, "flow_out", "gen_penalty")
     end
 end
