@@ -149,7 +149,7 @@ Where ``penalty()`` returnes the penalty value for violation of constraints with
 ```math
 \begin{aligned}
     \texttt{stor\_level\_Δ\_op}&[n, t] = \\ &
-    \texttt{vol\_inflow}(n, t) + \texttt{stor\_charge\_use}[n, t] - \texttt{stor\_discharge\_use}[n, t]
+    vol\_inflow(n, t) + \texttt{stor\_charge\_use}[n, t] - \texttt{stor\_discharge\_use}[n, t]
 \end{aligned}
 ```
 
