@@ -29,6 +29,9 @@ The nodes should be connected by [`links`](@extref lib-pub-links) to represent t
 
 Some of the node types has similar functionality and use some of the same code. The following, describes some general functionality before a more detailed description of the nodes are provided.
 
+The illustration below shows a typical hydropower system where the dotted lines illustrate the links between the nodes.
+
+![Detailed hydropower example topology.](detailed-hydropower-illustration.svg)
 
 ### [Conversion to/from electric energy: the power-discharge relationship](@id nodes-hydro-phil-pq)
 
