@@ -7,13 +7,13 @@
 Pages = ["methods-fields.md"]
 ```
 
-## `NonDisRES`
+## [`NonDisRES`](@id lib-internal-nondisres)
 
 ```@docs
 EnergyModelsRenewableProducers.profile
 ```
 
-## `HydroStorage`
+## [`HydroStorage`](@id lib-internal-hydrostorage)
 
 ```@docs
 EnergyModelsRenewableProducers.level_init
@@ -21,19 +21,19 @@ EnergyModelsRenewableProducers.level_inflow
 EnergyModelsRenewableProducers.level_min
 ```
 
-## `PumpedHydroStor`
+## [`PumpedHydroStor`](@id lib-internal-pumpedhydrostor)
 
 ```@docs
 EnergyModelsRenewableProducers.opex_var_pump
 ```
 
-## `HydroReservoir`
+## [`HydroReservoir`](@id lib-internal-hydroreservoir)
 
 ```@docs
 EnergyModelsRenewableProducers.vol_inflow
 ```
 
-## `HydroUnit`
+## [`HydroUnit`](@id lib-internal-hydrounit)
 
 ```@docs
 EnergyModelsRenewableProducers.pq_curve
@@ -41,16 +41,7 @@ EnergyModelsRenewableProducers.water_resource
 EnergyModelsRenewableProducers.electricity_resource
 ```
 
-## `HydroGenerator`
-
-
-## `HydroPump`
-
-
-## `HydroGate`
-
-
-## `Constraint`
+## [`Constraint`](@id lib-internal-constraint)
 
 ```@docs
 EnergyModelsRenewableProducers.resource
@@ -58,7 +49,7 @@ EnergyModelsRenewableProducers.value
 EnergyModelsRenewableProducers.penalty
 ```
 
-## `PqPoints`
+## [`PqPoints`](@id lib-internal-pqpoints)
 
 ```@docs
 EnergyModelsRenewableProducers.discharge_segments

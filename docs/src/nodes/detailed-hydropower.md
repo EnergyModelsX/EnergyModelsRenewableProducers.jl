@@ -363,7 +363,7 @@ The [`HydroGenerator`](@ref) utilizes the standard variables from the `NetworkNo
 
 ##### [Additional variables](@id nodes-hydro_generator-math-add)
 
-In addition to the standard variables, the variables presented below are defined for [`HydroUnit`](@ref) and created for both [`HydroGenerator`](@ref) and [`HydroPump`](@ref) nodes.
+In addition to the standard variables, the variables presented below are defined for [`HydroUnit`](@ref EnergyModelsRenewableProducers.HydroUnit) and created for both [`HydroGenerator`](@ref) and [`HydroPump`](@ref) nodes.
 - ``\texttt{discharge\_segments}[n, t, q]``: One discharge variable is defined for each segment `q` of the PQ-curve defined by the  `pq_curve` field of node ``n`` in operational period ``t`` with unit volume per time unit. 
 
 If [`PqPoints`](@ref) are provided, the number of discharge segments will be Q, where Q+1 is the length of the vectors in the fields of [`PqPoints`](@ref). There is only one discharge segment if an energy equivalent is used. The ``\texttt{discharge\_segments}`` variables define the utilisation of each discharge segment and sums up to the total discharge. 
@@ -541,7 +541,7 @@ The [`HydroPump`](@ref) utilizes the standard variables from the `NetworkNode`, 
 
 ##### [Additional variables](@id nodes-hydro_pump-math-add)
 
-In addition to the standard variables, the variables presented below are defined for [`HydroUnit`](@ref) nodes. These variabels are created for both [`HydroGenerator`](@ref) and [`HydroPump`](@ref) nodes.
+In addition to the standard variables, the variables presented below are defined for [`HydroUnit`](@ref EnergyModelsRenewableProducers.HydroUnit) nodes. These variabels are created for both [`HydroGenerator`](@ref) and [`HydroPump`](@ref) nodes.
 
 - ``\texttt{discharge\_segments}[n, t, q]``: One discharge variable is defined for each segment `q` of the PQ-curve defined by the  `pq_curve` field in `HydroPump` node ``n`` in operational period ``t`` with unit volume per time unit. 
 
