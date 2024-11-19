@@ -1,6 +1,6 @@
 # [Detailed hydropower](@id nodes-storage)
 
-Cascaded hydropower systems can be modelled usind the [`HydroReservoir`](@ref), [`HydroGate`](@ref), [`HydroGenerator`](@ref), and [`HydroPump`](@ref) nodes. The nodes can be used in combination to model a detailed hydropower system. Unlike [`HydroStorage`](@ref), these nodes allow for modelling of water as a resource that can be stored in reservoirs and moved between reservoirs to produce/consume electricity. The defined node types are:
+Cascaded hydropower systems can be modelled using the [`HydroReservoir`](@ref), [`HydroGate`](@ref), [`HydroGenerator`](@ref), and [`HydroPump`](@ref) nodes. The nodes can be used in combination to model a detailed hydropower system. Unlike [`HydroStorage`](@ref), these nodes allow for modelling of water as a resource that can be stored in reservoirs and moved between reservoirs to produce/consume electricity. The defined node types are:
 
 - [`HydroReservoir`](@ref) can have water as the stored resource.
 - [`HydroGenerator`](@ref) can produce electricity by moving water to a reservoir at a lower altitude or the ocean. 
@@ -12,17 +12,17 @@ Cascaded hydropower systems can be modelled usind the [`HydroReservoir`](@ref), 
 
 ## [Philosophy of the detailed hydropower nodes](@id nodes-hydro-phil)
 
-The detailed hydropower nodes provide a flexible means to represent the physics of cascaded hydropower systems. By connecting nodes of different  types, unique systems with optional number of reservoirs, hydropower plants, pumps and discharge gates can be modelled. 
+The detailed hydropower nodes provide a flexible means to represent the physics of cascaded hydropower systems. By connecting nodes of different  types, unique systems with optional number of reservoirs, generators, pumps and discharge gates can be modelled. 
 
 The [`HydroReservoir`](@ref) node is a storage node used for storing water, while [`HydroGenerator`](@ref), [`HydroPump`](@ref) and [`HydroGate`](@ref) nodes move water around in the system. 
-In addition, [`HydroGenerator`](@ref) and [`HydroPump`](@ref) nodes convert potential energy to electric energy and wise versa. 
+In addition, [`HydroGenerator`](@ref) and [`HydroPump`](@ref) nodes convert potential energy to electric energy and vice versa. 
 
 The detailed modelling of hydropower requires two resources to be defined: a water resource and an electricity resource.  [`HydroReservoir`](@ref) and [`HydroGate`](@ref) nodes only use the water resource, while [`HydroGenerator`](@ref) and [`HydroPump`](@ref) nodes use both resources.
 
 The nodes should be connected by [`links`](@extref lib-pub-links) to represent the water ways in the system. Links are also used to define flow of electricity in and out of the system through [`HydroPump`](@ref) and [`HydroGenerator`](@ref) nodes, respectively. 
 
-!!! warning "Direct linking required"
-    The nodes should be connected directly and not through an availability node. Availability nodes can be used to connect electricity resources, but should not include water resources. 
+!!! danger "Direct linking required"
+    The nodes included in the water way should be connected directly and not through an availability node. An availability node can be used to connect electricity resources, but the water resource must be excluded from the availability node to prevent that the availability node is used to move water to reservoirs with higher altitude without consuming electricity.
 
 !!! note "Ocean node"
     The water transported through the hydropower system requires a final destination. The ocean, or similar final destination, should be represented as a [`RefSink`](@extref EnergyModelsBase.RefSink). 
@@ -38,11 +38,11 @@ The illustration below shows a typical hydropower system where the dotted lines 
 The conversion between energy stored in the water resources in the hydropower system and electric energy is described by a power-discharge relationship. 
 The conversion process in the [`HydroGenerator`](@ref) and [`HydroPump`](@ref) nodes are reversed processes and modelled using the same implementation. 
 
-The conversion is based on a set of PQ-points that describes the relationship between electric energy (power) and discharge of water, namely how much electric energy that is generated per volume of water discharged per time period. For a [`HydroPump`](@ref) node, the PQ-points describes how much electric energy the pump consumes per unit of water that is pumped to a higher reservoir, or how much water that is pumped per unit of electric energy consumed.
+The conversion is based on a set of PQ-points that describes the relationship between electric energy (power) and discharge of water, namely how much electric energy that is generated per volume of water discharged per time unit. For a [`HydroPump`](@ref) node, the PQ-points describes how much electric energy the pump consumes per unit of water that is pumped to a higher reservoir, or how much water that is pumped per unit of electric energy consumed.
 The PQ-points are provided as input through the `pq_curve` field of the  [`HydroGenerator`](@ref) and [`HydroPump`](@ref) nodes. 
 
 !!! note "Relative `PqPoints`"
-     The  [`PqPoints`](@ref) are relative to the installed capacity. This approach makes if possible to freely chose the capacity of the node (provided in the `cap::TimeProfile` field) to refer to the electricity resource (power capacity) or the water resource (discharge/pump capacity) of the node, depending on the input used when setting up det hydropower system. 
+     The  [`PqPoints`](@ref) are relative to the installed capacity. This approach makes if possible to freely chose the capacity of the node (provided in the `cap::TimeProfile` field) to refer to the electricity resource (power capacity) or the water resource (discharge/pump capacity) of the node, depending on the input used when setting up det hydropower system.
 
 !!! note "Energy equivalent"
     Alternatively, a single value representing the energy equivalent can be provided as input in the `pq_curve` field. By the use on a constuctor, a [`PqPoints`](@ref) struct consisting of a min and max point is then created based on the energy equvalent. If a single energy equivalent is given as input, the installed capacity (provided in the `cap::TimeProfile` field) must refer to the power capacity of the [`HydroGenerator`](@ref) or [`HydroPump`](@ref) nodes.
@@ -51,17 +51,22 @@ The PQ-points are provided as input through the `pq_curve` field of the  [`Hydro
 
 ### [Additional constraints](@id nodes-hydro-phil-con)
 
-In addition to the constraints describing the physical system, hydropower systems are subject to a wide range of regulatory constraints or self-imposed constraints. For example to preserve ecological conditions, facilitate multiple use of water ( such as for agriculture or recreation) or ensure safe operation before/during maintanance or in the high season for recreational acitivities in the water courses. 
-Often, such constraints boil down to a type of minimum, maximum or scheduling constraints. 
+In addition to the constraints describing the physical system, hydropower systems are subject to a wide range of regulatory constraints or self-imposed constraints. For example, to preserve ecological conditions, facilitate multiple use of water (such as for agriculture or recreation), or ensure safe operation before/during maintanance or in the high season for recreational acitivities in the water courses. 
+Often, such constraints can be translated into a schedule, or a minimum or maximum constraint. 
 A general functionality has been implemented for adding such constraints to [`HydroReservoir`](@ref), [`HydroGate`](@ref), [`HydroGenerator`](@ref), and [`HydroPump`](@ref) nodes. The constraints are optional through the use of the **`data::Vector{Data}`** fields.
 
-- Minimum constraints [[MinConstraintType](@ref EnergyModelsRenewableProducers.MinConstraintType)]: hard constraints (absolute) or soft constraints (with a penalty for violation) that restricts the minimum of a variable to a given value (e.g., discharge, power, reservoir level)
-- Maximum constraints [[MaxConstraintType](@ref EnergyModelsRenewableProducers.MaxConstraintType)]: hard constraints (absolute) or soft constraints (with a penalty for violation) that restricts the maximum of a variable to a given value (e.g., discharge, power, reservoir level)
-- Schedule constraints [[ScheduleConstraintType](@ref EnergyModelsRenewableProducers.ScheduleConstraintType)]: hard constraints (absolute) or soft constraints (with a penalty for violation) that restricts a variable to a given value (e.g., discharge, power, reservoir level)
+!!! note "Constraint scaling"
+    Constraint inputs are given as values relative to a node capacity. For example, a constraint value 0.5 represents 50% of the node capacity. This makes the use of constraints in investment models possible where the capacity is not known ahead.
+
+- Minimum constraints ([MinConstraintType](@ref EnergyModelsRenewableProducers.MinConstraintType)): hard constraints (absolute) or soft constraints (with a penalty for violation) that restricts the minimum of a variable to a given value (e.g., discharge, power, reservoir level)
+- Maximum constraints ([MaxConstraintType](@ref EnergyModelsRenewableProducers.MaxConstraintType)): hard constraints (absolute) or soft constraints (with a penalty for violation) that restricts the maximum of a variable to a given value (e.g., discharge, power, reservoir level)
+- Schedule constraints ([ScheduleConstraintType](@ref EnergyModelsRenewableProducers.ScheduleConstraintType)): hard constraints (absolute) or soft constraints (with a penalty for violation) that restricts a variable to a given value (e.g., discharge, power, reservoir level)
 
 The min, max and schedule consttaints are subtypes of the abstract type [Constraint{T<:AbstractConstraintType}](@ref EnergyModelsRenewableProducers.Constraint), where new constraints types can be implemeted as subtypes. 
 
 ### [End-value setting of water](@id nodes-hydro-phil-wv)
+
+Scheduling of large reservoirs typically require a method for valuating the future oportunity value of storing water beyond the optimization horizon. This will be included in the EMX receeding horizon package that is under development.
 
 # [Hydro reservoir node](@id nodes-hydro_reservoir)
 
@@ -70,21 +75,21 @@ The [`HydroReservoir`](@ref) nodes represents a water storage in a hydropower sy
 
 
 !!! warning "Spillage"
-    The [`HydroReservoir`](@ref) nodes do not include a spillage variable. To avoid infeasible solutions all reservoir nodes should be connected to a [`HydroGate`](@ref) node representing a water way for spillage in case of full reservoirs. 
+    The [`HydroReservoir`](@ref) nodes do not include a spillage variable. To avoid infeasible solutions, all reservoir nodes should be connected to a [`HydroGate`](@ref) node representing a water way for spillage in case of full reservoirs.
 
 #### [Standard fields](@id nodes-hydro_reservoir-fields-stand)
 The [`HydroReservoir`](@ref) nodes builds on the [`RefStorage`](@extref EnergyModelsBase.RefStorage) node type. Standard fields are given as:
 
-- **`id`**:\
+- **`id`**:
   The field `id` is only used for providing a name to the node.
-- **`vol::EMB.UnionCapacity`**:\
+- **`vol::EMB.UnionCapacity`**:
   The installed volume corresponds to the total water volume storage capacity of the reservoir.
-- **`stor_res::ResourceCarrier`**:\
+- **`stor_res::ResourceCarrier`**:
   The resource that is stored in the reservoir. Should be the reserource representing water and must be consistent for all components in the watercourse.
-- **`data::Vector{Data}`**:\
+- **`data::Vector{Data}`**:
   An entry for providing additional data to the model. 
 
-!!! note "additional constraints"
+!!! note "Additional constraints"
     The `data` field can be used to add minimum, maximum and schedule constraints for the volume using the general constraints types described [here](@ref nodes-hydro-phil-con).
 
     
@@ -92,8 +97,8 @@ The [`HydroReservoir`](@ref) nodes builds on the [`RefStorage`](@extref EnergyMo
 
 [`HydroReservoir`](@ref) nodes add a single additional field compared to a [`RefStorage`](@extref EnergyModelsBase.RefStorage), and does not include the `charge` field since charge/discharge capacity is given throug the [`HydroGenerator`](@ref), [`HydroPump`](@ref), and [`HydroGate`](@ref):
 
-- **`vol_inflow::TimeProfile`**: \
-  The volume inflow to the reservoir per timestep.
+- **`vol_inflow::TimeProfile`**:
+  The inflow rate to the reservoir.
 
 ### [Mathematical description](@id nodes-hydro_reservoir-math)
 
@@ -145,7 +150,7 @@ In addition, all constraints are valid ``\forall t \in T`` (that is in all opera
 \end{aligned}
 ```
 
-Where ``penalty()`` returnes the penalty value for violation of constraints with penalty variables in the upward and downward direction, denoted by ``c_{up}`` and  ``c_{up}``. ``scale\_op\_sp(t_{inv}, t)`` is a scaling factor. 
+where ``penalty()`` returnes the penalty value for violation of constraints with penalty variables in the upward and downward direction, denoted by ``c_{up}`` and  ``c_{down}``. ``scale\_op\_sp(t_{inv}, t)`` is a scaling factor. 
 
 - The dispatch on `constraints_level_aux` alters the energy balance to include hydro inflow,
 
@@ -197,32 +202,32 @@ The `HydroReservoir` nodes do not include any additional constraints other than 
 # [Hydro gate node](@id nodes-hydro_gate)
 
 ### [Introduced type and its field](@id nodes-hydro_gate-fields)
-The [`HydroGate`](@ref) is used when water can be released between reservoirs without going through a generator. The [`HydroGate`](@ref) can either represent a controlled gate that is used to regulate the dispatch from a reservoir without production, or to bypass water when a reservoir is, for example, full. The [`HydroGate`](@ref) can also be used to represent spillage. Althoug spillage is not, in reality, a control decisions but a consequence of full reservoir, it is often modelled as a controllable decisions since state dependent spillage can not be modelled directly in a linear model. Costs for operating gates can be added to penalize unwanted spillage using the ``opex_var`` field.
+The [`HydroGate`](@ref) is used when water can be released between reservoirs without going through a generator. The [`HydroGate`](@ref) can either represent a controlled gate that is used to regulate the dispatch from a reservoir without production, or to bypass water when a reservoir is, for example, full. The [`HydroGate`](@ref) can also be used to represent spillage. Althoug spillage is not, in reality, a control decisions but a consequence of full reservoir, it is often modelled as a controllable decisions since state dependent spillage can not be modelled directly in a linear model. Costs for operating gates can be added to penalize unwanted spillage using the ``opex_{var}`` field.
 
 #### [Standard fields](@id nodes-hydro_gate-fields-stand)
-The [`HydroGate`](@ref) nodes builds on the [NetworkNode](@extref EnergyModelsBase.NetworkNode) node type. Standard fields are given as:
+The [`HydroGate`](@ref) nodes build on the [NetworkNode](@extref EnergyModelsBase.NetworkNode) node type. Standard fields are given as:
 
-- **`id`**:\
+- **`id`**:
   The field `id` is only used for providing a name to the node.
-- **`cap::TimeProfile`**: \
+- **`cap::TimeProfile`**:
   The installed gate discharge capacity.
-- **`opex_var::TimeProfile`**: \
-  The variable operational expenses are based on the capacity utilization through the variable [`:cap_use`](@extref EnergyModelsBase man-opt_var-cap).
-- **`opex_fixed::TimeProfile`**:\
+- **`opex_var::TimeProfile`**:
+  The variable operational expenses are based on the capacity utilization through the variable [`cap_use`](@extref EnergyModelsBase man-opt_var-cap).
+- **`opex_fixed::TimeProfile`**:
   The fixed operating expenses are relative to the installed capacity (through the field `cap`) and the chosen duration of a strategic period as outlined on *[Utilize `TimeStruct`](@extref EnergyModelsBase how_to-utilize_TS)*.\
   It is important to note that you can only use `FixedProfile` or `StrategicProfile` for the fixed OPEX, but not `RepresentativeProfile` or `OperationalProfile`.
   In addition, all values have to be non-negative.
-- **`data::Vector{Data}`**:\
+- **`data::Vector{Data}`**:
   An entry for providing additional data to the model. 
 
-!!! note "additional constraints"
+!!! note "Additional constraints"
     The `data` field can be used to add minimum, maximum and schedule constraints on the discharge using the general constraints types described [here](@ref nodes-hydro-phil-con).
 
 #### [Additional fields](@id nodes-hydro_gate-fields-new)
-- **`resource::Resource`**: \
+- **`resource::Resource`**:
   The water resource that the node can release.
 
-!!! note "input/output fields"
+!!! note "Input/output fields"
     [`HydroGate`](@ref) includes a `resource::Resource` field instead of the `Input` and `Output` fields as a a hydro gate can only have one resource type, water, and the scaling is always 1 since water does not arise or disappear.
 
 
@@ -309,17 +314,17 @@ The [`HydroGenerator`](@ref) node represents a hydropower unit used to generate 
 #### [Standard fields](@id nodes-hydro_generator-fields-stand)      
 [`HydroGenerator`](@ref) nodes builds on the [`HydroUnit`](@ref EnergyModelsRenewableProducers.HydroUnit) and the  [`RefNetworkNode` ](@extref EnergyModelsBase.RefNetworkNode) nodes, but add additional fields. The standard fields are:
 
-- **`id`**: \
+- **`id`**:
   The field `id` is only used for providing a name to the node.
-- **`cap::TimeProfile`**: \
+- **`cap::TimeProfile`**:
   Can refer to either the installed power or discharge capactiy of the hydropower unit. 
-- **`opex_var::TimeProfile`**: \
-  The variable operational expenses are based on the capacity utilization through the variable [`:cap_use`](@ref man-opt_var-cap).
-- **`opex_fixed::TimeProfile`**: \
+- **`opex_var::TimeProfile`**:
+  The variable operational expenses are based on the capacity utilization through the variable [`cap_use`](@ref man-opt_var-cap).
+- **`opex_fixed::TimeProfile`**:
   The fixed operating expenses are relative to the installed capacity (through the field `cap`) and the chosen duration of a strategic period as outlined on *[Utilize `TimeStruct`](@ref how_to-utilize_TS)*.\
   It is important to note that you can only use `FixedProfile` or `StrategicProfile` for the fixed OPEX, but not `RepresentativeProfile` or `OperationalProfile`.
   In addition, all values have to be non-negative.
-- **`data::Vector{Data}`**: \
+- **`data::Vector{Data}`**:
   An entry for providing additional data to the model. 
 
 !!! note "Additional constraints"
@@ -329,11 +334,11 @@ The [`HydroGenerator`](@ref) node represents a hydropower unit used to generate 
 
 The following gives the additional fields of the [`HydroGenerator`](@ref) nodes:
 
-- **`pq_curve::AbstractPqCurve`**: \
+- **`pq_curve::AbstractPqCurve`**:
   Describes the [relationship between generated power (electricity) and discharge of water](@ref nodes-hydro-phil-pq). Input can be provided by using the subtype [`PqPoints`](@ref) or as a single energy equivalent. 
-- **`water_resource::Resource`**: \
+- **`water_resource::Resource`**:
   The water resource that the node discharge to generate electricity.
-- **`electricity_resource::Resource`**: \
+- **`electricity_resource::Resource`**:
   The electricity resource generated from the node.
 
 !!! warning "pq_curve"
@@ -406,7 +411,7 @@ Where `capacity(n, t)` is the installed capacity of node `n` in operational peri
 \end{aligned}
 ```
 
-The dispatch of the `constraints_opex_var` constraints allows penalty variables for violating maximum and minimum discharge/power constraints to be included when required, where ``penalty()`` returnes the penalty value for violation in the upward and downward direction of constraints with penalty variables, denoted by ``c_{up}`` and  ``c_{up}`` respectively. Set ``P^{res}`` contains the water and power resources of node `n` and ``scale\_op\_sp(t_{inv}, t)`` is a scaling factor. 
+The dispatch of the `constraints_opex_var` constraints allows penalty variables for violating maximum and minimum discharge/power constraints to be included when required, where ``penalty()`` returnes the penalty value for violation in the upward and downward direction of constraints with penalty variables, denoted by ``c_{up}`` and  ``c_{up}`` respectively. The set ``P^{res}`` contains the water and power resources of node `n` and ``scale\_op\_sp(t_{inv}, t)`` is a scaling factor. 
 
 Furthermore, we dispatche on the flow constraints for `HydroGenerator` nodes:
 
@@ -488,17 +493,17 @@ The [`HydroPump`](@ref) node represents a hydropower unit that consumes electric
 #### [Standard fields](@id nodes-hydro_pump-fields-stand)
 [`HydroPump`](@ref) nodes builds on the [`HydroUnit`](@ref EnergyModelsRenewableProducers.HydroUnit) and the  [`RefNetworkNode` ](@extref EnergyModelsBase.RefNetworkNode) nodes, but add additional fields. The following gives the fields of the [`HydroPump`](@ref) node and describes the differences from standard fields. See [`RefNetworkNode`](@extref EnergyModelsBase.RefNetworkNode) for information about the standard fields.
 
-- **`id`**:\
+- **`id`**:
   The field `id` is only used for providing a name to the node.
-- **`cap::TimeProfile`**:\
+- **`cap::TimeProfile`**:
   Refer to the installed pumping capacity, either in form of volume water per time period or power capacity. 
-- **`opex_var::TimeProfile`**:\
-  The variable operational expenses are based on the capacity utilization through the variable [`:cap_use`](@ref man-opt_var-cap).
-- **`opex_fixed::TimeProfile`**:\
-  The fixed operating expenses are relative to the installed capacity (through the field `cap`) and the chosen duration of a strategic period as outlined on *[Utilize `TimeStruct`](@ref how_to-utilize_TS)*.\
+- **`opex_var::TimeProfile`**:
+  The variable operational expenses are based on the capacity utilization through the variable [`cap_use`](@ref man-opt_var-cap).
+- **`opex_fixed::TimeProfile`**:
+  The fixed operating expenses are relative to the installed capacity (through the field `cap`) and the chosen duration of a strategic period as outlined on *[Utilize `TimeStruct`](@ref how_to-utilize_TS)*.
   It is important to note that you can only use `FixedProfile` or `StrategicProfile` for the fixed OPEX, but not `RepresentativeProfile` or `OperationalProfile`.
   In addition, all values have to be non-negative.
-- **`data::Vector{Data}`**:\
+- **`data::Vector{Data}`**:
   An entry for providing additional data to the model. 
 
 !!! note "Additional constraints"
@@ -506,11 +511,11 @@ The [`HydroPump`](@ref) node represents a hydropower unit that consumes electric
 
 #### [Additional fields](@id nodes-hydro_pump-fields-stand)
 
-- **`pq_curve::AbstractPqCurve`**:\ 
+- **`pq_curve::AbstractPqCurve`**:
   Describes the [relationship between consumed power (electricity) and pumped water](@ref nodes-hydro-phil-pq). 
-- **`water_resource::Resource`**:\
+- **`water_resource::Resource`**:
   The water resource that the node pumps between reservoirs.
-- **`electricity_resource::Resource`**:\
+- **`electricity_resource::Resource`**:
   The electricity resource consumed in the node.
 
 !!! warning "pq_curve"
