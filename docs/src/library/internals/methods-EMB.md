@@ -11,6 +11,7 @@ Pages = ["methods-EMB.md"]
 ```@docs
 EnergyModelsBase.variables_node
 EnergyModelsBase.create_node
+EnergyModelsBase.level
 ```
 
 ## Constraint methods

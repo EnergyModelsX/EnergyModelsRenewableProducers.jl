@@ -63,13 +63,13 @@ end
 """
     EMB.variables_node(m, 𝒩::Vector{HydroGate}, 𝒯, modeltype::EnergyModel)
 
-Create the optimization variable `:gate_penalty_up` or `:gate_penalty_down` for every HydroGate node
-that has constraints with penalty variables. This variable enables `HydroGate` nodes to take
-penalty if volume or discharge constraint is violated. Wihtout this penalty variable, too
-strict volume restrictions may lead to an infeasible model.
+Create the optimization variable `:gate_penalty_up` or `:gate_penalty_down` for every
+HydroGate node that has constraints with penalty variables.
+This variable enables `HydroGate` nodes to take penalty if volume or discharge constraint
+is violated.
+Wihtout this penalty variable, too strict volume restrictions may cause an infeasible model.
 """
-function EMB.variables_node(m, 𝒩::Vector{HydroGate}, 𝒯,
-    modeltype::EnergyModel)
+function EMB.variables_node(m, 𝒩::Vector{HydroGate}, 𝒯, modeltype::EnergyModel)
 
     @variable(m, gate_penalty_up[
         n ∈ 𝒩,
@@ -86,13 +86,13 @@ function EMB.variables_node(m, 𝒩::Vector{HydroGate}, 𝒯,
 end
 
 """
-    EMB.variables_node(m, 𝒩::Vector{HydroReservoir{T}}, 𝒯,
-    modeltype::EnergyModel) where {T <: EMB.StorageBehavior}
+    EMB.variables_node(m, 𝒩::Vector{HydroReservoir{T}}, 𝒯, modeltype::EnergyModel) where \
+    {T <: EMB.StorageBehavior}
 
 Create the optimization variable `:rsv_penalty_up` or `:rsv_penalty_down` for every
 `HydroReservoir` node that has constraints with penalty variables. This variable enables
 `HydroReservoir` nodes to take penalty if volume or discharge constraint is violated.
-Wihtout this penalty variable, too strict volume restrictions may lead to an infeasible model.
+Wihtout this penalty variable, too strict volume restrictions may cause an infeasible model.
 """
 function EMB.variables_node(m, 𝒩::Vector{HydroReservoir{T}}, 𝒯,
     modeltype::EnergyModel) where {T <: EMB.StorageBehavior}
@@ -113,11 +113,14 @@ end
 
 
 """
-    EMB.variables_node(m, 𝒩::Vector{HydroGenerator}, 𝒯, modeltype::EnergyModel)
+    EMB.variables_node(m, 𝒩::Vector{HydroUnit}, 𝒯, modeltype::EnergyModel)
 
-Create the optimization variable `:discharge_segment` for every HydroGenerator node. This variable
-enables the use of a concave PQ-curve. The sum of the utilisation of the discharge_sements has to
-equal the cap_use. """
+Create the optimization variable `:discharge_segment` for every HydroUnit node. This variable
+enables the use of a concave PQ-curve.
+The capacity of the discharge_segments sums up to the total discharge capacity.
+In addition, the variables `gen_penalty_up` and `gen_penalty_down` are created if penalties
+for violating the maximum discharge or generation capacity are provided.
+"""
 function EMB.variables_node(m, 𝒩::Vector{<:HydroUnit}, 𝒯, modeltype::EnergyModel)
     @variable(m, discharge_segment[
         n ∈ 𝒩,
