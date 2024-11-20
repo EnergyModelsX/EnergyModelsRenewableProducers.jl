@@ -28,6 +28,7 @@ EnergyModelsBase.constraints_opex_var
 
 ```@docs
 EnergyModelsBase.check_node
+EnergyModelsBase.check_node_data
 ```
 
 ## [Field extraction methods](@id lib-int-met_emb-field)

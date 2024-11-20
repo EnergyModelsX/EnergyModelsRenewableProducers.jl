@@ -28,14 +28,16 @@ The nodes should be connected by [`links`](@extref lib-pub-links) to represent t
 !!! danger "Direct linking required"
     The nodes included in the water way should be connected directly and not through an [`Availability`](@extref EnergyModelsBase.Availability) node. An availability node can be used to connect electricity resources, but the water resource must be excluded from the availability node to prevent that the availability node is used to move water to reservoirs with higher altitude without consuming electricity.
 
-!!! danger "Reservoir inputs required"
-    All nodes must have both inputs and output.
+!!! danger "Reservoir input and input required"
+    All nodes must have both input and output.
     Therefore, a [`RefSource`](@extref EnergyModelsBase.RefSource) node with capacity 0 should be connected to the reservoir at the top of the water course.
-
-!!! note "Ocean node"
-    The water transported through the hydropower system requires a final destination.
+    Similarly, the water transported through the hydropower system requires a final destination.
     The ocean, or similar final destination, should be represented as a [`RefSink`](@extref EnergyModelsBase.RefSink) with the water resource as input an no surplus penalty.
     This way, it can accept any amount of water.
+
+!!! warning "Detailed hydropower nodes and investment models"
+    The current implementation of nodes described below does not allow their usage in capacity expansion models.
+    This is checked through the function `EMB.check_node_data` in the `EnergyModelsInvestments` extension.
 
 Some of the node types has similar functionality and use some of the same code.
 The following, describes some general functionality before a more detailed description of the nodes are provided.
