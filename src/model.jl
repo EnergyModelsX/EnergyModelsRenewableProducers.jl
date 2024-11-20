@@ -154,18 +154,17 @@ function EMB.variables_node(m, 𝒩::Vector{<:HydroUnit}, 𝒯, modeltype::Energ
     ] ≥ 0)
 
     # Add discharge/production constraint penalty variables
-    𝒫ᵉʷ = [water_resource(n), electricity_resource(n)]
     @variable(m, gen_penalty_up[
         n ∈ 𝒩,
         t ∈ 𝒯,
-        p ∈ 𝒫ᵉʷ;
+        p ∈ [water_resource(n), electricity_resource(n)];
         any([has_penalty_up(c, t, p) for c in constraint_data(n)])
     ] ≥ 0)
 
     @variable(m, gen_penalty_down[
         n ∈ 𝒩,
         t ∈ 𝒯,
-        p ∈ 𝒫ᵉʷ;
+        p ∈ [water_resource(n), electricity_resource(n)];
         any([has_penalty_down(c, t, p) for c in constraint_data(n)])
     ] ≥ 0)
 end

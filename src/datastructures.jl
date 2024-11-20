@@ -412,7 +412,7 @@ has_penalty_up(data::Constraint{MinConstraintType}) = true
 has_penalty_up(data::Constraint{ScheduleConstraintType}) = true
 has_penalty_up(data::Constraint, t) = has_penalty_up(data) & has_penalty(data, t)
 has_penalty_up(data::Constraint, t, p::Resource) =
-    has_penalty_up(data, t) & (resource(data) == resource)
+    has_penalty_up(data, t) & (resource(data) == p)
 
 """
     has_penalty_down(data::Constraint)
@@ -433,8 +433,8 @@ has_penalty_down(data::Constraint) = false
 has_penalty_down(data::Constraint{MaxConstraintType}) = true
 has_penalty_down(data::Constraint{ScheduleConstraintType}) = true
 has_penalty_down(data::Constraint, t) = has_penalty_down(data) & has_penalty(data, t)
-has_penalty_down(data::Constraint, t, resource::Resource) =
-    has_penalty_down(data, t) & (resource(data) == resource)
+has_penalty_down(data::Constraint, t, p::Resource) =
+    has_penalty_down(data, t) & (resource(data) == p)
 
 """
     HydroReservoir{T} <: EMB.Storage{T}
