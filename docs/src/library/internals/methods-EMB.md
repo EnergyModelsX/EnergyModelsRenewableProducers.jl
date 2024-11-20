@@ -1,12 +1,12 @@
-# Methods - `EnergyModelsBase`
+# [Methods - `EnergyModelsBase`](@id lib-int-met_emb)
 
-## Index
+## [Index](@id lib-int-met_emb-idx)
 
 ```@index
 Pages = ["methods-EMB.md"]
 ```
 
-## Extension methods
+## [Extension methods](@id lib-int-met_emb-ext)
 
 ```@docs
 EnergyModelsBase.variables_node
@@ -14,7 +14,7 @@ EnergyModelsBase.create_node
 EnergyModelsBase.level
 ```
 
-## Constraint methods
+## [Constraint methods](@id lib-int-met_emb-con)
 
 ```@docs
 EnergyModelsBase.constraints_capacity
@@ -24,13 +24,14 @@ EnergyModelsBase.constraints_level_aux
 EnergyModelsBase.constraints_opex_var
 ```
 
-## Check methods
+## [Check methods](@id lib-int-met_emb-check)
 
 ```@docs
 EnergyModelsBase.check_node
 ```
 
-## Other methods
+## [Field extraction methods](@id lib-int-met_emb-field)
+
 ```@docs
-EnergyModelsRenewableProducers.capacity
+EnergyModelsBase.capacity
 ```
