@@ -14,11 +14,12 @@ It has in its current stage two concrete subtypes, [`HydroStor`](@ref) and [`Pum
 Both types utilize the same main functionality, although [`PumpedHydroStor`](@ref) allows for utilizing electricity to store more water.
 The two nodes are designed to work with the cyclic *[storage behaviors](@extref EnergyModelsBase lib-pub-nodes-stor_behav)*.
 [`HydroStor`](@ref) and [`PumpedHydroStor`](@ref) should mainly be used for aggregated hydropower descriptions.
+
 !!! warning "Input, output, and stored resource"
     Although hydro reservoir store water, we have to assume in the current implementation that electricity is stored.
     The key reason for this is that we do not support in the modelling approach a conversion from the variable ``\texttt{flow\_in}`` of a resource to a different stored resource.
 
-For detailed hydropower modeling, see [](@ref nodes-hydro_reservoir), [](@ref nodes-hydro_generator), [](@ref nodes-hydro_pump), and [](@ref nodes-hydro_gate).
+For detailed hydropower modeling, see *[Detailed hydropower](@ref nodes-det_hydro_power)*.
 
 ### [Standard fields](@id nodes-hydro_power-fields-stand)
 
