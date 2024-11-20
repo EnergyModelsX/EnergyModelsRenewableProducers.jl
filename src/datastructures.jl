@@ -630,17 +630,21 @@ function PqPoints(eq::Real)
 end
 
 """
+    power_level(pq::PqPoints)
     power_level(pq::PqPoints, i)
 
-Returns the power level at `PqPoint` with index `i`.
+Returns the power level of PqPoint `pq` as array or at index `i`.
 """
+power_level(pq::PqPoints) = pq.power_levels
 power_level(pq::PqPoints, i) = pq.power_levels[i]
 
 """
+    discharge_level(pq::PqPoints)
     discharge_level(pq::PqPoints, i)
 
-Returns the discharge level at `PqPoint` with index `i`.
+Returns the discharge level of PqPoint `pq` as array or at index `i`.
 """
+discharge_level(pq::PqPoints) = pq.discharge_levels
 discharge_level(pq::PqPoints, i) = pq.discharge_levels[i]
 
 """

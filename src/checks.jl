@@ -155,8 +155,6 @@ This method checks that the [`HydroReservoir`](@ref) node is valid.
 ## Checks
 - The `TimeProfile` of the `capacity` of the `HydroReservoir` `level` is required
   to be non-negative.
-- The value of constraints are required to be in the range ``[0, 1]`` for all time steps
-  ``t ∈ \\mathcal{T}``.
 """
 function EMB.check_node(n::HydroReservoir, 𝒯, modeltype::EMB.EnergyModel, check_timeprofiles::Bool)
 
@@ -165,17 +163,9 @@ function EMB.check_node(n::HydroReservoir, 𝒯, modeltype::EMB.EnergyModel, che
 
     if isa(par_level, EMB.UnionCapacity)
         @assert_or_log(
-            sum(capacity(par_level, t) ≥ 0 for t ∈ 𝒯) == length(𝒯),
+            all(capacity(par_level, t) ≥ 0 for t ∈ 𝒯),
             "The volume capacity has to be non-negative."
         )
-    end
-    for d in n.data
-        if isa(d, Constraint{<: AbstractConstraintType})
-            @assert_or_log(
-                sum(0 ≤ d.value[t] ≤ 1 for t ∈ 𝒯) == length(𝒯),
-                "The relative constraint value must be between 0 and 1."
-            )
-        end
     end
 end
 
@@ -186,24 +176,14 @@ This method checks that the *[`HydroGate`](@ref)* node is valid.
 
 ## Checks
  - The field `cap` is required to be non-negative.
- - The value of constraints are required to be in the range ``[0, 1]`` for all time steps
- ``t ∈ \\mathcal{T}``.
 """
 function EMB.check_node(n::HydroGate, 𝒯, modeltype::EMB.EnergyModel, check_timeprofiles::Bool)
     𝒯ᴵⁿᵛ = strategic_periods(𝒯)
 
     @assert_or_log(
-        sum(capacity(n, t) ≥ 0 for t ∈ 𝒯) == length(𝒯),
+        all(capacity(n, t) ≥ 0 for t ∈ 𝒯),
         "The capacity must be non-negative."
     )
-    for d in n.data
-        if isa(d, Constraint{<: AbstractConstraintType})
-            @assert_or_log(
-                sum(0 ≤ d.value[t] ≤ 1 for t ∈ 𝒯) == length(𝒯),
-                "The relative constraint value must be between 0 and 1."
-            )
-        end
-    end
 end
 
 """
@@ -233,45 +213,69 @@ function EMB.check_node(n::HydroUnit, 𝒯, modeltype::EnergyModel, check_timepr
     pq = pq_curve(n)
     if pq isa PqPoints
         @assert_or_log(
-            length(pq.power_levels) == length(pq.discharge_levels),
-            "The PqPoint vectors must have the same length."
+            length(power_level(pq)) == length(discharge_level(pq)),
+            "The `PqPoint` vectors must have the same length."
         )
 
         @assert_or_log(
-            (pq.power_levels[begin] ≈ 0) & (pq.discharge_levels[begin] ≈ 0),
-            "The PqPoint vectors should start at 0."
+            (power_level(pq, 1) ≈ 0) & (discharge_level(pq, 1) ≈ 0),
+            "The `PqPoint` vectors should start at 0."
         )
 
         @assert_or_log(
-            issorted(pq.power_levels, lt= <=) & issorted(pq.discharge_levels, lt= <=),
-            "The PqPoint vectors must be increasing."
+            issorted(power_level(pq), lt= <=) & issorted(discharge_level(pq), lt= <=),
+            "The `PqPoint` vectors must be increasing."
         )
-
+        n_p = length(power_level(pq))
+        n_d = length(discharge_level(pq))
         @assert_or_log(
-            ((pq.power_levels[begin] ≈ 0) & (pq.power_levels[end] ≈ 1)) |
-            ((pq.discharge_levels[begin] ≈ 0) & (pq.discharge_levels[end] ≈ 1)),
-            "One of the PqPoint vectors should be from 0 to 1."
+            ((power_level(pq, 1) ≈ 0) & (power_level(pq, n_p) ≈ 1)) |
+            ((discharge_level(pq, 1) ≈ 0) & (discharge_level(pq, n_d) ≈ 1)),
+            "One of the `PqPoint` vectors should be from 0 to 1."
         )
 
         if n isa HydroGenerator
             @assert_or_log(
                 issorted(
-                    (pq.power_levels[begin+1:end] - pq.power_levels[begin:end-1]) ./
-                        (pq.discharge_levels[begin+1:end] - pq.discharge_levels[begin:end-1]),
+                    (power_level(pq)[2:end] - power_level(pq)[1:end-1]) ./
+                        (discharge_level(pq)[2:end] - discharge_level(pq)[1:end-1]),
                     rev=true, lt= <=
                 ),
-                "The PqPoint curve should be concave for generators."
+                "The `PqPoint` curve should be concave for generators."
             )
         else
             @assert_or_log(
                 issorted(
-                    (pq.power_levels[begin+1:end] - pq.power_levels[begin:end-1]) ./
-                        (pq.discharge_levels[begin+1:end] - pq.discharge_levels[begin:end-1]),
+                    (power_level(pq)[2:end] - power_level(pq)[1:end-1]) ./
+                        (discharge_level(pq)[2:end] - discharge_level(pq)[1:end-1]),
                     rev=false, lt= <=
                 ),
-                "The PqPoint curve should be convex for pumps."
+                "The `PqPoint` curve should be convex for pumps."
             )
         end
     end
     EMB.check_fixed_opex(n, 𝒯ᴵⁿᵛ, check_timeprofiles)
+end
+
+"""
+    EMB.check_node_data(n::EMB.Node, data::Constraint, 𝒯, modeltype::EnergyModel, check_timeprofiles::Bool)
+
+Performs various checks on [`Constraint`](@ref) data for all nodes.
+
+## Checks
+- The value of constraints are required to be in the range ``[0, 1]`` for all time steps
+  ``t ∈ \\mathcal{T}``.
+"""
+function EMB.check_node_data(
+    n::EMB.Node,
+    data::Constraint,
+    𝒯,
+    modeltype::EnergyModel,
+    check_timeprofiles::Bool,
+)
+
+    @assert_or_log(
+        all(0 ≤ value(data, t) ≤ 1 for t ∈ 𝒯),
+        "The relative constraint value must be between 0 and 1."
+    )
 end
