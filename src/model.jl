@@ -63,11 +63,17 @@ end
 """
     EMB.variables_node(m, 𝒩::Vector{HydroGate}, 𝒯, modeltype::EnergyModel)
 
-Create the optimization variable `:gate_penalty_up` or `:gate_penalty_down` for every
-HydroGate node that has constraints with penalty variables.
-This variable enables `HydroGate` nodes to take penalty if volume or discharge constraint
-is violated.
-Wihtout this penalty variable, too strict volume restrictions may cause an infeasible model.
+Creates the following additional variables for **ALL** hydro gate nodes that have additional
+constraints through [`Constraint`](@ref):
+- `gate_penalty_up[n, t, p]` is the *up* penalty variable of hydro gate `n` in operational
+  period `t` for resource `p`.
+- `gate_penalty_down[n, t, p]` is the *down* penalty variable of hydro gate `n` in operational
+  period `t` for resource `p`.
+
+These variables enable `HydroGate` nodes to penalize a violation of the discharge constraint
+instead of providing a strict upper bound. They hence transform the constraint to a soft
+constraint. Without these penalty variables, too strict discharge restrictions may cause an
+infeasible model.
 """
 function EMB.variables_node(m, 𝒩::Vector{HydroGate}, 𝒯, modeltype::EnergyModel)
 
@@ -89,12 +95,21 @@ end
     EMB.variables_node(m, 𝒩::Vector{HydroReservoir{T}}, 𝒯, modeltype::EnergyModel) where \
     {T <: EMB.StorageBehavior}
 
-Create the optimization variable `:rsv_penalty_up` or `:rsv_penalty_down` for every
-`HydroReservoir` node that has constraints with penalty variables. This variable enables
-`HydroReservoir` nodes to take penalty if volume or discharge constraint is violated.
-Wihtout this penalty variable, too strict volume restrictions may cause an infeasible model.
+
+Creates the following additional variables for **ALL** [`HydroReservoir`](@ref) nodes that
+have additional
+constraints through [`Constraint`](@ref):
+- `rsv_penalty_up[n, t, p]` is the *up* penalty variable of hydro reservoir `n` in
+  operational period `t` for resource `p`.
+- `rsv_penalty_down[n, t, p]` is the *down* penalty variable of hydro reservoir `n` in
+  operational period `t` for resource `p`.
+
+These variables enable `HydroReservoir` nodes to penalize a violation of the volume constraint
+instead of providing a strict bound. They hence transform the constraint to a soft
+constraint. Without these penalty variables, too strict volume restrictions may cause an
+infeasible model.
 """
-function EMB.variables_node(m, 𝒩::Vector{HydroReservoir{T}}, 𝒯,
+function EMB.variables_node(m, 𝒩::Vector{<:HydroReservoir{T}}, 𝒯,
     modeltype::EnergyModel) where {T <: EMB.StorageBehavior}
 
     @variable(m, rsv_penalty_up[
@@ -113,33 +128,44 @@ end
 
 
 """
-    EMB.variables_node(m, 𝒩::Vector{HydroUnit}, 𝒯, modeltype::EnergyModel)
+    EMB.variables_node(m, 𝒩::Vector{:<HydroUnit}, 𝒯, modeltype::EnergyModel)
 
-Create the optimization variable `:discharge_segment` for every HydroUnit node. This variable
-enables the use of a concave PQ-curve.
-The capacity of the discharge_segments sums up to the total discharge capacity.
-In addition, the variables `gen_penalty_up` and `gen_penalty_down` are created if penalties
-for violating the maximum discharge or generation capacity are provided.
+Creates the following additional variables for **ALL** [`HydroUnit`](@ref) nodes that
+have additional
+constraints through [`Constraint`](@ref):
+- `gen_penalty_up[n, t, p]` is the *up* penalty variable of hydro unit `n` in
+  operational period `t` for resource `p`.
+- `rsv_penalty_down[n, t, p]` is the *down* penalty variable of hydro unit `n` in
+  operational period `t` for resource `p`.
+- `discharge_segment[n, t, q]` is the discharge segment variable of hydro unit `n` in
+  operational period `t` for discharge segment `q`
+  The capacity of the `discharge_segment`s sums up to the total discharge capacity.
+
+The first two variables enable `HydroUnit` nodes to penalize a violation of the
+generation/pumping constraints instead of providing a strict bound. They hence transform the
+constraint to a soft constraint. Without these penalty variables, too strict generation/pumping
+constraints may cause an infeasible model.
 """
 function EMB.variables_node(m, 𝒩::Vector{<:HydroUnit}, 𝒯, modeltype::EnergyModel)
     @variable(m, discharge_segment[
         n ∈ 𝒩,
         t ∈ 𝒯,
         q ∈ discharge_segments(pq_curve(n))
-    ] >= 0)
+    ] ≥ 0)
 
     # Add discharge/production constraint penalty variables
+    𝒫ᵉʷ = [water_resource(n), electricity_resource(n)]
     @variable(m, gen_penalty_up[
         n ∈ 𝒩,
         t ∈ 𝒯,
-        p ∈ [water_resource(n), electricity_resource(n)];
+        p ∈ 𝒫ᵉʷ;
         any([has_penalty_up(c, t, p) for c in constraint_data(n)])
     ] ≥ 0)
 
     @variable(m, gen_penalty_down[
         n ∈ 𝒩,
         t ∈ 𝒯,
-        p ∈ [water_resource(n), electricity_resource(n)];
+        p ∈ 𝒫ᵉʷ;
         any([has_penalty_down(c, t, p) for c in constraint_data(n)])
     ] ≥ 0)
 end

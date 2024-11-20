@@ -150,13 +150,13 @@ end
 """
     EMB.check_node(n::HydroReservoir, 𝒯, modeltype::EMB.EnergyModel, check_timeprofiles::Bool)
 
-This method checks that the *[`HydroReservoir`](@ref)* node is valid.
+This method checks that the [`HydroReservoir`](@ref) node is valid.
 
 ## Checks
- - The `TimeProfile` of the `capacity` of the `HydroReservoir` `level` is required
+- The `TimeProfile` of the `capacity` of the `HydroReservoir` `level` is required
   to be non-negative.
- - The value of constraints are required to be in the range ``[0, 1]`` for all time steps
- ``t ∈ \\mathcal{T}``.
+- The value of constraints are required to be in the range ``[0, 1]`` for all time steps
+  ``t ∈ \\mathcal{T}``.
 """
 function EMB.check_node(n::HydroReservoir, 𝒯, modeltype::EMB.EnergyModel, check_timeprofiles::Bool)
 
@@ -209,18 +209,17 @@ end
 """
     EMB.check_node(n::HydroUnit, 𝒯, modeltype::EMB.EnergyModel, check_timeprofiles::Bool)
 
-This method checks that the *[`HydroUnit`](@ref)* and *[`HydroPump`](@ref)* node is valid.
+This method checks that the [`HydroGenerator`](@ref) and [`HydroPump`](@ref) nodes are valid.
 
 ## Checks
- - The field `cap` is required to be non-negative.
- - The PqPoints vectors are required to have the same length.
- - The PqPoint vectors should start at 0.
- - The PqPoints vectors are required to be increasing.
- - One of the PqPoints vectors should have values between 0 and 1.
- - The PqPoints curve should be concave for generators and convex for pumps.
- - The value of the field `fixed_opex` is required to be non-negative and
-   accessible through a `StrategicPeriod` as outlined in the function
-   `check_fixed_opex(n, 𝒯ᴵⁿᵛ, check_timeprofiles)`.
+- The field `cap` is required to be non-negative.
+- The [`PqPoints`](@ref) vectors are required to have the same length.
+- The [`PqPoints`](@ref) vectors should start at 0.
+- The [`PqPoints`](@ref) vectors are required to be increasing.
+- One of the [`PqPoints`](@ref) vectors should have values between 0 and 1.
+- The [`PqPoints`](@ref) curve should be concave for generators and convex for pumps.
+- The value of the field `fixed_opex` is required to be non-negative and accessible through
+  a `StrategicPeriod` as outlined in the function [`EMB.check_fixed_opex()`](@extref EnergyModelsBase.check_fixed_opex).
 """
 function EMB.check_node(n::HydroUnit, 𝒯, modeltype::EnergyModel, check_timeprofiles::Bool)
 

@@ -322,13 +322,13 @@ A constraint that can be added as `Data`. `T <: AbstractConstraintType` denotes 
 ## Fields
 - **`resource::{Union{<:Resource, Nothing}}`** is the resource type the constraint applies
   to if the node can have multiple resources as input/outputs.
-- **`value::TimeProfile`** is the constraint value, the limit that should not be violated.
+- **`value::TimeProfile`** is the constraint value, that is the limit that should not be violated.
 - **`flag::TimeProfile`** is a boolean value indicating if the constraint is active.
 - **`penalty::TimeProfile`** is the penalty for violating the constraint. If penalty is set
   to `Inf` it will be built as a hard constraint.
 """
 struct Constraint{T} <: Data where {T<:AbstractConstraintType}
-    resource::Union{<:Resource, Nothing} # Should be specified for nodes with multiple input/output resources
+    resource::Union{<:Resource, Nothing}
     value::TimeProfile{<:Number}
     flag::TimeProfile{Bool}
     penalty::TimeProfile{<:Number}
@@ -362,97 +362,99 @@ constraint_data(n::EMB.Node) = filter(is_constraint_data, node_data(n))
 
 Returns true if `Data` is of type `Constraint` and `Constraint` resource type is `resource`.
 """
-is_constraint_resource(data::Constraint, resource::Resource) = resource == data.resource
+is_constraint_resource(data::Constraint, resource::Resource) = resource == resource(data)
 
 """
     is_active(data::Constraint, t)
 
-Returns true if given constraint is active at time step `t`.
+Returns true if given constraint `data` is active at operational period `t`.
 """
 is_active(data::Constraint, t) = data.flag[t]
 
 """
     value(data::Constraint, t)
 
-Returns the value of a constraint at time step `t`.
+Returns the value of a constraint `data` at operational period `t`.
 """
 value(data::Constraint, t) = data.value[t]
 
 """
     penalty(data::Constraint, t)
 
-Returns penalty value of constraint.
+Returns the penalty value of constraint `data` at operational period `t`.
 """
 penalty(data::Constraint, t) = data.penalty[t]
 
 """
     has_penalty(data::Constraint, t)
 
-Returns true if a constraint needs a penalty variable at time step `t`.
+Returns true if a constraint needs a penalty variable at operational period `t`.
 """
 has_penalty(data::Constraint, t) = !isinf(penalty(data, t)) & is_active(data, t)
 
 """
     has_penalty_up(data::Constraint)
+    has_penalty_up(data::Constraint, t)
+    has_penalty_up(data::Constraint, t, p::Resource)
 
-Returns true if a constraint is of a type that may require a penalty up variable, which is
-true for `MinConstraintType` and `ScheduleConstraintType`.
+Returns true if a constraint `data` is of a type that may require a penalty up variable,
+which is true for [`MinConstraintType`](@ref) and [`ScheduleConstraintType`](@ref).
+
+When the operational period `t` is provided in addition, it is furthermore necessary that the
+penalty is finite.
+
+When the operational period `t` and the resource `p` is provided in addition, it is
+furthermore necessary that the penalty is finite and that `p` corresponds to the `Constraint`
+resource.
 """
 has_penalty_up(data::Constraint) = false
 has_penalty_up(data::Constraint{MinConstraintType}) = true
 has_penalty_up(data::Constraint{ScheduleConstraintType}) = true
-
-"""
-    has_penalty_up(data::Constraint, t)
-    has_penalty_up(data::Constraint, t, resource::Resource)
-
-Returns true if a constraint requires a penalty up variable at time step `t`. The constraint
-must be of the right type, have a non-infinite penalty and be active a the current time step
-`t`. For nodes where schedule can apply for different resource types, the `resource` must
-also match the constraint resource.
-"""
 has_penalty_up(data::Constraint, t) = has_penalty_up(data) & has_penalty(data, t)
-has_penalty_up(data::Constraint, t, resource::Resource) = has_penalty_up(data, t) & (data.resource == resource)
+has_penalty_up(data::Constraint, t, p::Resource) =
+    has_penalty_up(data, t) & (resource(data) == resource)
 
 """
     has_penalty_down(data::Constraint)
+    has_penalty_down(data::Constraint, t)
+    has_penalty_down(data::Constraint, t, resource::Resource)
 
-Returns true if a constraint is of a type that may require a penalty down variable, which is
-true for `MaxConstraintType` and `ScheduleConstraintType`.
+Returns true if a constraint `data` is of a type that may require a penalty up down,
+which is true for [`MaxConstraintType`](@ref) and [`ScheduleConstraintType`](@ref).
+
+When the operational period `t` is provided in addition, it is furthermore necessary that the
+penalty is finite.
+
+When the operational period `t` and the resource `p` is provided in addition, it is
+furthermore necessary that the penalty is finite and that `p` corresponds to the `Constraint`
+resource.
 """
 has_penalty_down(data::Constraint) = false
 has_penalty_down(data::Constraint{MaxConstraintType}) = true
 has_penalty_down(data::Constraint{ScheduleConstraintType}) = true
-
-"""
-    has_penalty_down(data::Constraint, t)
-    has_penalty_down(data::Constraint, t, resource::Resource)
-
-Returns true if a constraint requires a penalty down variable at time step `t`. The constraint
-must be of the right type, have a non-infinite penalty and be active a the current time step
-`t`. For nodes where schedule can apply for different resource types, the `resource` must
-also match the constraint resource.
-"""
 has_penalty_down(data::Constraint, t) = has_penalty_down(data) & has_penalty(data, t)
-has_penalty_down(data::Constraint, t, resource::Resource) = has_penalty_down(data, t) & (data.resource == resource)
+has_penalty_down(data::Constraint, t, resource::Resource) =
+    has_penalty_down(data, t) & (resource(data) == resource)
 
 """
     HydroReservoir{T} <: EMB.Storage{T}
 
-A regulated hydropower reservoir, modelled as a `Storage` node. A regulated hydro storage node
-requires a storage volume for the `vol` and volume inflow `vol_inflow`. The `stor_res`
-represents water. Minimum, maximum and schedule volume constraints can be added using `Data`
-input of the composite type `Constraint`.
-These are given relative sizes between 0 and 1 relative to the total storage volume `vol`.
+A regulated hydropower reservoir, modelled as a `Storage` node.
+
+A `HydroReservoir` differs from [`HydroStor`](@ref) and[`PumpedHydroStor`](@ref) nodes as
+it models the stored energy in the form of water through the potential energy.
+It can only be used in conjunction with [`HydroGenerator`](@ref) nodes.
 
 ## Fields
-- **`id`** is the name/identifyer of the node.\n
-- **`vol::EMB.UnionCapacity`** are the storage volume parameters of the HydroReservoir node
+- **`id`** is the name/identifyer of the node.
+- **`vol::EMB.UnionCapacity`** are the storage volume parameters of the `HydroReservoir` node
   (typically million cubic meters).
-- **`vol_inflow::TimeProfile`** is the inflow to the reservoir (typically million cubic per time unit).
-- **`stor_res::ResourceCarrier`** is the stored `Resource`.\n
-- **`data::Vector{Data}`** additional data (e.g. for investments). The field \
-`data` is conditional through usage of a constructor.
+- **`vol_inflow::TimeProfile`** is the water inflow to the reservoir
+  (typically million cubic per time unit).
+- **`stor_res::ResourceCarrier`** is the stored `Resource`.
+- **`data::Vector{<:Data}`** is the additional data (*e.g.*, for investments or constraints
+  through [`AbstractConstraintType`](@ref)). The field `data` is conditional through usage
+  of a constructor.
 """
 struct HydroReservoir{T} <: EMB.Storage{T}
     id::Any
@@ -499,8 +501,8 @@ end
     level(n::HydroReservoir)
     level(n::HydroReservoir, t)
 
-Returns the `vol` parameter field of the node either as `TimeProfile`. or in operational
-period `t`.
+Returns the `vol` parameter field of the HydroReservoir `n` either as `TimeProfile` or in
+operational period `t`.
 """
 EMB.level(n::HydroReservoir) = n.vol
 EMB.level(n::HydroReservoir, t) = n.vol[t]
@@ -509,8 +511,8 @@ EMB.level(n::HydroReservoir, t) = n.vol[t]
     vol_inflow(n::HydroReservoir)
     vol_inflow(n::HydroReservoir, t)
 
-Returns the inflow to a node `n` of type `HydroReservoir` either as `TimeProfile` or in
-operational period `t`.
+Returns the inflow to a HydroReservoir `n` either as `TimeProfile` or in operational period
+`t`.
 """
 vol_inflow(n::HydroReservoir) = n.vol_inflow
 vol_inflow(n::HydroReservoir, t) = n.vol_inflow[t]
@@ -518,17 +520,22 @@ vol_inflow(n::HydroReservoir, t) = n.vol_inflow[t]
 """
     HydroGate <: EMB.NetworkNode
 
-A Hydro Gate, modelled as a `NetworkNode` node. Can be used to model outlets/inlets and
-minimum/maximum requirements for water flow.
+A hydro gate, modelled as a `NetworkNode` node.
+
+It an be used to model outlets/inlets and minimum/maximum requirements for water flow
+between individual reservoirs without power generation..
 
 ## Fields
 - **`id`** is the name/identifier of the node.
 - **`cap::TimeProfile`** is the installed discharge capacity.
-- **`opex_var::TimeProfile`** is the variational operational costs per energy unit produced.
+- **`opex_var::TimeProfile`** is the variational operational costs per water flow through
+  the gate.
 - **`opex_fixed::TimeProfile`** is the fixed operational costs.
-- **`resource<:Resource`** is the water resource type since gates are only used for dispatching water.
-- **`data::Vector{Data}`** is the additional data (e.g. for investments). The field
-  `data` is conditional through usage of a constructor.
+- **`resource<:Resource`** is the water resource type since gates are only used for
+  dispatching water.
+- **`data::Vector{<:Data}`** is the additional data (*e.g.*, for investments or constraints
+  through [`AbstractConstraintType`](@ref)). The field `data` is conditional through usage
+  of a constructor.
 """
 struct HydroGate <: EMB.NetworkNode
     id::Any
@@ -568,51 +575,53 @@ function HydroGate(
 end
 
 """
-    HydroUnit <: EMB.NetworkNode
+    abstract type HydroUnit <: EMB.NetworkNode
 
 A Hydropower unit node for either pumping or production, modelled as a `NetworkNode` node.
 """
 abstract type HydroUnit <: EMB.NetworkNode end
 
 """
-    AbstractPqCurve
+    abstract type AbstractPqCurve
 
-`AbstractPqCurve` type used to represent the relatioship between discharge of water and generation of electricity.
+`AbstractPqCurve` type used to represent the relationship between discharge of water and
+generation of electricity.
 """
 abstract type AbstractPqCurve end
 
 """
-    PqPoints <: AbstractPqCurve
+    struct PqPoints <: AbstractPqCurve
+    PqPoints(power_levels::Vector{Real}, discharge_levels::Vector{Real})
+    PqPoints(eq::Real)
 
-The relationship between discharge/pumping of water and power generation/consumption represented \
-by a set of discharge and power values (PQ-points).
+The relationship between discharge/pumping of water and power generation/consumption
+represented by a set of discharge and power values (PQ-points).
 
 ## Fields
 - **`power_levels::Vector{Real}`** is a vector of power values.
 - **`discharge_levels::Vector{Real}`** is a vector of discharge values.
 
 The two vectors muct be of equal size and ordered so that the power and discharge values
-describes the convertion from energy (stored in the water) to electricity (power) for a
-`HydroGenerator` node or the convertion from electric energy to energy stored as water in
-the reservoirs for a `HydroPump` node.
-The first value in each vector should be zero. Furthermore, the vectors should relative to
-the installed capacity, so that either the power-vector or the discharge vector is in the
+describes the conversion from energy (stored in the water) to electricity (power) for a
+[`HydroGenerator`](@ref) node or the conversion from electric energy to energy stored as
+water in the reservoirs for a [`HydroPump`](@ref) node.
+
+The first value in each vector should be zero. Furthermore, the vectors should be relative
+to the installed capacity, so that either the power-vector or the discharge vector is in the
 range [0, 1].
-The described power-discharge relationship should be concave for a `HydroGenerator` node and
-convex for a `HydroPump` node.
+
+If a single `Real` is provided as input, it constructs the two Arrays through the energy
+equivalent input. If this approach is used, the installed capacity of the node must refer
+to the power capacity of a [`HydroGenerator`](@ref) or [`HydroPump`](@ref) node.
+
+!!! note
+    The described power-discharge relationship should be concave for a [`HydroGenerator`](@ref)
+    node and convex for a [`HydroPump`](@ref) node.
 """
 struct PqPoints <: AbstractPqCurve
-    power_levels::Vector{Real}  # MW / m3/s
-    discharge_levels::Vector{Real} #share of total discharege capacity (0,1)
+    power_levels::Vector{Real}
+    discharge_levels::Vector{Real}
 end
-
-"""
-    PqPoints(eq::Real)
-
-Construct a PqPoints description based on energy equivalent input. If this function is used,
-the installed capacity of the node must refer to the power capacity of the `HydroGenerator`
-or `HydroPump` node.
-"""
 function PqPoints(eq::Real)
     return PqPoints(
         [0.0, 1],
@@ -637,18 +646,24 @@ discharge_level(pq::PqPoints, i) = pq.discharge_levels[i]
 """
     HydroGenerator <: HydroUnit
 
-A regular hydropower plant, modelled as a `HydroUnit` node.
+A hydropower generator, modelled as a `HydroUnit` node.
+
+A hydropower generator is located between two [`HydroReservoir`](@ref)s or between a
+[`HydroReservoir`](@ref) and a `Sink` node corresponding to the ocean. It differs from a
+[`HydroGate`](@ref) as it allows for power generation desctibed through an
+[`AbstractPqCurve`](@ref).
 
 ## Fields
-- **`id`** is the name/identifier of the node.\n
-- **`cap::TimeProfile`** is the installed discharge or power capacity.\n
-- **`pq_curve::AbstractPqCurve` describes the relationship between power and discharge (water).\
-- **`opex_var::TimeProfile`** is the variable operational costs per energy unit produced.\n
-- **`opex_fixed::TimeProfile`** is the fixed operational costs.\n
-- **`electricity_resource::Resource`** is the electricity resource generated as output.\n
-- **`water_resource::Resource`** is the water resource taken as input and discharged as output.\n
-- **`data::Vector{Data}`** is the additional data (e.g. for investments). The field \
-`data` is conditional through usage of a constructor.
+- **`id`** is the name/identifier of the node.
+- **`cap::TimeProfile`** is the installed discharge or power capacity.
+- **`pq_curve::AbstractPqCurve` describes the relationship between power and discharge (water).
+- **`opex_var::TimeProfile`** is the variable operational costs per energy unit produced.
+- **`opex_fixed::TimeProfile`** is the fixed operational costs.
+- **`electricity_resource::Resource`** is the electricity resource generated as output.
+- **`water_resource::Resource`** is the water resource taken as input and discharged as output.
+- **`data::Vector{<:Data}`** is the additional data (*e.g.*, for investments or constraints
+  through [`AbstractConstraintType`](@ref)). The field `data` is conditional through usage
+  of a constructor.
 """
 struct HydroGenerator <: HydroUnit
     id::Any
@@ -682,18 +697,22 @@ end
 """
     HydroPump <: HydroUnit
 
-A regular hydropower pump, modelled as a `HydroUnit` node.
+A hydropower pump, modelled as a `HydroUnit` node.
+
+A hydropower pump is located between two [`HydroReservoir`](@ref)s and allows the transfer
+of water from one reservoir to the other through pumping the water.
 
 ## Fields
-- **`id`** is the name/identifier of the node.\n
-- **`cap::TimeProfile`** is the installed pumping capacity in piwer or volume per time unit.\n
-- **`pq_curve::AbstractPqCurve` describes the relationship between power and pumping of water.\
-- **`opex_var::TimeProfile`** is the variable operational costs per energy unit produced.\n
-- **`opex_fixed::TimeProfile`** is the fixed operational costs.\n
-- **`electricity_resource::Resource`** is the electricity resource taken as input (consumed).\n
-- **`water_resource::Resource`** is the water resource taken as input and discharged (pumped) as output.\n
-- **`data::Vector{Data}`** is the additional data (e.g. for investments). The field \
-`data` is conditional through usage of a constructor.
+- **`id`** is the name/identifier of the node.
+- **`cap::TimeProfile`** is the installed pumping capacity in piwer or volume per time unit.
+- **`pq_curve::AbstractPqCurve` describes the relationship between power and pumping of water.
+- **`opex_var::TimeProfile`** is the variable operational costs per energy unit produced.
+- **`opex_fixed::TimeProfile`** is the fixed operational costs.
+- **`electricity_resource::Resource`** is the electricity resource taken as input (consumed).
+- **`water_resource::Resource`** is the water resource taken as input and discharged (pumped) as output.
+- **`data::Vector{<:Data}`** is the additional data (*e.g.*, for investments or constraints
+  through [`AbstractConstraintType`](@ref)). The field `data` is conditional through usage
+  of a constructor.
 """
 struct HydroPump <: HydroUnit
     id::Any
@@ -727,35 +746,35 @@ end
 """
     electricity_resource(n::HydroUnit)
 
-Returns the resource of the `electricity_resource` field of a node `n`.
+Returns the resource of the `electricity_resource` field of a HydroUnit `n`.
 """
 electricity_resource(n::HydroUnit) = n.electricity_resource
 
 """
     water_resource(n::HydroUnit)
 
-Returns the resource of the `water_resource` field of a node `n`.
+Returns the resource of the `water_resource` field of a HydroUnit `n`.
 """
 water_resource(n::HydroUnit) = n.water_resource
 
 """
     pq_curve(n::HydroUnit)
 
-Returns the resources in the PQ-curve of a node `n` of type `HydroUnit`
+Returns the resources in the PQ-curve of a HydroUnit `n`.
 """
 pq_curve(n::HydroUnit) = n.pq_curve
 
 """
     discharge_segments(pq_curve::PqPoints)
 
-Returns the range of segment indices for given `PqPoints`.
+Returns the range of segment indices for a PqPoints `pq_curve`.
 """
 discharge_segments(pq_curve::PqPoints) = range(1, length(pq_curve.discharge_levels) - 1)
 
 """
     max_power(n::HydroUnit)
 
-Returns the maximum power of `HydroUnit` based on pq_curve input.
+Returns the maximum power of HydroUnit `n` based on the pq_curve input.
 """
 function max_power(n::HydroUnit)
     if pq_curve(n) isa PqPoints
@@ -766,7 +785,7 @@ end
 """
     max_flow(n::HydroUnit)
 
-Returns the maximum flow of `HydroUnit` based on pq_curve input.
+Returns the maximum flow of HydroUnit `n` based on the pq_curve input.
 """
 function max_flow(n::HydroUnit)
     if pq_curve(n) isa PqPoints
@@ -776,8 +795,15 @@ end
 
 """
     capacity(n::HydroUnit, t, p::Resource)
+    capacity(n::HydroGate, t, p::Resource)
 
-Returns the `HydroUnit` capacity for a given resource `p` (either power or flow).
+Returns the capacity of HydroUnit `n` in operational period `t` for a given resource `p`.
+In the case of a `HydroGate`, this function reverts to `capacity(n, t)` to allow its
+application in multiple methods.
+
+!!! warning
+    The resource `p` **must** be either the `electricity_resource` or `water_resource`.
+    Otherwise, an error is raised.
 """
 function EMB.capacity(n::HydroUnit, t, p::Resource)
     if p == electricity_resource(n)
@@ -785,15 +811,8 @@ function EMB.capacity(n::HydroUnit, t, p::Resource)
     elseif p == water_resource(n)
         return capacity(n, t) * max_flow(n)
     end
-    throw("Hydro HydroUnit capacity resource has to be either water or electricity.")
+    throw(
+        "The Resource `p` the function capacity(n, t, p) must be either the water or " *
+        "electricity resource of HydroUnit `n`.")
 end
-
-"""
-    capacity(n::HydroGate, t, p::Resource)
-
-Returns the `HydroGate` capacity. The resource `p` is ignored since `HydroGate` only can
-have one resource type.
-Function has been implemented to allow using the same function for building constraints
-for both `HydroGate` and `HydroUnit`.
-"""
 EMB.capacity(n::HydroGate, t, p::Resource) = EMB.capacity(n, t)
