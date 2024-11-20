@@ -42,7 +42,13 @@ makedocs(
         "Nodes" => Any[
             "Non-dispatchable RES" => "nodes/nondisres.md",
             "Simple Hydropower" => "nodes/hydropower.md",
-            "Detailed hydropower" => "nodes/detailed-hydropower.md",
+            "Detailed hydropower" => String[
+                "nodes/det_hydropower/description.md",
+                "nodes/det_hydropower/reservoir.md",
+                "nodes/det_hydropower/generator.md",
+                "nodes/det_hydropower/pump.md",
+                "nodes/det_hydropower/gate.md",
+            ],
         ],
         "How to" => Any[
             "Update models" => "how-to/update-models.md",

@@ -51,10 +51,11 @@ Depth = 1
 Pages = [
     "nodes/nondisres.md",
     "nodes/hydropower.md",
-    "node/hydroreservoir.md",
-    "node/hydrogenerator.md",
-    "node/hydropump.md",
-    "node/hydrogate.md",
+    "nodes/det_hydropower/description.md",
+    "nodes/det_hydropower/reservoir.md",
+    "nodes/det_hydropower/generator.md",
+    "nodes/det_hydropower/pump.md",
+    "nodes/det_hydropower/gate.md",
 ]
 Depth = 1
 ```
