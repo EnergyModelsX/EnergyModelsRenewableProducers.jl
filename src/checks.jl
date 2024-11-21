@@ -275,7 +275,10 @@ end
 Performs various checks on [`ScheduleConstraint`](@ref) data for all nodes.
 
 ## Checks
+- The the field `resource` is required to be a valid resource of the node.
 - The value of constraints are required to be in the range ``[0, 1]`` for all time steps
+  ``t ∈ \\mathcal{T}``.
+- The penalty of constraints are required to be non-negative for all time steps
   ``t ∈ \\mathcal{T}``.
 """
 function EMB.check_node_data(
@@ -285,9 +288,19 @@ function EMB.check_node_data(
     modeltype::EnergyModel,
     check_timeprofiles::Bool,
 )
-
+    if isa(n, HydroUnit)
+        @assert_or_log(
+            (resource(data) == water_resource(n)) |
+                (resource(data) == electricity_resource(n)),
+            "The constraint resource must be either the water or electricity resource."
+        )
+    end
     @assert_or_log(
         all(0 ≤ value(data, t) ≤ 1 for t ∈ 𝒯),
         "The relative constraint value must be between 0 and 1."
+    )
+    @assert_or_log(
+        all(penalty(data, t) ≥ 0 for t ∈ 𝒯),
+        "The penalty must be non-negative."
     )
 end
