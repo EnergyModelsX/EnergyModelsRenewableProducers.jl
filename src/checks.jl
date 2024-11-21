@@ -155,6 +155,11 @@ This method checks that the [`HydroReservoir`](@ref) node is valid.
 ## Checks
 - The `TimeProfile` of the `capacity` of the `HydroReservoir` `level` is required
   to be non-negative.
+- The `TimeProfile` of the field `fixed_opex` is required to be non-negative and
+  accessible through a `StrategicPeriod` as outlined in the function
+  `check_fixed_opex(n, 𝒯ᴵⁿᵛ, check_timeprofiles)` for the chosen composite type.
+- The `TimeProfile` of the `vol_inflow` of the `HydroReservoir` is required to be
+  non-negative.
 """
 function EMB.check_node(n::HydroReservoir, 𝒯, modeltype::EMB.EnergyModel, check_timeprofiles::Bool)
 
@@ -167,6 +172,13 @@ function EMB.check_node(n::HydroReservoir, 𝒯, modeltype::EMB.EnergyModel, che
             "The volume capacity has to be non-negative."
         )
     end
+    if isa(par_level, EMB.UnionOpexFixed)
+        EMB.check_fixed_opex(par_level, 𝒯ᴵⁿᵛ, check_timeprofiles)
+    end
+    @assert_or_log(
+        all(vol_inflow(n, t) ≥ 0 for t ∈ 𝒯),
+        "The field `vol_inflow` has to be non-negative."
+    )
 end
 
 """
