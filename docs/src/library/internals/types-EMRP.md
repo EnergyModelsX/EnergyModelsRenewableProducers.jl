@@ -15,11 +15,11 @@ EnergyModelsRenewableProducers.HydroUnit
 ## [Constraint types](@id lib-int-types-con)
 
 ```@docs
-EnergyModelsRenewableProducers.AbstractConstraintType
-EnergyModelsRenewableProducers.MinConstraintType
-EnergyModelsRenewableProducers.MaxConstraintType
-EnergyModelsRenewableProducers.ScheduleConstraintType
-EnergyModelsRenewableProducers.Constraint
+EnergyModelsRenewableProducers.AbstractScheduleType
+EnergyModelsRenewableProducers.MinSchedule
+EnergyModelsRenewableProducers.MaxSchedule
+EnergyModelsRenewableProducers.EqualSchedule
+EnergyModelsRenewableProducers.ScheduleConstraint
 ```
 
 ## [Power-flow curves](@id lib-int-types-pq)

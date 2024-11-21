@@ -38,6 +38,6 @@ export AbstractNonDisRES, NonDisRES
 export HydroStorage, RegHydroStor, HydroStor, PumpedHydroStor
 export HydroReservoir, HydroGenerator, HydroPump, HydroGate
 export PqPoints
-export Constraint, MinConstraintType, MaxConstraintType, ScheduleConstraintType
+export ScheduleConstraint, MinSchedule, MaxSchedule, EqualSchedule
 
 end # module

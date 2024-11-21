@@ -63,8 +63,8 @@ end
 """
     EMB.variables_node(m, 𝒩::Vector{HydroGate}, 𝒯, modeltype::EnergyModel)
 
-Creates the following additional variables for **ALL** hydro gate nodes that have additional
-constraints through [`Constraint`](@ref):
+Creates the following additional variables for **ALL** [`HydroGate`](@ref) nodes that have
+additional constraints through [`ScheduleConstraint`](@ref):
 - `gate_penalty_up[n, t, p]` is the *up* penalty variable of hydro gate `n` in operational
   period `t` for resource `p`.
 - `gate_penalty_down[n, t, p]` is the *down* penalty variable of hydro gate `n` in operational
@@ -97,8 +97,7 @@ end
 
 
 Creates the following additional variables for **ALL** [`HydroReservoir`](@ref) nodes that
-have additional
-constraints through [`Constraint`](@ref):
+have additional constraints through [`ScheduleConstraint`](@ref):
 - `rsv_penalty_up[n, t, p]` is the *up* penalty variable of hydro reservoir `n` in
   operational period `t` for resource `p`.
 - `rsv_penalty_down[n, t, p]` is the *down* penalty variable of hydro reservoir `n` in
@@ -131,8 +130,7 @@ end
     EMB.variables_node(m, 𝒩::Vector{:<HydroUnit}, 𝒯, modeltype::EnergyModel)
 
 Creates the following additional variables for **ALL** [`HydroUnit`](@ref) nodes that
-have additional
-constraints through [`Constraint`](@ref):
+have additional constraints through [`ScheduleConstraint`](@ref):
 - `gen_penalty_up[n, t, p]` is the *up* penalty variable of hydro unit `n` in
   operational period `t` for resource `p`.
 - `rsv_penalty_down[n, t, p]` is the *down* penalty variable of hydro unit `n` in

@@ -92,29 +92,29 @@ function EMB.constraints_level_aux(m, n::HydroStorage, 𝒯, 𝒫, modeltype::En
 end
 
 """
-    build_hydro_reservoir_vol_constraints(m, n::HydroReservoir, c::Constraint, 𝒯)
+    build_hydro_reservoir_vol_constraints(m, n::HydroReservoir, c::ScheduleConstraint, 𝒯)
 
 Create minimum/maximum/schedule volume constraints for a [`HydroReservoir`](@ref) node. The
-`Constraint{T}` can have types `T <: AbstractConstraintType` that defines the direction of
+`ScheduleConstraint{T}` can have types `T <: AbstractScheduleType` that defines the direction of
 the constraint.
 
 Penalty variables are included unless the  penalty value is not set or `Inf`.
 """
-function build_hydro_reservoir_vol_constraints(m, n::HydroReservoir, c::Constraint{MinConstraintType}, 𝒯)
+function build_hydro_reservoir_vol_constraints(m, n::HydroReservoir, c::ScheduleConstraint{MinSchedule}, 𝒯)
     p = storage_resource(n)
     @constraint(m, [t ∈ 𝒯; is_active(c, t) & has_penalty(c, t)],
         m[:stor_level][n, t] + m[:rsv_penalty_up][n, t, p] ≥ EMB.capacity(EMB.level(n), t) * value(c, t))
     @constraint(m, [t ∈ 𝒯; is_active(c, t) & !has_penalty(c, t)],
         m[:stor_level][n, t] ≥ EMB.capacity(EMB.level(n), t) * value(c, t))
 end
-function build_hydro_reservoir_vol_constraints(m, n::HydroReservoir, c::Constraint{MaxConstraintType}, 𝒯)
+function build_hydro_reservoir_vol_constraints(m, n::HydroReservoir, c::ScheduleConstraint{MaxSchedule}, 𝒯)
     p = storage_resource(n)
     @constraint(m, [t ∈ 𝒯; is_active(c, t) & has_penalty(c, t)],
         m[:stor_level][n, t] - m[:rsv_penalty_down][n, t, p] ≤ EMB.capacity(EMB.level(n), t) * value(c, t))
     @constraint(m, [t ∈ 𝒯; is_active(c, t) & !has_penalty(c, t)],
         m[:stor_level][n, t] ≤ EMB.capacity(EMB.level(n), t) * value(c, t))
 end
-function build_hydro_reservoir_vol_constraints(m, n::HydroReservoir, c::Constraint{ScheduleConstraintType}, 𝒯)
+function build_hydro_reservoir_vol_constraints(m, n::HydroReservoir, c::ScheduleConstraint{EqualSchedule}, 𝒯)
     p = storage_resource(n)
     @constraint(m, [t ∈ 𝒯; is_active(c, t) & has_penalty(c, t)],
         m[:stor_level][n, t] + m[:rsv_penalty_up][n, t, p] - m[:rsv_penalty_down][n, t, p] ==
@@ -289,17 +289,17 @@ function EMB.constraints_opex_var(m, n::HydroUnit, 𝒯ᴵⁿᵛ, modeltype::Ene
 end
 
 """
-    build_constraint(m, n::Union{HydroGate, HydroUnit}, c::Constraint, 𝒯::TimeStructure, p::ResourceCarrier)
+    build_constraint(m, n::Union{HydroGate, HydroUnit}, c::ScheduleConstraint, 𝒯::TimeStructure, p::ResourceCarrier)
 
 Create minimum/maximum/schedule discharge constraints for the generic `Node` type. The
-`Constraint{T}` can have types `T <: AbstractConstraintType` that defines the direction of
+`ScheduleConstraint{T}` can have types `T <: AbstractScheduleType` that defines the direction of
 the constraint.
 Penalty variables are included unless penalty value is not set or `Inf``.
 """
 function build_constraint(
     m,
     n::Union{HydroGate, HydroUnit},
-    c::Constraint{MinConstraintType},
+    c::ScheduleConstraint{MinSchedule},
     𝒯::TimeStructure,
     p::ResourceCarrier,
     var_name,
@@ -318,7 +318,7 @@ end
 function build_constraint(
     m,
     n::Union{HydroGate, HydroUnit},
-    c::Constraint{MaxConstraintType},
+    c::ScheduleConstraint{MaxSchedule},
     𝒯::TimeStructure,
     p::ResourceCarrier,
     var_name,
@@ -335,7 +335,7 @@ function build_constraint(
 end
 function build_constraint(m,
     n::Union{HydroGate, HydroUnit},
-    c::Constraint{ScheduleConstraintType},
+    c::ScheduleConstraint{EqualSchedule},
     𝒯::TimeStructure,
     p::ResourceCarrier,
     var_name,

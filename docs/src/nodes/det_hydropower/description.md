@@ -71,15 +71,15 @@ Often, such constraints can be translated into a schedule, a minimum, or maximum
 A general functionality has been implemented for adding such constraints to [`HydroReservoir`](@ref), [`HydroGate`](@ref), [`HydroGenerator`](@ref), and [`HydroPump`](@ref) nodes.
 The constraints are optional through the use of the **`data::Vector{Data}`** fields.
 
-!!! note "Constraint scaling"
-    Constraint inputs are given as values relative to a node capacity.
+!!! note "ScheduleConstraint scaling"
+    ScheduleConstraint inputs are given as values relative to a node capacity.
     For example, a constraint value 0.5 represents 50% of the node capacity. This makes the use of constraints in investment models possible where the capacity is not known ahead.
 
-- Minimum constraints ([MinConstraintType](@ref EnergyModelsRenewableProducers.MinConstraintType)): hard constraints (absolute) or soft constraints (with a penalty for violation) that restricts the minimum of a variable to a given value (*e.g.*, discharge, power, reservoir level)
-- Maximum constraints ([MaxConstraintType](@ref EnergyModelsRenewableProducers.MaxConstraintType)): hard constraints (absolute) or soft constraints (with a penalty for violation) that restricts the maximum of a variable to a given value (*e.g.*, discharge, power, reservoir level)
-- Schedule constraints ([ScheduleConstraintType](@ref EnergyModelsRenewableProducers.ScheduleConstraintType)): hard constraints (absolute) or soft constraints (with a penalty for violation) that restricts a variable to a given value (*e.g.*, discharge, power, reservoir level)
+- Minimum constraints ([MinSchedule](@ref EnergyModelsRenewableProducers.MinSchedule)): hard constraints (absolute) or soft constraints (with a penalty for violation) that restricts the minimum of a variable to a given value (*e.g.*, discharge, power, reservoir level)
+- Maximum constraints ([MaxSchedule](@ref EnergyModelsRenewableProducers.MaxSchedule)): hard constraints (absolute) or soft constraints (with a penalty for violation) that restricts the maximum of a variable to a given value (*e.g.*, discharge, power, reservoir level)
+- Schedule constraints ([EqualSchedule](@ref EnergyModelsRenewableProducers.EqualSchedule)): hard constraints (absolute) or soft constraints (with a penalty for violation) that restricts a variable to a given value (*e.g.*, discharge, power, reservoir level)
 
-The minimum, maximum, and schedule constraints are subtypes of the abstract type [Constraint{T<:AbstractConstraintType}](@ref EnergyModelsRenewableProducers.Constraint), where new constraints types can be implemeted as subtypes.
+The minimum, maximum, and schedule constraints are subtypes of the abstract type [ScheduleConstraint{T<:AbstractScheduleType}](@ref EnergyModelsRenewableProducers.ScheduleConstraint), where new constraints types can be implemeted as subtypes.
 
 ## [End-value setting of water](@id nodes-det_hydro_power-phil-wv)
 

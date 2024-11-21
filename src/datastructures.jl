@@ -287,37 +287,37 @@ opex_var_pump(n::PumpedHydroStor) = n.opex_var_pump
 opex_var_pump(n::PumpedHydroStor, t) = n.opex_var_pump[t]
 
 """
-    abstract type AbstractConstraintType
+    abstract type AbstractScheduleType
 
 Abstract supertype for the different constraint types.
 """
-abstract type AbstractConstraintType end
+abstract type AbstractScheduleType end
 
 """
-    abstract type MinConstraintType <: AbstractConstraintType
+    abstract type MinSchedule <: AbstractScheduleType
 
-Abstract type used to define a `Constraint` as a minimum constraint.
+Abstract type used to define a `ScheduleConstraint` as a minimum constraint.
 """
-abstract type MinConstraintType <: AbstractConstraintType end
-
-"""
-    abstract type MaxConstraintType <: AbstractConstraintType
-
-Abstract type used to define a `Constraint` as a maximum constraint.
-"""
-abstract type MaxConstraintType <: AbstractConstraintType end
+abstract type MinSchedule <: AbstractScheduleType end
 
 """
-    abstract type ScheduleConstraintType <: AbstractConstraintType
+    abstract type MaxSchedule <: AbstractScheduleType
 
-Abstract type used to define a `Constraint` as a schedule constraint.
+Abstract type used to define a `ScheduleConstraint` as a maximum constraint.
 """
-abstract type ScheduleConstraintType <: AbstractConstraintType end
+abstract type MaxSchedule <: AbstractScheduleType end
 
 """
-    Constraint{T} <: Data where {T<:AbstractConstraintType}
+    abstract type EqualSchedule <: AbstractScheduleType
 
-A constraint that can be added as `Data`. `T <: AbstractConstraintType` denotes the constraint type.
+Abstract type used to define a `ScheduleConstraint` as a schedule constraint.
+"""
+abstract type EqualSchedule <: AbstractScheduleType end
+
+"""
+    ScheduleConstraint{T} <: Data where {T<:AbstractScheduleType}
+
+A constraint that can be added as `Data`. `T <: AbstractScheduleType` denotes the constraint type.
 
 ## Fields
 - **`resource::{Union{<:Resource, Nothing}}`** is the resource type the constraint applies
@@ -327,7 +327,7 @@ A constraint that can be added as `Data`. `T <: AbstractConstraintType` denotes 
 - **`penalty::TimeProfile`** is the penalty for violating the constraint. If penalty is set
   to `Inf` it will be built as a hard constraint.
 """
-struct Constraint{T} <: Data where {T<:AbstractConstraintType}
+struct ScheduleConstraint{T} <: Data where {T<:AbstractScheduleType}
     resource::Union{<:Resource, Nothing}
     value::TimeProfile{<:Number}
     flag::TimeProfile{Bool}
@@ -335,105 +335,105 @@ struct Constraint{T} <: Data where {T<:AbstractConstraintType}
 end
 
 """
-    resource(data::Constraint)
+    resource(data::ScheduleConstraint)
 
-Returns the `Resource` type of a `Constraint`.
+Returns the `Resource` type of a `ScheduleConstraint`.
 """
-resource(data::Constraint) = data.resource
+resource(data::ScheduleConstraint) = data.resource
 
 """
     is_constraint_data(data::Data)
-    is_constraint_data(data::Constraint)
+    is_constraint_data(data::ScheduleConstraint)
 
-Returns true if `Data` input is of type `Constraint`, otherwise false.
+Returns true if `Data` input is of type `ScheduleConstraint`, otherwise false.
 """
 is_constraint_data(data::Data) = false
-is_constraint_data(data::Constraint) = true
+is_constraint_data(data::ScheduleConstraint) = true
 
 """
     constraint_data(n::EMB.Node)
 
-Returns vector of `Data` that are of type `Constraint`.
+Returns vector of `Data` that are of type `ScheduleConstraint`.
 """
 constraint_data(n::EMB.Node) = filter(is_constraint_data, node_data(n))
 
 """
-    is_constraint_resource(data::Constraint, resource::Resource)
+    is_constraint_resource(data::ScheduleConstraint, resource::Resource)
 
-Returns true if `Data` is of type `Constraint` and `Constraint` resource type is `resource`.
+Returns true if `Data` is of type `ScheduleConstraint` and `ScheduleConstraint` resource type is `resource`.
 """
-is_constraint_resource(data::Constraint, resource::Resource) = resource == resource(data)
+is_constraint_resource(data::ScheduleConstraint, resource::Resource) = resource == resource(data)
 
 """
-    is_active(data::Constraint, t)
+    is_active(data::ScheduleConstraint, t)
 
 Returns true if given constraint `data` is active at operational period `t`.
 """
-is_active(data::Constraint, t) = data.flag[t]
+is_active(data::ScheduleConstraint, t) = data.flag[t]
 
 """
-    value(data::Constraint, t)
+    value(data::ScheduleConstraint, t)
 
 Returns the value of a constraint `data` at operational period `t`.
 """
-value(data::Constraint, t) = data.value[t]
+value(data::ScheduleConstraint, t) = data.value[t]
 
 """
-    penalty(data::Constraint, t)
+    penalty(data::ScheduleConstraint, t)
 
 Returns the penalty value of constraint `data` at operational period `t`.
 """
-penalty(data::Constraint, t) = data.penalty[t]
+penalty(data::ScheduleConstraint, t) = data.penalty[t]
 
 """
-    has_penalty(data::Constraint, t)
+    has_penalty(data::ScheduleConstraint, t)
 
 Returns true if a constraint needs a penalty variable at operational period `t`.
 """
-has_penalty(data::Constraint, t) = !isinf(penalty(data, t)) & is_active(data, t)
+has_penalty(data::ScheduleConstraint, t) = !isinf(penalty(data, t)) & is_active(data, t)
 
 """
-    has_penalty_up(data::Constraint)
-    has_penalty_up(data::Constraint, t)
-    has_penalty_up(data::Constraint, t, p::Resource)
+    has_penalty_up(data::ScheduleConstraint)
+    has_penalty_up(data::ScheduleConstraint, t)
+    has_penalty_up(data::ScheduleConstraint, t, p::Resource)
 
 Returns true if a constraint `data` is of a type that may require a penalty up variable,
-which is true for [`MinConstraintType`](@ref) and [`ScheduleConstraintType`](@ref).
+which is true for [`MinSchedule`](@ref) and [`EqualSchedule`](@ref).
 
 When the operational period `t` is provided in addition, it is furthermore necessary that the
 penalty is finite.
 
 When the operational period `t` and the resource `p` is provided in addition, it is
-furthermore necessary that the penalty is finite and that `p` corresponds to the `Constraint`
+furthermore necessary that the penalty is finite and that `p` corresponds to the `ScheduleConstraint`
 resource.
 """
-has_penalty_up(data::Constraint) = false
-has_penalty_up(data::Constraint{MinConstraintType}) = true
-has_penalty_up(data::Constraint{ScheduleConstraintType}) = true
-has_penalty_up(data::Constraint, t) = has_penalty_up(data) & has_penalty(data, t)
-has_penalty_up(data::Constraint, t, p::Resource) =
+has_penalty_up(data::ScheduleConstraint) = false
+has_penalty_up(data::ScheduleConstraint{MinSchedule}) = true
+has_penalty_up(data::ScheduleConstraint{EqualSchedule}) = true
+has_penalty_up(data::ScheduleConstraint, t) = has_penalty_up(data) & has_penalty(data, t)
+has_penalty_up(data::ScheduleConstraint, t, p::Resource) =
     has_penalty_up(data, t) & (resource(data) == p)
 
 """
-    has_penalty_down(data::Constraint)
-    has_penalty_down(data::Constraint, t)
-    has_penalty_down(data::Constraint, t, resource::Resource)
+    has_penalty_down(data::ScheduleConstraint)
+    has_penalty_down(data::ScheduleConstraint, t)
+    has_penalty_down(data::ScheduleConstraint, t, resource::Resource)
 
 Returns true if a constraint `data` is of a type that may require a penalty up down,
-which is true for [`MaxConstraintType`](@ref) and [`ScheduleConstraintType`](@ref).
+which is true for [`MaxSchedule`](@ref) and [`EqualSchedule`](@ref).
 
 When the operational period `t` is provided in addition, it is furthermore necessary that the
 penalty is finite.
 
 When the operational period `t` and the resource `p` is provided in addition, it is
-furthermore necessary that the penalty is finite and that `p` corresponds to the `Constraint`
+furthermore necessary that the penalty is finite and that `p` corresponds to the `ScheduleConstraint`
 resource.
 """
-has_penalty_down(data::Constraint) = false
-has_penalty_down(data::Constraint{MaxConstraintType}) = true
-has_penalty_down(data::Constraint{ScheduleConstraintType}) = true
-has_penalty_down(data::Constraint, t) = has_penalty_down(data) & has_penalty(data, t)
-has_penalty_down(data::Constraint, t, p::Resource) =
+has_penalty_down(data::ScheduleConstraint) = false
+has_penalty_down(data::ScheduleConstraint{MaxSchedule}) = true
+has_penalty_down(data::ScheduleConstraint{EqualSchedule}) = true
+has_penalty_down(data::ScheduleConstraint, t) = has_penalty_down(data) & has_penalty(data, t)
+has_penalty_down(data::ScheduleConstraint, t, p::Resource) =
     has_penalty_down(data, t) & (resource(data) == p)
 
 """
@@ -453,7 +453,7 @@ It can only be used in conjunction with [`HydroGenerator`](@ref) nodes.
   (typically million cubic per time unit).
 - **`stor_res::ResourceCarrier`** is the stored `Resource`.
 - **`data::Vector{<:Data}`** is the additional data (*e.g.*, for investments or constraints
-  through [`AbstractConstraintType`](@ref)). The field `data` is conditional through usage
+  through [`AbstractScheduleType`](@ref)). The field `data` is conditional through usage
   of a constructor.
 """
 struct HydroReservoir{T} <: EMB.Storage{T}
@@ -539,7 +539,7 @@ between individual reservoirs without power generation.
 - **`resource::ResourceCarrier`** is the water resource type since gates are only used for
   discharging water.
 - **`data::Vector{<:Data}`** is the additional data (*e.g.*, for investments or constraints
-  through [`AbstractConstraintType`](@ref)). The field `data` is conditional through usage
+  through [`AbstractScheduleType`](@ref)). The field `data` is conditional through usage
   of a constructor.
 """
 struct HydroGate <: EMB.NetworkNode
@@ -697,7 +697,7 @@ A hydropower generator is located between two [`HydroReservoir`](@ref)s or betwe
 - **`electricity_resource::Resource`** is the electricity resource generated as output.
 - **`water_resource::Resource`** is the water resource taken as input and discharged as output.
 - **`data::Vector{<:Data}`** is the additional data (*e.g.*, for investments or constraints
-  through [`AbstractConstraintType`](@ref)). The field `data` is conditional through usage
+  through [`AbstractScheduleType`](@ref)). The field `data` is conditional through usage
   of a constructor.
 """
 struct HydroGenerator <: HydroUnit
@@ -766,7 +766,7 @@ of water from one reservoir to the other through pumping the water.
 - **`electricity_resource::Resource`** is the electricity resource taken as input (consumed).
 - **`water_resource::Resource`** is the water resource taken as input and discharged (pumped) as output.
 - **`data::Vector{<:Data}`** is the additional data (*e.g.*, for investments or constraints
-  through [`AbstractConstraintType`](@ref)). The field `data` is conditional through usage
+  through [`AbstractScheduleType`](@ref)). The field `data` is conditional through usage
   of a constructor.
 """
 struct HydroPump <: HydroUnit

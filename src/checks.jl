@@ -258,9 +258,9 @@ function EMB.check_node(n::HydroUnit, 𝒯, modeltype::EnergyModel, check_timepr
 end
 
 """
-    EMB.check_node_data(n::EMB.Node, data::Constraint, 𝒯, modeltype::EnergyModel, check_timeprofiles::Bool)
+    EMB.check_node_data(n::EMB.Node, data::ScheduleConstraint, 𝒯, modeltype::EnergyModel, check_timeprofiles::Bool)
 
-Performs various checks on [`Constraint`](@ref) data for all nodes.
+Performs various checks on [`ScheduleConstraint`](@ref) data for all nodes.
 
 ## Checks
 - The value of constraints are required to be in the range ``[0, 1]`` for all time steps
@@ -268,7 +268,7 @@ Performs various checks on [`Constraint`](@ref) data for all nodes.
 """
 function EMB.check_node_data(
     n::EMB.Node,
-    data::Constraint,
+    data::ScheduleConstraint,
     𝒯,
     modeltype::EnergyModel,
     check_timeprofiles::Bool,

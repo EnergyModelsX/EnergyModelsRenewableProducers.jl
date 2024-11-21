@@ -87,7 +87,7 @@ end
     @test objective_value(m) == 0
 end
 
-@testset "Test hydro reservoir hard Constraint of type MinConstraintType and MaxConstraintType" begin
+@testset "Test hydro reservoir hard ScheduleConstraint of type MinSchedule and MaxSchedule" begin
     case, model = build_case_gate()
     optimizer = optimizer_with_attributes(HiGHS.Optimizer, MOI.Silent() => true)
 
@@ -98,7 +98,7 @@ end
     Water = case[:products][3]
     max_profile = [0.2, 0.8, 0.8, 1]
     push!(hydro_reservoir.data,
-        Constraint{MaxConstraintType}(
+        ScheduleConstraint{MaxSchedule}(
             nothing,
             OperationalProfile(max_profile), # value
             FixedProfile(true),              # flag
@@ -107,7 +107,7 @@ end
     )
     min_profile = [0.2, 0.2, 0, 0]
     push!(hydro_reservoir.data,
-        Constraint{MinConstraintType}(
+        ScheduleConstraint{MinSchedule}(
             nothing,
             OperationalProfile(min_profile), # value
             FixedProfile(true),              # flag
@@ -134,7 +134,7 @@ end
     @test objective_value(m) + sum(discharge_deficit_cost) == 0
 end
 
-@testset "Test hydro reservoir Constraint of type MaxConstraintType with penalty cost" begin
+@testset "Test hydro reservoir ScheduleConstraint of type MaxSchedule with penalty cost" begin
     case, model = build_case_gate()
     optimizer = optimizer_with_attributes(HiGHS.Optimizer, MOI.Silent() => true)
 
@@ -147,7 +147,7 @@ end
     max_profile = [1, 0, 0.8, 1]
     penalty_cost = 57
     push!(hydro_reservoir.data,
-        Constraint{MaxConstraintType}(
+        ScheduleConstraint{MaxSchedule}(
             nothing,
             OperationalProfile(max_profile), # value
             OperationalProfile([false, true, false, false]), # flag
@@ -156,7 +156,7 @@ end
     )
     min_profile = [1, 0, 0, 0]
     push!(hydro_reservoir.data,
-        Constraint{MinConstraintType}(
+        ScheduleConstraint{MinSchedule}(
             nothing,
             OperationalProfile(min_profile), # value
             FixedProfile(true),              # flag
@@ -190,7 +190,7 @@ end
     flags = [false, true, true, false]
     penalty_cost = 57
     push!(hydro_gate.data,
-        Constraint{ScheduleConstraintType}(
+        ScheduleConstraint{EqualSchedule}(
             nothing,
             OperationalProfile(schedule_profile), # value
             OperationalProfile(flags),            # flag
@@ -221,7 +221,7 @@ end
     schedule_profile = 0.1 * ones(4)
     penalty_cost = [12, 23, 57, 44]
     push!(hydro_gate.data,
-        Constraint{ScheduleConstraintType}(
+        ScheduleConstraint{EqualSchedule}(
             nothing,
             OperationalProfile(schedule_profile), # value
             FixedProfile(true),                   # flag
@@ -363,7 +363,7 @@ end
     schedule_profile = 0.8 * ones(4)
     schedule_flag = [false, false, true, true]
     push!(hydro_generator.data,
-        Constraint{ScheduleConstraintType}(
+        ScheduleConstraint{EqualSchedule}(
             Power,
             OperationalProfile(schedule_profile),  # value
             OperationalProfile(schedule_flag),     # flag
@@ -404,7 +404,7 @@ end
     # Verify power schedule
     min_discharge_factor = 0.5
     push!(hydro_generator.data,
-        Constraint{MinConstraintType}(
+        ScheduleConstraint{MinSchedule}(
             Water,
             FixedProfile(min_discharge_factor), # value
             FixedProfile(true),                 # flag
@@ -575,7 +575,7 @@ end
 
     gen_flag = [true, false, false, false]
     push!(hydro_generator.data,
-        Constraint{MinConstraintType}(
+        ScheduleConstraint{MinSchedule}(
             Water,
             FixedProfile(0.6),                               # value
             OperationalProfile(gen_flag), # flag
@@ -585,7 +585,7 @@ end
 
     pump_flag = [false, true, false, false]
     push!(hydro_pump.data,
-        Constraint{MinConstraintType}(
+        ScheduleConstraint{MinSchedule}(
             Water,
             FixedProfile(0.4),                               # value
             OperationalProfile(pump_flag), # flag
