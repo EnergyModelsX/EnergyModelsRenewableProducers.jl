@@ -11,7 +11,7 @@ Pages = ["methods-EMRP.md"]
 ```@docs
 EnergyModelsRenewableProducers.build_hydro_reservoir_vol_constraints
 EnergyModelsRenewableProducers.build_pq_constaints
-EnergyModelsRenewableProducers.build_constraint
+EnergyModelsRenewableProducers.build_schedule_constraint
 ```
 
 ## [Identification functions](@id lib-int-met-ident)

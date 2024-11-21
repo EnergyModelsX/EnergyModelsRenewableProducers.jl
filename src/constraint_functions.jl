@@ -289,14 +289,14 @@ function EMB.constraints_opex_var(m, n::HydroUnit, 𝒯ᴵⁿᵛ, modeltype::Ene
 end
 
 """
-    build_constraint(m, n::Union{HydroGate, HydroUnit}, c::ScheduleConstraint, 𝒯::TimeStructure, p::ResourceCarrier)
+    build_schedule_constraint(m, n::Union{HydroGate, HydroUnit}, c::ScheduleConstraint, 𝒯::TimeStructure, p::ResourceCarrier)
 
 Create minimum/maximum/schedule discharge constraints for the generic `Node` type. The
 `ScheduleConstraint{T}` can have types `T <: AbstractScheduleType` that defines the direction of
 the constraint.
 Penalty variables are included unless penalty value is not set or `Inf``.
 """
-function build_constraint(
+function build_schedule_constraint(
     m,
     n::Union{HydroGate, HydroUnit},
     c::ScheduleConstraint{MinSchedule},
@@ -315,7 +315,7 @@ function build_constraint(
             EMB.capacity(n, t, p) * value(c, t)
     )
 end
-function build_constraint(
+function build_schedule_constraint(
     m,
     n::Union{HydroGate, HydroUnit},
     c::ScheduleConstraint{MaxSchedule},
@@ -333,7 +333,7 @@ function build_constraint(
             EMB.capacity(n, t, p) * value(c, t)
     )
 end
-function build_constraint(m,
+function build_schedule_constraint(m,
     n::Union{HydroGate, HydroUnit},
     c::ScheduleConstraint{EqualSchedule},
     𝒯::TimeStructure,
@@ -369,7 +369,7 @@ function EMB.constraints_flow_out(m, n::HydroGate, 𝒯::TimeStructure, modeltyp
 
     # If HydroGate has constraint data, build the required constraints
     for c in constraint_data(n)
-        build_constraint(m, n, c, 𝒯, p, "flow_out", "gate_penalty")
+        build_schedule_constraint(m, n, c, 𝒯, p, "flow_out", "gate_penalty")
     end
 end
 
@@ -437,7 +437,7 @@ Method for creating the constraint on the inlet flow of a node `n`.
 !!! note "`HydroPump`"
     The electricity flow to the unit is equal to the capacity utilization
     The flow of the inlet resources can be constrained through calling the function
-    [`build_constraint`](@ref).
+    [`build_schedule_constraint`](@ref).
 """
 function EMB.constraints_flow_in(m, n::HydroGenerator, 𝒯::TimeStructure, modeltype::EnergyModel)
     @constraint(m, [t ∈ 𝒯],
@@ -452,7 +452,7 @@ function EMB.constraints_flow_in(m, n::HydroPump, 𝒯::TimeStructure, modeltype
     )
 
     for c ∈ constraint_data(n)
-        build_constraint(m, n, c, 𝒯, resource(c), "flow_in", "gen_penalty")
+        build_schedule_constraint(m, n, c, 𝒯, resource(c), "flow_in", "gen_penalty")
     end
 end
 
@@ -465,7 +465,7 @@ Method for creating the constraint on the oulet flow of a node `n`.
 !!! tip "`HydroGenerator`"
     - The electricity flow from the unit is equal to the capacity utilization.
     - The flow of the inlet resources can be constrained through calling the function
-      [`build_constraint`](@ref).
+      [`build_schedule_constraint`](@ref).
 !!! note "`HydroPump`"
     - The constraints enforce that the water outlet flow is equal to the inlet flow at each
       operational period `t`, and hence, preserve conservation of mass.
@@ -477,7 +477,7 @@ function EMB.constraints_flow_out(m, n::HydroGenerator, 𝒯::TimeStructure, mod
     )
 
     for c ∈ constraint_data(n)
-        build_constraint(m, n, c, 𝒯, resource(c), "flow_out", "gen_penalty")
+        build_schedule_constraint(m, n, c, 𝒯, resource(c), "flow_out", "gen_penalty")
     end
 end
 function EMB.constraints_flow_out(m, n::HydroPump, 𝒯::TimeStructure, modeltype::EnergyModel)
