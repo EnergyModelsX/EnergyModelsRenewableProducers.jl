@@ -826,22 +826,24 @@ Returns the range of segment indices for a PqPoints `pq_curve`.
 discharge_segments(pq_curve::PqPoints) = range(1, length(pq_curve.discharge_levels) - 1)
 
 """
-    max_power(n::HydroUnit)
+    max_normalized_power(n::HydroUnit)
 
-Returns the maximum power of HydroUnit `n` based on the pq_curve input.
+Returns the maximum power as a fraction of the capacity of HydroUnit `n` based on the
+pq_curve input.
 """
-function max_power(n::HydroUnit)
+function max_normalized_power(n::HydroUnit)
     if pq_curve(n) isa PqPoints
         return pq_curve(n).power_levels[end]
     end
 end
 
 """
-    max_flow(n::HydroUnit)
+    max_normalized_flow(n::HydroUnit)
 
-Returns the maximum flow of HydroUnit `n` based on the pq_curve input.
+Returns the maximum flow as a fraction of the capacity of HydroUnit `n` based on the
+pq_curve input.
 """
-function max_flow(n::HydroUnit)
+function max_normalized_flow(n::HydroUnit)
     if pq_curve(n) isa PqPoints
         return pq_curve(n).discharge_levels[end]
     end
@@ -861,9 +863,9 @@ application in multiple methods.
 """
 function EMB.capacity(n::HydroUnit, t, p::Resource)
     if p == electricity_resource(n)
-        return capacity(n, t) * max_power(n)
+        return capacity(n, t) * max_normalized_power(n)
     elseif p == water_resource(n)
-        return capacity(n, t) * max_flow(n)
+        return capacity(n, t) * max_normalized_flow(n)
     end
     throw(
         "The Resource `p` the function capacity(n, t, p) must be either the water or " *

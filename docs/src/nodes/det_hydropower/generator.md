@@ -108,11 +108,11 @@ The function `constraints_capacity` rquires a new method to account for the incl
 
 ```math
 \begin{aligned}
-    \texttt{cap\_use}&[n, t] \leq \texttt{cap\_inst}[n, t] \times \frac{P^{max}}{capacity(n, t)}\\
+    \texttt{cap\_use}&[n, t] \leq \texttt{cap\_inst}[n, t] \times P_{norm}^{max}\\
 \end{aligned}
 ```
 
-Where `capacity(n, t)` is the installed capacity of node `n` in operational period `t` and ``P^{max}`` is the maximum power capacity identified through the function [`max_power`](@ref EnergyModelsRenewableProducers.max_power).
+Where `capacity(n, t)` is the installed capacity of node `n` in operational period `t` and ``P_{norm}^{max}`` is the maximum normalized power capacity identified through the function [`max_normalized_power`](@ref EnergyModelsRenewableProducers.max_normalized_power). If the capacity refers to power, the `PqPoints` `power_levels` ranges between 0 and 1 and ``P_{norm}^{max}`` will also be 1. If the capacity refers to flow, the `discharge_levels` ranges between 0 and 1, while `power_levels` may take other values and ``P_{norm}^{max}`` represents the last element of the `power_levels` vector.
 
 The function `constraints_opex_var` requires a new method as we have to include the penalty variables for violating the constraints if required:
 

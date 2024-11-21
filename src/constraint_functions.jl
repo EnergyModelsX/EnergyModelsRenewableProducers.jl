@@ -378,7 +378,7 @@ end
 
 Function for creating the constraints on the maximum capacity of a [`HydroUnit`](@ref) node.
 It differs from the base functions through incorporating the PQ Curve through the function
-[`max_power`](@ref)
+[`max_normalized_power`](@ref)
 
 Furthermore, the function [`build_pq_constaints`](@ref) is called for creating additional
 constraints on the capacity utilization.
@@ -389,7 +389,7 @@ constraints on the capacity utilization.
     investment options.
 """
 function EMB.constraints_capacity(m, n::HydroUnit, 𝒯::TimeStructure, modeltype::EnergyModel)
-    @constraint(m, [t ∈ 𝒯], m[:cap_use][n, t] ≤ m[:cap_inst][n, t] * max_power(n))
+    @constraint(m, [t ∈ 𝒯], m[:cap_use][n, t] ≤ m[:cap_inst][n, t] * max_normalized_power(n))
     build_pq_constaints(m, n, pq_curve(n), 𝒯)
 
     constraints_capacity_installed(m, n, 𝒯, modeltype)

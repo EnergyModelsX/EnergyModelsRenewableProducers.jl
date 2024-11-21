@@ -35,8 +35,8 @@ EnergyModelsRenewableProducers.opex_var_pump
 ## [`HydroReservoir`](@id lib-int-met_field-hydroreservoir)
 
 ```@docs
-EnergyModelsRenewableProducers.max_power
-EnergyModelsRenewableProducers.max_flow
+EnergyModelsRenewableProducers.max_normalized_power
+EnergyModelsRenewableProducers.max_normalized_flow
 EnergyModelsRenewableProducers.vol_inflow
 ```
 
