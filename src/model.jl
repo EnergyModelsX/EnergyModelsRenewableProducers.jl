@@ -166,3 +166,18 @@ function EMB.variables_node(m, 𝒩::Vector{<:HydroUnit}, 𝒯, modeltype::Energ
         any([has_penalty_down(c, t, p) for c in constraint_data(n)])
     ] ≥ 0)
 end
+
+"""
+    EMB.variables_node(m, 𝒩::Vector{<:ReserveBattery}, 𝒯, modeltype::EnergyModel)
+
+Declaration of reserve variables for [`ReserveBattery`](@ref) nodes.
+The following reserve variables are declared:
+
+- `bat_res_up[n, t]` is the upwards reserve of battery storage `n` in operational period `t`.
+- `bat_res_down[n, t]` is the upwards reserve of battery of storage `n` in operational
+  period `t`.
+"""
+function EMB.variables_node(m, 𝒩::Vector{<:ReserveBattery}, 𝒯, modeltype::EnergyModel)
+    @variable(m, bat_res_up[𝒩, 𝒯] ≥ 0)
+    @variable(m, bat_res_down[𝒩, 𝒯] ≥ 0)
+end

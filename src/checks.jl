@@ -52,7 +52,7 @@ This method checks that the *[`HydroStorage`](@ref)* node is valid.
   accessible through a `StrategicPeriod` as outlined in the function
   `check_fixed_opex(n, 𝒯ᴵⁿᵛ, check_timeprofiles)` for the chosen composite type .
  - The field `output` can only include a single `Resource`.
- - The value of the field `output` is required to be smaller or equal to 1.
+ - The value of the field `output` is required to be in the range ``[0, 1]``.
  - The value of the field `input` is required to be in the range ``[0, 1]``.
  - The value of the field `level_init` is required to be in the range
    ``[level\\_min, 1] \\cdot stor\\_cap(t)`` for all time steps ``t ∈ \\mathcal{T}``.
@@ -85,7 +85,7 @@ function EMB.check_node(n::HydroStorage, 𝒯, modeltype::EMB.EnergyModel, check
     if isa(par_discharge, EMB.UnionCapacity)
         @assert_or_log(
             sum(capacity(par_discharge, t) ≥ 0 for t ∈ 𝒯) == length(𝒯),
-            "The charge capacity must be non-negative."
+            "The discharge capacity must be non-negative."
         )
     end
     if isa(par_discharge, EMB.UnionOpexFixed)
@@ -302,5 +302,96 @@ function EMB.check_node_data(
     @assert_or_log(
         all(penalty(data, t) ≥ 0 for t ∈ 𝒯),
         "The penalty must be non-negative."
+    )
+end
+
+"""
+    EMB.check_node(n::ReserveBattery, 𝒯, modeltype::EMB.EnergyModel, check_timeprofiles::Bool)
+
+This method checks that the *[`ReserveBattery`](@ref)* node is valid.
+
+## Checks
+- The `TimeProfile` of the field `capacity` in the type in the field `charge` is required
+  to be non-negative.
+- The `TimeProfile` of the field `capacity` in the type in the field `level` is required
+  to be non-negative`.
+- The `TimeProfile` of the field `capacity` in the type in the field `discharge` is required
+  to be non-negative.
+- The `TimeProfile` of the field `fixed_opex` is required to be non-negative and
+  accessible through a `StrategicPeriod` as outlined in the function
+  `check_fixed_opex(n, 𝒯ᴵⁿᵛ, check_timeprofiles)` for the chosen composite type .
+ - The field `output` can only include a single `Resource`.
+ - The value of the field `input` is required to be in the range ``[0, 1]``.
+ - The value of the field `output` is required to be in the range ``[0, 1]``
+ - The resources in the array `reserve_up` cannot be part of the resources in the dictionaries
+   dictionaries `input` and `output`.
+ - The resources in the array `reserve_down` cannot be part of the resources in the
+   dictionaries `input` and `output`.
+"""
+function EMB.check_node(n::ReserveBattery, 𝒯, modeltype::EMB.EnergyModel, check_timeprofiles::Bool)
+
+    𝒯ᴵⁿᵛ = strategic_periods(𝒯)
+    par_charge = charge(n)
+    par_level = level(n)
+    par_discharge = discharge(n)
+
+    @assert_or_log(
+        sum(capacity(par_charge, t) ≥ 0 for t ∈ 𝒯) == length(𝒯),
+        "The charge capacity must be non-negative."
+    )
+    if isa(par_charge, EMB.UnionOpexFixed)
+        EMB.check_fixed_opex(par_charge, 𝒯ᴵⁿᵛ, check_timeprofiles)
+    end
+    @assert_or_log(
+        sum(capacity(par_level, t) ≥ 0 for t ∈ 𝒯) == length(𝒯),
+        "The level capacity must be non-negative."
+    )
+    if isa(par_level, EMB.UnionOpexFixed)
+        EMB.check_fixed_opex(par_level, 𝒯ᴵⁿᵛ, check_timeprofiles)
+    end
+    @assert_or_log(
+        sum(capacity(par_discharge, t) ≥ 0 for t ∈ 𝒯) == length(𝒯),
+        "The discharge capacity must be non-negative."
+    )
+    if isa(par_discharge, EMB.UnionOpexFixed)
+        EMB.check_fixed_opex(par_discharge, 𝒯ᴵⁿᵛ, check_timeprofiles)
+    end
+
+    for v ∈ values(n.output)
+        @assert_or_log(
+            v ≤ 1,
+            "The value of the `output` resource has to be less than or equal to 1."
+        )
+        @assert_or_log(
+            v ≥ 0,
+            "The value of the `output` resource has to be non-negative."
+        )
+    end
+
+    for v ∈ values(n.input)
+        @assert_or_log(
+            v ≤ 1,
+            "The values of the input variables have to be less than or equal to 1."
+        )
+        @assert_or_log(
+            v ≥ 0,
+            "The values of the input variables have to be non-negative."
+        )
+    end
+    @assert_or_log(
+        any([!haskey(n.input, p) for p ∈ reserve_up(n)]),
+        "The `reserve_up` resources cannot be in the `input` dictionary."
+    )
+    @assert_or_log(
+        any([!haskey(n.output, p) for p ∈ reserve_up(n)]),
+        "The `reserve_up` resources cannot be in the `output` dictionary."
+    )
+    @assert_or_log(
+        any([!haskey(n.input, p) for p ∈ reserve_down(n)]),
+        "The `reserve_down` resources cannot be in the `input` dictionary."
+    )
+    @assert_or_log(
+        any([!haskey(n.output, p) for p ∈ reserve_down(n)]),
+        "The `reserve_down` resources cannot be in the `output` dictionary."
     )
 end

@@ -21,6 +21,38 @@ function EMB.constraints_capacity(m, n::AbstractNonDisRES, 𝒯::TimeStructure, 
 
     constraints_capacity_installed(m, n, 𝒯, modeltype)
 end
+"""
+    constraints_capacity(m, n::ReserveBattery, 𝒯::TimeStructure, modeltype::EnergyModel)
+
+Function for creating the constraint on the maximum capacity of an [`ReserveBattery`](@ref).
+It includes in addition to the standard constraints constraints on the reserve of the battery
+"""
+function EMB.constraints_capacity(m, n::ReserveBattery, 𝒯::TimeStructure, modeltype::EnergyModel)
+    # Introduce the required constraints based on the installed capacity
+    @constraint(m, [t ∈ 𝒯], m[:stor_level][n, t] ≤ m[:stor_level_inst][n, t])
+    @constraint(m, [t ∈ 𝒯], m[:stor_charge_use][n, t] ≤ m[:stor_charge_inst][n, t])
+    @constraint(m, [t ∈ 𝒯], m[:stor_discharge_use][n, t] ≤ m[:stor_discharge_inst][n, t])
+
+    # Add the reserve constraints
+    @constraint(m, [t ∈ 𝒯],
+        m[:stor_discharge_use][n, t] - m[:stor_charge_use][n, t] + m[:bat_res_up][n, t]
+            ≤ m[:stor_discharge_inst][n, t]
+    )
+    @constraint(m, [t ∈ 𝒯],
+        m[:stor_charge_use][n, t] - m[:stor_discharge_use][n, t] + m[:bat_res_down][n, t]
+            ≤ m[:stor_charge_inst][n, t]
+    )
+    @constraint(m, [t ∈ 𝒯],
+        m[:stor_level][n, t] + m[:bat_res_up][n, t]
+            ≤ m[:stor_level_inst][n, t]
+    )
+    @constraint(m, [t ∈ 𝒯],
+        m[:stor_level][n, t] - m[:bat_res_down][n, t]
+            ≥ 0
+    )
+    # Call of the function for determining the installed capacity
+    constraints_capacity_installed(m, n, 𝒯, modeltype)
+end
 
 """
     constraints_flow_in(m, n::HydroStor, 𝒯::TimeStructure, modeltype::EnergyModel)
@@ -57,7 +89,34 @@ function EMB.constraints_flow_in(m, n::PumpedHydroStor, 𝒯::TimeStructure, mod
 end
 
 """
-    EMB.constraints_level_aux(m, n::HydroStorage, 𝒯, 𝒫, modeltype)
+    constraints_flow_in(m, n::ReserveBattery, 𝒯::TimeStructure, modeltype::EnergyModel)
+
+When `n::ReserveBattery`, the variable `:flow_out` is also declared for the different
+reserve resources as identified through the functions [`reserve_up`](@ref) and
+[`reserve_down`](@ref).
+"""
+function EMB.constraints_flow_out(m, n::ReserveBattery, 𝒯::TimeStructure, modeltype::EnergyModel)
+    # Declaration of the required subsets
+    p_stor = storage_resource(n)
+
+    # Constraint for the individual input stream connections
+    @constraint(m, [t ∈ 𝒯],
+        m[:flow_out][n, t, p_stor] == m[:stor_discharge_use][n, t]
+    )
+
+    # Constraint for storage reserve up delivery
+    @constraint(m, [t ∈ 𝒯],
+        m[:bat_res_up][n, t] == sum(m[:flow_out][n, t, p] for p in reserve_up(n))
+    )
+
+    # Constraint for storage reserve down delivery
+    @constraint(m, [t ∈ 𝒯],
+        m[:bat_res_down][n, t] == sum(m[:flow_out][n, t, p] for p in reserve_down(n))
+    )
+end
+
+"""
+    constraints_level_aux(m, n::HydroStorage, 𝒯, 𝒫, modeltype)
 
 Function for creating the Δ constraint for the level of a `HydroStorage` node as well as
 the specification of the initial level in a strategic period.
@@ -90,6 +149,26 @@ function EMB.constraints_level_aux(m, n::HydroStorage, 𝒯, 𝒫, modeltype::En
         m[:stor_level][n, t] ≥ level_min(n, t) * m[:stor_level_inst][n, t]
     )
 end
+
+"""
+    constraints_level_aux(m, n::AbstractBattery, 𝒯, 𝒫, modeltype::EnergyModel)
+
+Function for creating the Δ constraint for the level of an [`AbstractBattery`](@ref)
+node utilizing the efficiencies declared in inputs and outputs of the storage resource.
+"""
+function EMB.constraints_level_aux(m, n::AbstractBattery, 𝒯, 𝒫, modeltype::EnergyModel)
+    # Declaration of the required subsets
+    p_stor = storage_resource(n)
+
+    # Constraint for the change in the level in a given operational period
+    @constraint(m, [t ∈ 𝒯],
+        m[:stor_level_Δ_op][n, t] ==
+            m[:stor_charge_use][n, t] * inputs(n, p_stor) -
+            m[:stor_discharge_use][n, t] / outputs(n, p_stor)
+    )
+end
+
+#! format: on
 
 """
     build_hydro_reservoir_vol_constraints(m, n::HydroReservoir, c::ScheduleConstraint, 𝒯)

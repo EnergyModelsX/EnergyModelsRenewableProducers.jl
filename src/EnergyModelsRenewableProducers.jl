@@ -39,5 +39,6 @@ export HydroStorage, RegHydroStor, HydroStor, PumpedHydroStor
 export HydroReservoir, HydroGenerator, HydroPump, HydroGate
 export PqPoints
 export ScheduleConstraint, MinSchedule, MaxSchedule, EqualSchedule
+export AbstractBattery, ReserveBattery
 
 end # module

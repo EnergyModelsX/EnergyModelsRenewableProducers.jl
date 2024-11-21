@@ -78,7 +78,7 @@ except for water inflow from outside the model, although it requires a field `in
 - **`input::Dict{Resource, Real}`** are the input `Resource`s. In the case of a `HydroStor`,
   this field can be left out.
 - **`output::Dict{Resource, Real}`** can only contain one entry, the stored resource.
-- **`data::Vector{Data}`** additional data (e.g. for investments). The field `data` is
+- **`data::Vector{Data}`** additional data (*e.g.*, for investments). The field `data` is
   conditional through usage of a constructor.
 """
 struct HydroStor{T} <: HydroStorage{T}
@@ -189,11 +189,11 @@ account for the potential to store energy in the form of potential energy.
 - **`charge::EMB.UnionCapacity`** are the charging parameters of the `PumpedHydroStor` node.
   Depending on the chosen type, the charge parameters can include variable OPEX, fixed OPEX,
   and/or a capacity.
-- **`level::EMB.UnionCapacity`** are the level parameters of the `HydroStor` node.
+- **`level::EMB.UnionCapacity`** are the level parameters of the `PumpedHydroStor` node.
   Depending on the chosen type, the charge parameters can include variable OPEX and/or fixed OPEX.
-- **`discharge::EMB.UnionCapacity`** are the discharging parameters of the `HydroStor` node.
-  Depending on the chosen type, the discharge parameters can include variable OPEX, fixed OPEX,
-  and/or a capacity.
+- **`discharge::EMB.UnionCapacity`** are the discharging parameters of the `PumpedHydroStor`
+  node. Depending on the chosen type, the discharge parameters can include variable OPEX,
+  fixed OPEX, and/or a capacity.
 - **`level_init::TimeProfile`** is the initial stored energy in the dam.
 - **`level_inflow::TimeProfile`** is the inflow of power per operational period.
 - **`level_min::TimeProfile`** is the minimum fraction of the reservoir capacity that
@@ -201,7 +201,7 @@ account for the potential to store energy in the form of potential energy.
 - **`stor_res::ResourceCarrier`** is the stored `Resource`.
 - **`input::Dict{Resource, Real}`** are the input `Resource`s.
 - **`output::Dict{Resource, Real}`** can only contain one entry, the stored resource.
-- **`data::Vector{Data}`** additional data (e.g. for investments). The field `data` is
+- **`data::Vector{Data}`** additional data (*e.g.*, for investments). The field `data` is
   conditional through usage of a constructor.
 """
 struct PumpedHydroStor{T} <: HydroStorage{T}
@@ -872,3 +872,119 @@ function EMB.capacity(n::HydroUnit, t, p::Resource)
         "electricity resource of HydroUnit `n`.")
 end
 EMB.capacity(n::HydroGate, t, p::Resource) = EMB.capacity(n, t)
+
+
+"""
+    AbstractBattery{T} <: EMB.Storage{T}
+
+Abstract supertype for the different battery storage models.
+"""
+abstract type AbstractBattery{T} <: EMB.Storage{T} end
+
+"""
+    ReserveBattery{T} <: AbstractBattery{T}
+
+A battery storage, modelled as a `Storage` node. A battery storage nodes differs from a
+[`RefStorage`](@extref EnergyModelsBase.RefStorage) node through:
+
+1. incorporating a discharge capacity,
+2. including charge and discharge efficiencies, and
+3. allow for the introduction of both upwards and downwards reserves.
+
+!!! warning "Implementation details"
+    - The discharge and charge capacities are independent of each other.
+    - The values for the charge and discharge efficiencies must be smaller than 1.
+    - The upwards and downwards reserves are implemented as resources leaving the battery.
+      It is hence important to also provide a potential sink which determines the total
+      reserve required in the system.
+
+## Fields
+- **`id`** is the name/identifyer of the node.
+- **`charge::EMB.UnionCapacity`** are the charging parameters of the `BatteryStorage` node.
+  Depending on the chosen type, the charge parameters can include variable OPEX, fixed OPEX,
+  and/or a capacity.
+- **`level::EMB.UnionCapacity`** are the level parameters of the `BatteryStorage` node.
+  Depending on the chosen type, the charge parameters can include variable OPEX and/or
+  fixed OPEX.
+- **`discharge::EMB.UnionCapacity`** are the discharging parameters of the `BatteryStorage`
+  node. Depending on the chosen type, the discharge parameters can include variable OPEX,
+  fixed OPEX, and/or a capacity.
+- **`stor_res::ResourceCarrier`** is the stored `Resource`.
+- **`input::Dict{Resource, Real}`** are the input `Resource`s with corresponding efficiency
+  value.
+- **`output::Dict{Resource, Real}`** are the output `Resource`s with corresponding
+  efficiency value.
+- **`reserve_up::Vector{ResourceCarrier}`** are the `Resource`s used as reserve for
+  providing energy to the system.
+- **`reserve_down::Vector{ResourceCarrier}`** are the `Resource`s used as reserve for
+  removing energy from the system.
+- **`data::Vector{Data}`** additional data (*e.g.*, for investments). The field `data` is
+  conditional through usage of a constructor.
+"""
+struct ReserveBattery{T} <: AbstractBattery{T}
+    id
+    charge::EMB.UnionCapacity
+    level::EMB.UnionCapacity
+    discharge::EMB.UnionCapacity
+
+    stor_res::ResourceCarrier
+    input::Dict{<:Resource, <:Real}
+    output::Dict{<:Resource, <:Real}
+    reserve_up::Vector{<:ResourceCarrier}
+    reserve_down::Vector{<:ResourceCarrier}
+    data::Vector{<:Data}
+end
+function ReserveBattery{T}(
+    id,
+    charge::EMB.UnionCapacity,
+    level::EMB.UnionCapacity,
+    discharge::EMB.UnionCapacity,
+
+    stor_res::Resource,
+    input::Dict{<:Resource, <:Real},
+    output::Dict{<:Resource, <:Real},
+    reserve_up::Vector{<:ResourceCarrier},
+    reserve_down::Vector{<:ResourceCarrier},
+) where {T}
+    return ReserveBattery{T}(
+        id,
+        charge,
+        level,
+        discharge,
+        stor_res,
+        input,
+        output,
+        reserve_up,
+        reserve_down,
+        Data[],
+    )
+end
+
+"""
+    EMB.outputs(n::ReserveBattery)
+    EMB.outputs(n::ReserveBattery, p::Resource)
+
+When the node is an [`ReserveBattery`](@ref), it returns both the output and reserve
+resources.
+
+If the resource `p` is specified, it returns the value if the resource is in the output
+dictionary. Otherwise, it returns a value of 0.
+"""
+EMB.outputs(n::ReserveBattery) =
+    unique(vcat(collect(keys(n.output)), n.reserve_up, n.reserve_down))
+EMB.outputs(n::ReserveBattery, p::Resource) =
+    haskey(n.output, p) ? n.output[p] : 0
+
+"""
+    reserve_up(n::ReserveBattery)
+
+Returns the instances used as reserve resources for adding capacity to the energy system.
+"""
+reserve_up(n::ReserveBattery) = n.reserve_up
+
+"""
+    reserve_down(n::ReserveBattery)
+
+Returns the instances used as reserve resources for removing capacity from the energy system.
+"""
+reserve_down(n::ReserveBattery) = n.reserve_down
