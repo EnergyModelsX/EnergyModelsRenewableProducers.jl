@@ -461,26 +461,7 @@ struct HydroReservoir{T} <: EMB.Storage{T}
     vol::EMB.UnionCapacity
     vol_inflow::TimeProfile
     stor_res::ResourceCarrier # Water
-    input::Dict{<:Resource,<:Real} # Water
-    output::Dict{<:Resource,<:Real} # Water
     data::Vector{<:Data}
-end
-function HydroReservoir{T}(
-    id::Any,
-    vol::EMB.UnionCapacity,
-    vol_inflow::TimeProfile,
-    stor_res::ResourceCarrier,
-    data::Vector{<:Data}
-) where {T<:EMB.StorageBehavior}
-    HydroReservoir{T}(
-        id,
-        vol,
-        vol_inflow,
-        stor_res,
-        Dict(stor_res => 1.0),
-        Dict(stor_res => 1.0),
-        data
-    )
 end
 function HydroReservoir{T}(
     id::Any,
@@ -496,6 +477,30 @@ function HydroReservoir{T}(
         Data[],
     )
 end
+
+"""
+    inputs(n::HydroReservoir)
+    inputs(n::HydroReservoir, p::Resource)
+
+Returns the input resources of a HydroReservoir `n`, specified *via* the field `stor_res`.
+
+If the resource `p` is specified, it returns a value of 1. This behaviour should in theory
+not occur.
+"""
+EMB.inputs(n::HydroReservoir) = [storage_resource(n)]
+EMB.inputs(n::HydroReservoir, p::Resource) = 1
+
+"""
+    outputs(n::HydroReservoir)
+    outputs(n::HydroReservoir, p::Resource)
+
+Returns the output resources of a HydroReservoir `n`, specified *via* the field `stor_res`.
+
+If the resource `p` is specified, it returns a value of 1. This behaviour should in theory
+not occur.
+"""
+EMB.outputs(n::HydroReservoir) = [storage_resource(n)]
+EMB.outputs(n::HydroReservoir, p::Resource) = 1
 
 """
     level(n::HydroReservoir)
@@ -523,7 +528,7 @@ vol_inflow(n::HydroReservoir, t) = n.vol_inflow[t]
 A hydro gate, modelled as a `NetworkNode` node.
 
 It an be used to model outlets/inlets and minimum/maximum requirements for water flow
-between individual reservoirs without power generation..
+between individual reservoirs without power generation.
 
 ## Fields
 - **`id`** is the name/identifier of the node.
@@ -531,8 +536,8 @@ between individual reservoirs without power generation..
 - **`opex_var::TimeProfile`** is the variational operational costs per water flow through
   the gate.
 - **`opex_fixed::TimeProfile`** is the fixed operational costs.
-- **`resource<:Resource`** is the water resource type since gates are only used for
-  dispatching water.
+- **`resource::ResourceCarrier`** is the water resource type since gates are only used for
+  discharging water.
 - **`data::Vector{<:Data}`** is the additional data (*e.g.*, for investments or constraints
   through [`AbstractConstraintType`](@ref)). The field `data` is conditional through usage
   of a constructor.
@@ -542,27 +547,8 @@ struct HydroGate <: EMB.NetworkNode
     cap::TimeProfile
     opex_var::TimeProfile
     opex_fixed::TimeProfile
-    input::Dict{<:Resource,<:Real}
-    output::Dict{<:Resource,<:Real}
+    resource::ResourceCarrier
     data::Vector{<:Data}
-end
-function HydroGate(
-    id::Any,
-    cap::TimeProfile,
-    opex_var::TimeProfile,
-    opex_fixed::TimeProfile,
-    resource::ResourceCarrier,
-    data::Vector{<:Data}
-)
-    HydroGate(
-        id,
-        cap,
-        opex_var,
-        opex_fixed,
-        Dict(resource => 1.0),
-        Dict(resource => 1.0),
-        data
-    )
 end
 function HydroGate(
     id::Any,
@@ -575,11 +561,56 @@ function HydroGate(
 end
 
 """
+    inputs(n::HydroGate)
+    inputs(n::HydroGate, p::Resource)
+
+Returns the input resources of a HydroGate `n`, specified *via* the field `resource`.
+
+If the resource `p` is specified, it returns a value of 1. This behaviour should in theory
+not occur.
+"""
+EMB.inputs(n::HydroGate) = [n.resource]
+EMB.inputs(n::HydroGate, p::Resource) = 1
+
+"""
+    outputs(n::HydroGate)
+    outputs(n::HydroGate, p::Resource)
+
+Returns the output resources of a HydroGate `n`, specified *via* the field `resource`.
+
+If the resource `p` is specified, it returns a value of 1. This behaviour should in theory
+not occur.
+"""
+EMB.outputs(n::HydroGate) = [n.resource]
+EMB.outputs(n::HydroGate, p::Resource) = 1
+
+"""
     abstract type HydroUnit <: EMB.NetworkNode
 
 A Hydropower unit node for either pumping or production, modelled as a `NetworkNode` node.
 """
 abstract type HydroUnit <: EMB.NetworkNode end
+
+"""
+    electricity_resource(n::HydroUnit)
+
+Returns the resource of the `electricity_resource` field of a HydroUnit `n`.
+"""
+electricity_resource(n::HydroUnit) = n.electricity_resource
+
+"""
+    water_resource(n::HydroUnit)
+
+Returns the resource of the `water_resource` field of a HydroUnit `n`.
+"""
+water_resource(n::HydroUnit) = n.water_resource
+
+"""
+    pq_curve(n::HydroUnit)
+
+Returns the resources in the PQ-curve of a HydroUnit `n`.
+"""
+pq_curve(n::HydroUnit) = n.pq_curve
 
 """
     abstract type AbstractPqCurve
@@ -677,8 +708,6 @@ struct HydroGenerator <: HydroUnit
     opex_fixed::TimeProfile
     electricity_resource::Resource
     water_resource::Resource
-    input::Dict{<:Resource,<:Real}
-    output::Dict{<:Resource,<:Real}
     data::Vector{<:Data}
 end
 function HydroGenerator(
@@ -690,13 +719,35 @@ function HydroGenerator(
     electricity_resource::Resource,
     water_resource::Resource,
 )
-
-    input = Dict(water_resource => 1.0)
-    output = Dict(water_resource => 1.0, electricity_resource => 1.0)
-
     return HydroGenerator(id, cap, pq_curve, opex_var, opex_fixed,
-        electricity_resource, water_resource, input, output, Data[])
+        electricity_resource, water_resource, Data[])
 end
+
+"""
+    inputs(n::HydroGenerator)
+    inputs(n::HydroGenerator, p::Resource)
+
+Returns the input resources of a HydroGenerator `n`, specified *via* the field
+`water_resource`.
+
+If the resource `p` is specified, it returns a value of 1. This behaviour should in theory
+not occur.
+"""
+EMB.inputs(n::HydroGenerator) = [water_resource(n)]
+EMB.inputs(n::HydroGenerator, p::Resource) = 1
+
+"""
+    outputs(n::HydroGenerator)
+    outputs(n::HydroGenerator, p::Resource)
+
+Returns the output resources of a HydroGenerator `n`, specified *via* the fields
+`water_resource` and `electricity_resource`.
+
+If the resource `p` is specified, it returns a value of 1. This behaviour should in theory
+not occur.
+"""
+EMB.outputs(n::HydroGenerator) = [water_resource(n), electricity_resource(n)]
+EMB.outputs(n::HydroGenerator, p::Resource) = 1
 
 """
     HydroPump <: HydroUnit
@@ -726,8 +777,6 @@ struct HydroPump <: HydroUnit
     opex_fixed::TimeProfile
     electricity_resource::Resource
     water_resource::Resource
-    input::Dict{<:Resource,<:Real}
-    output::Dict{<:Resource,<:Real}
     data::Vector{<:Data}
 end
 function HydroPump(
@@ -739,34 +788,35 @@ function HydroPump(
     electricity_resource::Resource,
     water_resource::Resource,
 )
-
-    input = Dict(water_resource => 1.0, electricity_resource => 1.0)
-    output = Dict(water_resource => 1.0)
-
     return HydroPump(id, cap, pq_curve, opex_var, opex_fixed,
-        electricity_resource, water_resource, input, output, Data[])
+        electricity_resource, water_resource, Data[])
 end
 
 """
-    electricity_resource(n::HydroUnit)
+    inputs(n::HydroPump)
+    inputs(n::HydroPump, p::Resource)
 
-Returns the resource of the `electricity_resource` field of a HydroUnit `n`.
+Returns the input resources of a HydroPump `n`, specified *via* the fields `water_resource`
+and `electricity_resource`.
+
+If the resource `p` is specified, it returns a value of 1. This behaviour should in theory
+not occur.
 """
-electricity_resource(n::HydroUnit) = n.electricity_resource
+EMB.inputs(n::HydroPump) = [water_resource(n), electricity_resource(n)]
+EMB.inputs(n::HydroPump, p::Resource) = 1
 
 """
-    water_resource(n::HydroUnit)
+    outputs(n::HydroPump)
+    outputs(n::HydroPump, p::Resource)
 
-Returns the resource of the `water_resource` field of a HydroUnit `n`.
-"""
-water_resource(n::HydroUnit) = n.water_resource
+Returns the output resources of a HydroPump `n`, specified *via* the field `water_resource`.
 
+If the resource `p` is specified, it returns a value of 1. This behaviour should in theory
+not occur.
 """
-    pq_curve(n::HydroUnit)
+EMB.outputs(n::HydroPump) = [water_resource(n)]
+EMB.outputs(n::HydroPump, p::Resource) = 1
 
-Returns the resources in the PQ-curve of a HydroUnit `n`.
-"""
-pq_curve(n::HydroUnit) = n.pq_curve
 
 """
     discharge_segments(pq_curve::PqPoints)

@@ -380,6 +380,9 @@ Function for creating the constraints on the maximum capacity of a [`HydroUnit`]
 It differs from the base functions through incorporating the PQ Curve through the function
 [`max_power`](@ref)
 
+Furthermore, the function [`build_pq_constaints`](@ref) is called for creating additional
+constraints on the capacity utilization.
+
 !!! warning "Dispatching on this function"
     If you create a new method for this function, it is crucial to call within said function
     the function `constraints_capacity_installed(m, n, 𝒯, modeltype)` if you want to include
@@ -387,6 +390,7 @@ It differs from the base functions through incorporating the PQ Curve through th
 """
 function EMB.constraints_capacity(m, n::HydroUnit, 𝒯::TimeStructure, modeltype::EnergyModel)
     @constraint(m, [t ∈ 𝒯], m[:cap_use][n, t] ≤ m[:cap_inst][n, t] * max_power(n))
+    build_pq_constaints(m, n, pq_curve(n), 𝒯)
 
     constraints_capacity_installed(m, n, 𝒯, modeltype)
 end
@@ -431,8 +435,6 @@ Method for creating the constraint on the inlet flow of a node `n`.
     The constraints enforce that the water inlet flow is equal to the outlet flow at each
     operational period `t`, and hence, preserve conservation of mass.
 !!! note "`HydroPump`"
-    The function [`build_pq_constaints`](@ref) is called for creating the constraint on the
-    capacity utilization.
     The electricity flow to the unit is equal to the capacity utilization
     The flow of the inlet resources can be constrained through calling the function
     [`build_constraint`](@ref).
@@ -444,7 +446,6 @@ function EMB.constraints_flow_in(m, n::HydroGenerator, 𝒯::TimeStructure, mode
     )
 end
 function EMB.constraints_flow_in(m, n::HydroPump, 𝒯::TimeStructure, modeltype::EnergyModel)
-    build_pq_constaints(m, n, pq_curve(n), 𝒯)
     @constraint(m, [t ∈ 𝒯],
         m[:flow_in][n, t, electricity_resource(n)] ==
             m[:cap_use][n, t]
@@ -462,8 +463,6 @@ end
 Method for creating the constraint on the oulet flow of a node `n`.
 
 !!! tip "`HydroGenerator`"
-    - The function [`build_pq_constaints`](@ref) is called for creating the constraint on the
-      capacity utilization.
     - The electricity flow from the unit is equal to the capacity utilization.
     - The flow of the inlet resources can be constrained through calling the function
       [`build_constraint`](@ref).
@@ -472,7 +471,6 @@ Method for creating the constraint on the oulet flow of a node `n`.
       operational period `t`, and hence, preserve conservation of mass.
 """
 function EMB.constraints_flow_out(m, n::HydroGenerator, 𝒯::TimeStructure, modeltype::EnergyModel)
-    build_pq_constaints(m, n, pq_curve(n), 𝒯)
     @constraint(m, [t ∈ 𝒯],
         m[:flow_out][n, t, electricity_resource(n)] ==
             m[:cap_use][n, t]

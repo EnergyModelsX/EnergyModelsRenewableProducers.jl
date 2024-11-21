@@ -35,4 +35,6 @@ EnergyModelsBase.check_node_data
 
 ```@docs
 EnergyModelsBase.capacity
+EnergyModelsBase.inputs
+EnergyModelsBase.outputs
 ```

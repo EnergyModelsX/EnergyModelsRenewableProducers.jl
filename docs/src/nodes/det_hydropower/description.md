@@ -28,7 +28,7 @@ The nodes should be connected by [`links`](@extref lib-pub-links) to represent t
 !!! danger "Direct linking required"
     The nodes included in the water way should be connected directly and not through an [`Availability`](@extref EnergyModelsBase.Availability) node. An availability node can be used to connect electricity resources, but the water resource must be excluded from the availability node to prevent that the availability node is used to move water to reservoirs with higher altitude without consuming electricity.
 
-!!! danger "Reservoir input and input required"
+!!! danger "Reservoir input and output required"
     All nodes must have both input and output.
     Therefore, a [`RefSource`](@extref EnergyModelsBase.RefSource) node with capacity 0 should be connected to the reservoir at the top of the water course.
     Similarly, the water transported through the hydropower system requires a final destination.
