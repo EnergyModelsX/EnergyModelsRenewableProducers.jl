@@ -28,15 +28,15 @@ The standard fields are given as:
 - **`id`**:\
   The field `id` is only used for providing a name to the node. This is similar to the approach utilized in `EnergyModelsBase`.
 - **`charge::EMB.UnionCapacity`**:\
-  The charge storage parameters must include a capacity for charging.
+  The charge storage parameters must include a capacity.
   More information can be found on *[storage parameters](@extref EnergyModelsBase lib-pub-nodes-stor_par)*.
   !!! info "Meaning in boths nodes"
       The `charge` field is only included for [`PumpedHydroStor`](@ref) nodes while [`HydroStor`](@ref) do **not** allow for flow into the node.
 - **`level::EMB.UnionCapacity`**:\
-  The level storage parameters must include a capacity for charging.
+  The level storage parameters must include a capacity.
   More information can be found on *[storage parameters](@extref EnergyModelsBase lib-pub-nodes-stor_par)*.
-- **`charge::EMB.UnionCapacity`**:\
-  The charge storage parameters must include a capacity for charging.
+- **`discharge::EMB.UnionCapacity`**:\
+  The discharge storage parameters must include a capacity.
   More information can be found on *[storage parameters](@extref EnergyModelsBase lib-pub-nodes-stor_par)*.
   !!! note "Permitted values for storage parameters in `charge`, `level`, and `discharge`"
       If the node should contain investments through the application of [`EnergyModelsInvestments`](https:// energymodelsx.github.io/EnergyModelsInvestments.jl/stable/), it is important to note that you can only use `FixedProfile` or `StrategicProfile` for the capacity, but not `RepresentativeProfile` or `OperationalProfile`.
