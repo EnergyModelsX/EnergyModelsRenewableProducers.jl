@@ -1,5 +1,25 @@
 # Release notes
 
+## Unversioned
+
+### Detailed hydropower modelling
+
+* Introduced a detailed modelling of hydro power utilizing multiple nodes and PQ-curves.
+* All nodes can handle `ScheduleConstraint`s for providing hard or soft bounds on production/stored volume.
+* `Hydroreservoir` nodes:
+  * `Storage` nodes that do not require a large amount of input.
+  * Utilize water volumes as stored energy.
+* `HydroGate` nodes:
+  * Can server as a spillover from a reservoir to another.
+  * Can still provide a limited capacity and fixed OPEX for maintaining them.
+* `HydroGenerator` nodes:
+  * Connects multiple reservoirs.
+  * Can take in water from multiple reservoirs.
+  * Utilize concave PQ-curves for the calculation of power generation.
+* `HydroPump` nodes:
+  * Can pump water to a higher level.
+  * Utilizes convex PQ-curves for the calculation of power requirement for pumping.
+
 ## Version 0.6.2 (2024-10-16)
 
 * Minor updates on docstrings and descriptions.

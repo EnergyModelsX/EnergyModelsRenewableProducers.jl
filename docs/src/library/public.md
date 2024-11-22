@@ -21,6 +21,10 @@ AbstractNonDisRES
 NonDisRES
 HydroStor
 PumpedHydroStor
+HydroReservoir
+HydroGenerator
+HydroPump
+HydroGate
 ```
 
 ### [Legacy constructors](@id lib-pub-node-legacy)

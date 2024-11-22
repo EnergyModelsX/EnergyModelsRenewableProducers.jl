@@ -4,6 +4,7 @@ using HiGHS
 using JuMP
 using Test
 using TimeStruct
+import Interpolations
 
 const EMB = EnergyModelsBase
 const EMRP = EnergyModelsRenewableProducers
@@ -16,6 +17,10 @@ const EMRP = EnergyModelsRenewableProducers
 
     @testset "RP | Hydropower" begin
         include("test_hydro.jl")
+    end
+
+    @testset "RP | Detailed hydropower" begin
+        include("test_detailed_hydro.jl")
     end
 
     @testset "RP | examples" begin
