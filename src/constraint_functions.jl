@@ -266,18 +266,82 @@ function constraints_usage_sp(
     t_inv::TS.AbstractStrategicPeriod,
     modeltype::EnergyModel,
 )
-    t_inv_prev = strat_per(prev_pers)
-    p_stor = storage_resource(n)
-
+    disjunct = replace_disjunct(m, n, battery_life(n), prev_pers, t_inv, modeltype)
     @constraint(m,
-        m[:bat_prev_use_sp][n, t_inv] ==
-            # Initial usage in previous sp
-            m[:bat_prev_use][n, first(t_inv_prev)] -
-            m[:stor_charge_use][n, first(t_inv_prev)] * inputs(n, p_stor) *
-            duration(first(t_inv_prev)) +
-            # Increase in previous representative period
-            m[:bat_use_sp][n, t_inv_prev] * duration_strat(t_inv_prev)
+        m[:bat_prev_use_sp][n, t_inv] == disjunct
     )
+end
+"""
+    replace_disjunct(
+        m,
+        n::AbstractBattery,
+        bat_life::AbstractBatteryLife,
+        prev_pers::PreviousPeriods,
+        t_inv::TS.AbstractStrategicPeriod,
+        modeltype::EnergyModel,
+    )
+
+Function for dispatching no the different type of battery lifes for incorporation of the
+preivous usage constraints in the first operational period (of the first representative
+period) of a strategic period.
+
+!!! tip "Default approach"
+    Returns the value based on the the calculation of the previous usage in the previous
+    strategic period and the initial value in the previous strategic period.
+
+!!! note "`CycleLife`"
+    In the case of a cycle life, it takes into account the potential for stack replacement
+    through a bilinear formulation. The bilinear formulation is simplifed due to the known
+    lower bounds.
+"""
+function replace_disjunct(
+    m,
+    n::AbstractBattery,
+    bat_life::AbstractBatteryLife,
+    prev_pers::PreviousPeriods,
+    t_inv::TS.AbstractStrategicPeriod,
+    modeltype::EnergyModel,
+)
+    t_inv_prev = strat_per(prev_pers)
+    return @expression(m,
+        # Initial usage in previous sp
+        m[:bat_prev_use_sp][n, t_inv_prev] +
+        # Increase in previous representative period
+        m[:bat_use_sp][n, t_inv_prev] * duration_strat(t_inv_prev)
+    )
+end
+function replace_disjunct(
+    m,
+    n::AbstractBattery,
+    bat_life::CycleLife,
+    prev_pers::PreviousPeriods,
+    t_inv::TS.AbstractStrategicPeriod,
+    modeltype::EnergyModel,
+)
+    t_inv_prev = strat_per(prev_pers)
+
+    # Calculate the expression if no stack replacement is taking place
+    replace =  @expression(m,
+        # Initial usage in previous sp
+        m[:bat_prev_use_sp][n, t_inv_prev] +
+        # Increase in previous representative period
+        m[:bat_use_sp][n, t_inv_prev] * duration_strat(t_inv_prev)
+    )
+
+    # Introduce the auxiliary variable
+    ub = capacity_max(n, t_inv, modeltype)
+    var_aux = @variable(m, lower_bound = 0, upper_bound = ub)
+
+    # Constraints for the linear reformulation. The constraints are based on the
+    # McCormick envelopes which result in an exact reformulation for the multiplication
+    # of a binary and a continuous variable.
+    @constraints(m, begin
+        var_aux ≥ 0
+        var_aux ≥ ub * ((1 - m[:bat_stack_replacement_b][n, t_inv]) - 1) + replace
+        var_aux ≤ ub * (1 - m[:bat_stack_replacement_b][n, t_inv])
+        var_aux ≤ replace
+    end)
+    return var_aux
 end
 
 """
@@ -399,6 +463,61 @@ function constraints_usage_iterate(
                 prev_use + m[:stor_charge_use][n, t] * inputs(n, p_stor) * duration(t)
         )
     end
+end
+
+"""
+    constraints_opex_fixed(m, n::AbstractBattery, 𝒯ᴵⁿᵛ, modeltype::EnergyModel)
+
+Function for creating the constraint on the fixed OPEX of a generic [`AbstractBattery`](@ref).
+
+The functions nodes includes fixed OPEX for `charge`, `level`, and `discharge` if the node
+has the corresponding storage parameter. The individual contributions are in all situations
+calculated based on the installed capacities.
+
+In addition, stack replacement is included if the `battery_life` has a limited cycle lifetime.
+The division by duration_strat(t_inv) for the stack replacement is requried due to
+multiplication with the duration in the objective function calculation.
+"""
+function EMB.constraints_opex_fixed(m, n::AbstractBattery, 𝒯ᴵⁿᵛ, modeltype::EnergyModel)
+
+    # Extracts the contribution from the individual components
+    if EMB.has_level_OPEX_fixed(n)
+        opex_fixed_level = @expression(m, [t_inv ∈ 𝒯ᴵⁿᵛ],
+            m[:stor_level_inst][n, first(t_inv)] * opex_fixed(level(n), t_inv)
+        )
+    else
+        opex_fixed_level = @expression(m, [t_inv ∈ 𝒯ᴵⁿᵛ], 0)
+    end
+    if EMB.has_charge_OPEX_fixed(n)
+        opex_fixed_charge = @expression(m, [t_inv ∈ 𝒯ᴵⁿᵛ],
+            m[:stor_charge_inst][n, first(t_inv)] * opex_fixed(charge(n), t_inv)
+        )
+    else
+        opex_fixed_charge = @expression(m, [t_inv ∈ 𝒯ᴵⁿᵛ], 0)
+    end
+    if EMB.has_discharge_OPEX_fixed(n)
+        opex_fixed_discharge = @expression(m, [t_inv ∈ 𝒯ᴵⁿᵛ],
+            m[:stor_discharge_inst][n, first(t_inv)] * opex_fixed(discharge(n), t_inv)
+        )
+    else
+        opex_fixed_discharge = @expression(m, [t_inv ∈ 𝒯ᴵⁿᵛ], 0)
+    end
+    if has_degradation(n)
+        # Extraction of the stack replacement variable
+        stack_replace = multiplication_variables(m, n, 𝒯ᴵⁿᵛ, modeltype)
+        opex_fixed_degradation = @expression(m, [t_inv ∈ 𝒯ᴵⁿᵛ],
+            stack_replace[t_inv] * stack_cost(n)
+            )
+    else
+        opex_fixed_degradation = @expression(m, [t_inv ∈ 𝒯ᴵⁿᵛ], 0)
+    end
+
+    # Create the overall constraint
+    @constraint(m, [t_inv ∈ 𝒯ᴵⁿᵛ],
+        m[:opex_fixed][n, t_inv] ==
+        opex_fixed_level[t_inv] + opex_fixed_charge[t_inv] + opex_fixed_discharge[t_inv] +
+        opex_fixed_degradation[t_inv] / duration_strat(t_inv)
+    )
 end
 
 #! format: on

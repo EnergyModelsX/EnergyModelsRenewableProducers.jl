@@ -37,6 +37,7 @@ end
         el_demand;
         ops = SimpleTimes(10, [6, 3, 6, 3, 6, 6, 3, 6, 3, 6]),
         bat_life = InfLife(),
+        n_sp = 2,
     )
 
         products = [Power, CO2]
@@ -61,7 +62,7 @@ end
         sink = RefSink(
             "power_demand",
             el_demand,
-            Dict(:surplus => FixedProfile(0), :deficit => FixedProfile(1e3)),
+            Dict(:surplus => FixedProfile(0), :deficit => StrategicProfile([1e3,2e2])),
             Dict(Power => 1),
         )
 
@@ -74,7 +75,7 @@ end
 
         # Creation of the time structure and the used global data
         op_per_strat = 8760.0
-        T = TwoLevel(2, 2, ops; op_per_strat)
+        T = TwoLevel(n_sp, 2, ops; op_per_strat)
         modeltype = OperationalModel(
             Dict(CO2 => FixedProfile(10)),
             Dict(CO2 => FixedProfile(0)),
@@ -178,7 +179,7 @@ end
         )
     end
     @testset "SimpleTimes - Cycle limit" begin
-        bat_life = CycleLife(900, 0.2)
+        bat_life = CycleLife(900, 0.2, 2e4)
         m, case, modeltype = small_graph(supply_price, el_demand; bat_life)
 
         # Extract the data
@@ -192,6 +193,41 @@ end
         general_battery_tests(m, case)
         battery_prev_usage_tests(m, case)
         battery_degradation_tests(m, case)
+    end
+
+    @testset "SimpleTimes - Cycle limit, reinvest" begin
+        bat_life = CycleLife(900, 0.2, 2e4)
+        m, case, modeltype = small_graph(supply_price, el_demand; bat_life, n_sp=4)
+
+        # Extract the data
+        𝒯 = case[:T]
+        𝒯ᴵⁿᵛ = strategic_periods(𝒯)
+        𝒩 = case[:nodes]
+        stor = 𝒩[2]
+        sink = 𝒩[3]
+
+        # Run the standard tests
+        general_battery_tests(m, case)
+        battery_prev_usage_tests(m, case)
+
+        # Test that the capacity limit is correctly enforced in the individual operational
+        # periods
+        # - capacity_reduction and constraints_capacity:
+        #   - The value of 50 corresponds to the installed storage capacity of the battery
+        #   - The value of 0.8 corresponds to 1-the final degradation percentage
+        #   - The value of 900 correspondsd to the cycle numbers
+        @test all(
+            value.(m[:stor_level][stor, t]) ≤
+                50 - 0.2 * value.(m[:bat_prev_use][stor, t]) / 900
+        for t ∈ 𝒯)
+
+        # Test that stack replacement occurs once and the cost is correctly included
+        @test sum(value.(m[:bat_stack_replacement_b][stor, t_inv]) for t_inv ∈ 𝒯ᴵⁿᵛ) == 1
+        # - constraints_opex_fixed(m, n::AbstractBattery, 𝒯ᴵⁿᵛ, modeltype::EnergyModel)
+        #   - 50 is the capacity
+        #   - 2e4 is the cost for replacement
+        #   - /2 to account for the duration of a strategic period
+        @test sum(value.(m[:opex_fixed][stor, t_inv]) for t_inv ∈ 𝒯ᴵⁿᵛ) ≈ 50 * 2e4 / 2
     end
 
     # Modelling of two days as one representative period each with typical demand and price
@@ -238,7 +274,7 @@ end
     end
 
     @testset "RepresentativePeriods - Cycle limit" begin
-        bat_life = CycleLife(900, 0.2)
+        bat_life = CycleLife(900, 0.2, 5e4)
         m, case, modeltype = small_graph(supply_price, el_demand; ops, bat_life)
 
         # Extract the data

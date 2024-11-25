@@ -103,3 +103,99 @@ function previous_usage(
         m[:bat_usage_rp][n, t_rp_prev]
     )
 end
+function linear_reformulation(
+    m,
+    𝒯,
+    var_binary,
+    var_continuous,
+    lb::TimeProfile,
+    ub::TimeProfile,
+    )
+
+    # Declaration of the auxiliary variable
+    var_aux = @variable(m, [t ∈ 𝒯], lower_bound = minimum([0, lb[t]]), upper_bound = ub[t])
+
+    # Constraints for the linear reformulation. The constraints are based on the
+    # McCormick envelopes which result in an exact reformulation for the multiplication
+    # of a binary and a continuous variable.
+    @constraints(m, begin
+        [t ∈ 𝒯], var_aux[t] ≥ lb[t] * var_binary[t]
+        [t ∈ 𝒯], var_aux[t] ≥ ub[t] * (var_binary[t]-1) + var_continuous[t]
+        [t ∈ 𝒯], var_aux[t] ≤ ub[t] * var_binary[t]
+        [t ∈ 𝒯], var_aux[t] ≤ lb[t] * (var_binary[t]-1) + var_continuous[t]
+    end)
+
+    return var_aux
+end
+
+"""
+    multiplication_variables(
+        m,
+        n::AbstractBattery,
+        𝒯ᴵⁿᵛ,
+        modeltype::EnergyModel
+    )
+
+Function for calculating the muliplication of the capacity of an [`AbstractBattery`](@ref)
+and the binary variable `:bat_stack_replacement_b`.
+
+    modeltype::EnergyModel
+
+Multiplication of the installed capacity (expressed through `capacity(level(n), t_inv)`) and
+the binary variable `bat_stack_replacement_b` in a strategic period `t_inv`.
+
+## Returns
+- **`prod[t]`**: Multiplication of `capacity(level(n), t_inv)` and
+  `bat_stack_replacement_b[n, t_inv]`.
+
+
+    modeltype::AbstractInvestmentModel
+
+When the modeltype is an `AbstractInvestmentModel`, then the function applies a linear
+reformulation of the binary-continuous multiplication based on the McCormick relaxation and
+the function [`linear_reformulation`](@ref).
+
+!!! note
+    If the [`AbstractBattery`](@ref) node does not have investments, it reuses the
+    default function to avoid increasing the number of variables in the model.
+
+## Returns
+- **`prod[t]`**: Multiplication of `cap_inst[n, t]` and `var_b[t]` or alternatively
+  `cap_current[n, t]` and `var_b[t]`, if the TimeStructure is a `StrategicPeriods` and
+  the node `n` has investments.
+"""
+function multiplication_variables(
+    m,
+    n::AbstractBattery,
+    𝒯ᴵⁿᵛ,
+    modeltype::EnergyModel
+)
+    # Calculation of the multiplication with the installed capacity of the node
+    prod = @expression(m, [t_inv ∈ 𝒯ᴵⁿᵛ],
+        capacity(level(n), t_inv) * m[:bat_stack_replacement_b][n, t_inv]
+    )
+    return prod
+end
+
+"""
+    capacity_max(n::AbstractBattery, t_inv, modeltype::EnergyModel)
+
+Function for calculating the maximum capacity, including the number of cycles.
+
+    modeltype::EnergyModel
+
+When the modeltype is an `EnergyModel`, it returns the muliplication of the installed
+storage level capacity and the number of cycles before the stack must be replaced.
+
+    modeltype::AbstractInvestmentModel
+
+When the modeltype is an `AbstractInvestmentModel`, it returns the muliplication of the
+maximum installed storage level capacity and the number of cycles before the stack must be
+replaced.
+
+!!! note
+    If the [`AbstractBattery`](@ref) node does not have investments, it reuses the
+    default function.
+"""
+capacity_max(n::AbstractBattery, t_inv, modeltype::EnergyModel) =
+    capacity(level(n), t_inv) * cycles(n)

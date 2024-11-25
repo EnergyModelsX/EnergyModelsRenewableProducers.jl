@@ -901,10 +901,13 @@ number of cycles.
 - **`cycles::Int`** is the number of cycles that the battery can tolerate.
 - **`degradation::Float64`** is the allowed capacity reduction at the end of life of the
   battery.
+- **`stack_cost::Float64`** is the relative cost for replacing a battery stack once it
+  reached its maximum number of cycles.
 """
 struct CycleLife <: AbstractBatteryLife
     cycles::Int
     degradation::Float64
+    stack_cost::Float64
 end
 
 """
@@ -1103,6 +1106,14 @@ Returns the [`AbstractBatteryLife`](@ref) type of AbstractBattery `n`.
 battery_life(n::AbstractBattery) = n.battery_life
 
 """
+    has_degradation(n::AbstractBattery)
+
+Returns logic whether the AbstractBattery includes degradation of the battery and
+replacement options for the battery.
+"""
+has_degradation(n::AbstractBattery) = isa(battery_life(n), CycleLife)
+
+"""
     cycles(n::AbstractBattery)
     cycles(life::AbstractBatteryLife)
     cycles(life::CycleLife)
@@ -1126,3 +1137,16 @@ it will return `nothing`.
 degradation(n::AbstractBattery) = degradation(battery_life(n))
 degradation(life::AbstractBatteryLife) = nothing
 degradation(life::CycleLife) = life.degradation
+
+"""
+    stack_cost(n::AbstractBattery)
+    stack_cost(life::AbstractBatteryLife)
+    stack_cost(life::CycleLife)
+
+Returns the relative stack cost of the battery storage capacity for replacing the existing
+battery capacity. If the [`battery_life`](@ref) is an [`AbstractBatteryLife`](@ref),
+it will return `nothing`.
+"""
+stack_cost(n::AbstractBattery) = stack_cost(battery_life(n))
+stack_cost(life::AbstractBatteryLife) = nothing
+stack_cost(life::CycleLife) = life.stack_cost
