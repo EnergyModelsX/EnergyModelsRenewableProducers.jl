@@ -12,6 +12,10 @@ Pages = ["methods-EMRP.md"]
 EnergyModelsRenewableProducers.build_hydro_reservoir_vol_constraints
 EnergyModelsRenewableProducers.build_pq_constaints
 EnergyModelsRenewableProducers.build_schedule_constraint
+EnergyModelsRenewableProducers.constraints_usage
+EnergyModelsRenewableProducers.constraints_usage_iterate
+EnergyModelsRenewableProducers.constraints_usage_sp
+EnergyModelsRenewableProducers.constraints_reserve
 ```
 
 ## [Identification functions](@id lib-int-met-ident)
@@ -23,4 +27,16 @@ EnergyModelsRenewableProducers.is_active
 EnergyModelsRenewableProducers.has_penalty
 EnergyModelsRenewableProducers.has_penalty_up
 EnergyModelsRenewableProducers.has_penalty_down
+EnergyModelsRenewableProducers.has_degradation
+```
+
+## [Utility methods](@id lib-int-met-util)
+
+```@docs
+EnergyModelsRenewableProducers.capacity_max
+EnergyModelsRenewableProducers.linear_reformulation
+EnergyModelsRenewableProducers.multiplication_variables
+EnergyModelsRenewableProducers.previous_usage
+EnergyModelsRenewableProducers.capacity_reduction
+EnergyModelsRenewableProducers.replace_disjunct
 ```

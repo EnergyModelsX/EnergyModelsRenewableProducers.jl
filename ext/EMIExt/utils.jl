@@ -14,7 +14,7 @@ function RMP.multiplication_variables(
         #   `prod` = `stor_level_current * bat_stack_replacement_b`
         cap_lower_bound = FixedProfile(0)
         cap_upper_bound = EMI.max_installed(EMI.investment_data(n, :level))
-        prod = EMH.linear_reformulation(
+        prod = EMRP.linear_reformulation(
             m,
             𝒯ᴵⁿᵛ,
             var_b,

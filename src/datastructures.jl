@@ -992,7 +992,7 @@ end
     ReserveBattery{T} <: AbstractBattery{T}
 
 A reserve battery storage, modelled as a `Storage` node. A battery storage nodes differs
-from a [`Battery`](ref) node through allowing for the introduction of both upwards and
+from a [`Battery`](@ref) node through allowing for the introduction of both upwards and
 downwards reserves.
 
 !!! warning "Implementation details"

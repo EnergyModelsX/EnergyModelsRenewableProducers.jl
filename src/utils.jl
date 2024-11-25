@@ -50,7 +50,7 @@ end
     )
 
 Returns the previous usage of an `AbstractBattery` node depending on the type of
-[`PreviousPeriods`](@ref).
+[`PreviousPeriods`](@extref EnergyModelsBase.PreviousPeriods).
 
 The basic functionality is used in the case when the previous operational period is a
 `TimePeriod`, in which case it just returns the previous operational period.
@@ -103,6 +103,28 @@ function previous_usage(
         m[:bat_usage_rp][n, t_rp_prev]
     )
 end
+"""
+    linear_reformulation(
+        m,
+        𝒯,
+        var_binary,
+        var_continuous,
+        lb::TimeProfile,
+        ub::TimeProfile,
+    )
+
+Linear reformulation of the element-wise multiplication of the binary variable `var_binary[𝒯]`
+and the continuous variable `var_continuous[𝒯] ∈ [ub, lb]`.
+
+It returns the product `var_aux[𝒯]` with
+
+``var\\_aux[t] = var\\_binary[t] \\times var\\_continuous[t]``.
+
+!!! note
+    The bounds `lb` and `ub` must have the ability to access their fields using the iterator
+    of `𝒯`, that is if `𝒯` corresponds to the strategic periods, it is not possible to
+    provide an `OperationalProfile` or `RepresentativeProfile`.
+"""
 function linear_reformulation(
     m,
     𝒯,
