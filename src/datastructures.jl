@@ -873,6 +873,39 @@ function EMB.capacity(n::HydroUnit, t, p::Resource)
 end
 EMB.capacity(n::HydroGate, t, p::Resource) = EMB.capacity(n, t)
 
+"""
+    AbstractBatteryLife
+
+Abstract supertype for the modelling of the battery lifetime of an [`AbstractBattery`](@ref).
+It allows to differentiate between different degradation approaches for the storage node.
+"""
+abstract type AbstractBatteryLife  end
+
+
+"""
+    InfLife <: AbstractBatteryLife
+
+A life type corresponding to an infinite number of cycles without any battery degradation.
+The charge utilization is still calculated.
+"""
+struct InfLife <: AbstractBatteryLife
+end
+
+"""
+    CycleLife <: AbstractBatteryLife
+
+A life type corresponding to a linear degradation of the battery lifetime up to a given
+number of cycles.
+
+## Fields
+- **`cycles::Int`** is the number of cycles that the battery can tolerate.
+- **`degradation::Float64`** is the allowed capacity reduction at the end of life of the
+  battery.
+"""
+struct CycleLife <: AbstractBatteryLife
+    cycles::Int
+    degradation::Float64
+end
 
 """
     AbstractBattery{T} <: EMB.Storage{T}
@@ -882,14 +915,82 @@ Abstract supertype for the different battery storage models.
 abstract type AbstractBattery{T} <: EMB.Storage{T} end
 
 """
-    ReserveBattery{T} <: AbstractBattery{T}
+    Battery{T} <: AbstractBattery{T}
 
 A battery storage, modelled as a `Storage` node. A battery storage nodes differs from a
 [`RefStorage`](@extref EnergyModelsBase.RefStorage) node through:
 
 1. incorporating a discharge capacity,
 2. including charge and discharge efficiencies, and
-3. allow for the introduction of both upwards and downwards reserves.
+3. allow for the introduction of battery degradation and lifetime reduction.
+
+!!! warning "Implementation details"
+    - The discharge and charge capacities are independent of each other.
+    - The values for the charge and discharge efficiencies must be smaller than 1.
+
+## Fields
+- **`id`** is the name/identifyer of the node.
+- **`charge::EMB.UnionCapacity`** are the charging parameters of the `BatteryStorage` node.
+  Depending on the chosen type, the charge parameters can include variable OPEX, fixed OPEX,
+  and/or a capacity.
+- **`level::EMB.UnionCapacity`** are the level parameters of the `BatteryStorage` node.
+  Depending on the chosen type, the charge parameters can include variable OPEX and/or
+  fixed OPEX.
+- **`discharge::EMB.UnionCapacity`** are the discharging parameters of the `BatteryStorage`
+  node. Depending on the chosen type, the discharge parameters can include variable OPEX,
+  fixed OPEX, and/or a capacity.
+- **`stor_res::ResourceCarrier`** is the stored `Resource`.
+- **`input::Dict{Resource, Real}`** are the input `Resource`s with corresponding efficiency
+  value.
+- **`output::Dict{Resource, Real}`** are the output `Resource`s with corresponding
+  efficiency value.
+- **`battery_life::AbstractBatteryLife`** is used for calculating the maximum battery
+  lifetime and corresponding degradation of the Battery.
+- **`data::Vector{Data}`** additional data (*e.g.*, for investments). The field `data` is
+  conditional through usage of a constructor.
+"""
+struct Battery{T} <: AbstractBattery{T}
+    id
+    charge::EMB.UnionCapacity
+    level::EMB.UnionCapacity
+    discharge::EMB.UnionCapacity
+
+    stor_res::ResourceCarrier
+    input::Dict{<:Resource, <:Real}
+    output::Dict{<:Resource, <:Real}
+    battery_life::AbstractBatteryLife
+    data::Vector{<:Data}
+end
+function Battery{T}(
+    id,
+    charge::EMB.UnionCapacity,
+    level::EMB.UnionCapacity,
+    discharge::EMB.UnionCapacity,
+
+    stor_res::Resource,
+    input::Dict{<:Resource, <:Real},
+    output::Dict{<:Resource, <:Real},
+    battery_life::AbstractBatteryLife,
+) where {T}
+    return Battery{T}(
+        id,
+        charge,
+        level,
+        discharge,
+        stor_res,
+        input,
+        output,
+        battery_life,
+        Data[],
+    )
+end
+
+"""
+    ReserveBattery{T} <: AbstractBattery{T}
+
+A reserve battery storage, modelled as a `Storage` node. A battery storage nodes differs
+from a [`Battery`](ref) node through allowing for the introduction of both upwards and
+downwards reserves.
 
 !!! warning "Implementation details"
     - The discharge and charge capacities are independent of each other.
@@ -914,6 +1015,8 @@ A battery storage, modelled as a `Storage` node. A battery storage nodes differs
   value.
 - **`output::Dict{Resource, Real}`** are the output `Resource`s with corresponding
   efficiency value.
+- **`battery_life::AbstractBatteryLife`** is used for calculating the maximum battery
+  lifetime and corresponding degradation of the Battery.
 - **`reserve_up::Vector{ResourceCarrier}`** are the `Resource`s used as reserve for
   providing energy to the system.
 - **`reserve_down::Vector{ResourceCarrier}`** are the `Resource`s used as reserve for
@@ -930,6 +1033,7 @@ struct ReserveBattery{T} <: AbstractBattery{T}
     stor_res::ResourceCarrier
     input::Dict{<:Resource, <:Real}
     output::Dict{<:Resource, <:Real}
+    battery_life::AbstractBatteryLife
     reserve_up::Vector{<:ResourceCarrier}
     reserve_down::Vector{<:ResourceCarrier}
     data::Vector{<:Data}
@@ -943,6 +1047,7 @@ function ReserveBattery{T}(
     stor_res::Resource,
     input::Dict{<:Resource, <:Real},
     output::Dict{<:Resource, <:Real},
+    battery_life::AbstractBatteryLife,
     reserve_up::Vector{<:ResourceCarrier},
     reserve_down::Vector{<:ResourceCarrier},
 ) where {T}
@@ -954,6 +1059,7 @@ function ReserveBattery{T}(
         stor_res,
         input,
         output,
+        battery_life,
         reserve_up,
         reserve_down,
         Data[],
@@ -988,3 +1094,35 @@ reserve_up(n::ReserveBattery) = n.reserve_up
 Returns the instances used as reserve resources for removing capacity from the energy system.
 """
 reserve_down(n::ReserveBattery) = n.reserve_down
+
+"""
+    battery_life(n::AbstractBattery)
+
+Returns the [`AbstractBatteryLife`](@ref) type of AbstractBattery `n`.
+"""
+battery_life(n::AbstractBattery) = n.battery_life
+
+"""
+    cycles(n::AbstractBattery)
+    cycles(life::AbstractBatteryLife)
+    cycles(life::CycleLife)
+
+Returns the maximum number of cycles of AbstractBattery `n` through calling its subfunction.
+If the [`battery_life`](@ref) is an [`AbstractBatteryLife`](@ref), it will return `nothing`.
+"""
+cycles(n::AbstractBattery) = cycles(battery_life(n))
+cycles(life::AbstractBatteryLife) = nothing
+cycles(life::CycleLife) = life.cycles
+
+"""
+    degradation(n::AbstractBattery)
+    degradation(life::AbstractBatteryLife)
+    degradation(life::CycleLife)
+
+Returns the degradation of the battery storage capacity at the end of its lifetime through
+calling its subfunction. If the [`battery_life`](@ref) is an [`AbstractBatteryLife`](@ref),
+it will return `nothing`.
+"""
+degradation(n::AbstractBattery) = degradation(battery_life(n))
+degradation(life::AbstractBatteryLife) = nothing
+degradation(life::CycleLife) = life.degradation

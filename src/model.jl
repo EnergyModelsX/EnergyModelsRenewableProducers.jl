@@ -95,7 +95,6 @@ end
     EMB.variables_node(m, 𝒩::Vector{HydroReservoir{T}}, 𝒯, modeltype::EnergyModel) where \
     {T <: EMB.StorageBehavior}
 
-
 Creates the following additional variables for **ALL** [`HydroReservoir`](@ref) nodes that
 have additional constraints through [`ScheduleConstraint`](@ref):
 - `rsv_penalty_up[n, t, p]` is the *up* penalty variable of hydro reservoir `n` in
@@ -168,6 +167,36 @@ function EMB.variables_node(m, 𝒩::Vector{<:HydroUnit}, 𝒯, modeltype::Energ
 end
 
 """
+    EMB.variables_node(m, 𝒩::Vector{<:AbstractBattery}, 𝒯, modeltype::EnergyModel)
+
+Declaration of reserve variables for all [`AbstractBattery`](@ref) nodes.
+The following reserve variables are declared:
+
+- `bat_prev_use[n, t]` is the accumulated charge effect of an `AbstractBattery` up
+  to operational period `t`.
+- `bat_prev_use_sp[n, t_inv]` is the accumulated charge effect of an `AbstractBattery` up
+  to investment period `t_inv`.
+- `bat_use_sp[n, t_inv]` is the accummulated charge effect of an `AbstractBattery` in
+  investment period `t_inv`.
+- `bat_usage_rp[n, t_rp]` is the accummulated charge effect of an `AbstractBattery` in
+  representative period `t_rp`. It is only declared if the `TimeStructure` includes
+  `RepresentativePeriods`.
+"""
+function EMB.variables_node(m, 𝒩::Vector{<:AbstractBattery}, 𝒯, modeltype::EnergyModel)
+    # Declaration of the required subsets
+    𝒯ᴵⁿᵛ = strategic_periods(𝒯)
+
+    # Variables for degredation
+    @variable(m, bat_prev_use[𝒩, 𝒯] ≥ 0)
+    @variable(m, bat_prev_use_sp[𝒩, 𝒯ᴵⁿᵛ] ≥ 0)
+    @variable(m, bat_use_sp[𝒩, 𝒯ᴵⁿᵛ] ≥ 0)
+    if 𝒯 isa TwoLevel{S,T,U} where {S,T,U<:RepresentativePeriods}
+        𝒯ʳᵖ = repr_periods(𝒯)
+        @variable(m, bat_usage_rp[𝒩, 𝒯ʳᵖ])
+    end
+end
+
+"""
     EMB.variables_node(m, 𝒩::Vector{<:ReserveBattery}, 𝒯, modeltype::EnergyModel)
 
 Declaration of reserve variables for [`ReserveBattery`](@ref) nodes.
@@ -180,4 +209,54 @@ The following reserve variables are declared:
 function EMB.variables_node(m, 𝒩::Vector{<:ReserveBattery}, 𝒯, modeltype::EnergyModel)
     @variable(m, bat_res_up[𝒩, 𝒯] ≥ 0)
     @variable(m, bat_res_down[𝒩, 𝒯] ≥ 0)
+end
+
+
+"""
+    EMB.create_node(m, n::AbstractBattery, 𝒯, 𝒫, modeltype::EnergyModel)
+
+Set all constraints for a `AbstractBattery`. Can serve as fallback option for all unspecified
+subtypes of `AbstractBattery`. It differs from the function for a standard `Storage` node
+through calling the constraint function [`constraints_usage`](@ref) for calculating the
+cycles of the node.
+
+# Called constraint functions
+- [`constraints_level`](@extref EnergyModelsBase.constraints_level),
+- [`constraints_usage`](@ref),
+- [`constraints_data`](@extref EnergyModelsBase.constraints_data) for all `node_data(n)`,
+- [`constraints_flow_in`](@extref EnergyModelsBase.constraints_flow_in),
+- [`constraints_flow_out`](@extref EnergyModelsBase.constraints_flow_out),
+- [`constraints_capacity`](@extref EnergyModelsBase.constraints_capacity),
+- [`constraints_opex_fixed`](@extref EnergyModelsBase.constraints_opex_fixed), and
+- [`constraints_opex_var`](@extref EnergyModelsBase.constraints_opex_var).
+"""
+function EMB.create_node(m, n::AbstractBattery, 𝒯, 𝒫, modeltype::EnergyModel)
+
+    # Declaration of the required subsets
+    𝒯ᴵⁿᵛ = strategic_periods(𝒯)
+
+    # Mass/energy balance constraints for stored energy carrier
+    constraints_level(m, n, 𝒯, 𝒫, modeltype)
+
+    # Usage constraints for the battery
+    constraints_usage(m, n, 𝒯, modeltype)
+
+    # Reserve constraints for the battery
+    constraints_reserve(m, n, 𝒯, modeltype)
+
+    # Iterate through all data and set up the constraints corresponding to the data
+    for data ∈ node_data(n)
+        constraints_data(m, n, 𝒯, 𝒫, modeltype, data)
+    end
+
+    # Call of the function for the inlet flow to and outlet flow from the `Storage` node
+    constraints_flow_in(m, n, 𝒯, modeltype)
+    constraints_flow_out(m, n, 𝒯, modeltype)
+
+    # Call of the function for limiting the capacity to the maximum installed capacity
+    constraints_capacity(m, n, 𝒯, modeltype)
+
+    # Call of the functions for both fixed and variable OPEX constraints introduction
+    constraints_opex_fixed(m, n, 𝒯ᴵⁿᵛ, modeltype)
+    constraints_opex_var(m, n, 𝒯ᴵⁿᵛ, modeltype)
 end

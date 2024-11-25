@@ -21,17 +21,49 @@ function EMB.constraints_capacity(m, n::AbstractNonDisRES, 𝒯::TimeStructure, 
 
     constraints_capacity_installed(m, n, 𝒯, modeltype)
 end
-"""
-    constraints_capacity(m, n::ReserveBattery, 𝒯::TimeStructure, modeltype::EnergyModel)
 
-Function for creating the constraint on the maximum capacity of an [`ReserveBattery`](@ref).
-It includes in addition to the standard constraints constraints on the reserve of the battery
 """
-function EMB.constraints_capacity(m, n::ReserveBattery, 𝒯::TimeStructure, modeltype::EnergyModel)
+    constraints_capacity(m, n::AbstractBattery, 𝒯::TimeStructure, modeltype::EnergyModel)
+
+Function for creating the constraint on the maximum capacity of an [`AbstractBattery`](@ref).
+
+Its function flow is changed from the standard approach through calling the function
+[`capacity_reduction`](@ref) to identify the reduced storage capacity, depending on the
+chosen [`AbstractBatteryLife`](@ref) type.
+"""
+function EMB.constraints_capacity(m, n::AbstractBattery, 𝒯::TimeStructure, modeltype::EnergyModel)
+    # Identify the reduction in storage level capacity
+    stor_level_red = capacity_reduction(m, n, 𝒯, modeltype)
+
     # Introduce the required constraints based on the installed capacity
-    @constraint(m, [t ∈ 𝒯], m[:stor_level][n, t] ≤ m[:stor_level_inst][n, t])
+    @constraint(m, [t ∈ 𝒯],
+        m[:stor_level][n, t] ≤
+            m[:stor_level_inst][n, t] - stor_level_red[t]
+    )
     @constraint(m, [t ∈ 𝒯], m[:stor_charge_use][n, t] ≤ m[:stor_charge_inst][n, t])
     @constraint(m, [t ∈ 𝒯], m[:stor_discharge_use][n, t] ≤ m[:stor_discharge_inst][n, t])
+
+    # Call of the function for determining the installed capacity
+    constraints_capacity_installed(m, n, 𝒯, modeltype)
+end
+
+"""
+    constraints_reserve(m, n::AbstractBattery, 𝒯::TimeStructure, modeltype::EnergyModel)
+    constraints_reserve(m, n::ReserveBattery, 𝒯::TimeStructure, modeltype::EnergyModel)
+
+Function for creating the additional constraints on the capacity utilization to account
+for providing reserve capacity to the system.
+
+!!! tip "Default approach"
+    No constraints are added.
+
+!!! note "`ReserveBattery`"
+    Several constraints are added to guarantee that the provided reserve can be delivered
+    through the values of the variables `:stor_charge_use`, `stor_discharge_use`,
+    and `stor_level`.
+"""
+constraints_reserve(m, n::AbstractBattery, 𝒯::TimeStructure, modeltype::EnergyModel) = nothing
+function constraints_reserve(m, n::ReserveBattery, 𝒯::TimeStructure, modeltype::EnergyModel)
 
     # Add the reserve constraints
     @constraint(m, [t ∈ 𝒯],
@@ -50,8 +82,6 @@ function EMB.constraints_capacity(m, n::ReserveBattery, 𝒯::TimeStructure, mod
         m[:stor_level][n, t] - m[:bat_res_down][n, t]
             ≥ 0
     )
-    # Call of the function for determining the installed capacity
-    constraints_capacity_installed(m, n, 𝒯, modeltype)
 end
 
 """
@@ -166,6 +196,209 @@ function EMB.constraints_level_aux(m, n::AbstractBattery, 𝒯, 𝒫, modeltype:
             m[:stor_charge_use][n, t] * inputs(n, p_stor) -
             m[:stor_discharge_use][n, t] / outputs(n, p_stor)
     )
+end
+"""
+    constraints_usage(m, n::AbstractBattery, 𝒯ᴵⁿᵛ, modeltype::EnergyModel)
+
+Function for creating the usage constraints for an `AbstractBattery`. These constraints
+calculate the usage of the battery up to each time step for the lifetime calculations.
+"""
+function constraints_usage(m, n::AbstractBattery, 𝒯, modeltype::EnergyModel)
+    # Declaration of the required subsets
+    𝒯ᴵⁿᵛ = strategic_periods(𝒯)
+    p_stor = storage_resource(n)
+
+    # Mass/energy balance constraints for stored energy carrier.
+    for (t_inv_prev, t_inv) ∈ withprev(𝒯ᴵⁿᵛ)
+        # Creation of the iterator and call of the iterator function -
+        # The representative period is initiated with the current investment period to allow
+        # dispatching on it.
+        prev_pers = PreviousPeriods(t_inv_prev, nothing, nothing);
+        cyclic_pers = CyclicPeriods(t_inv, t_inv)
+        ts = t_inv.operational
+
+        # Constraint for the total usage in a given strategic period
+        @constraint(m,
+            m[:bat_use_sp][n, t_inv] ==
+                sum(
+                    m[:stor_charge_use][n, t] * inputs(n, p_stor) * scale_op_sp(t_inv, t)
+                for t ∈ t_inv)
+        )
+
+        # Constraint for calculating the charging utilization before the current strategic
+        # period
+        constraints_usage_sp(m, n, prev_pers, t_inv, modeltype)
+
+        # Iterate through the time structure for calculation of the individual charging
+        # cycles
+        constraints_usage_iterate(m, n, prev_pers, cyclic_pers, t_inv, t_inv, ts, modeltype)
+    end
+end
+"""
+    constraints_usage_sp(
+        m,
+        n::AbstractBattery,
+        prev_pers::PreviousPeriods,
+        t_inv::TS.AbstractStrategicPeriod,
+        modeltype::EnergyModel,
+    )
+
+Function for creating the constraints on the previous usage of an [`AbstractBattery`](@ref)
+before the beginning of a strategic period.
+
+In the case of the first strategic period, it fixes the variable `bat_prev_use_sp` to 0.
+In all subsequent strategic periods, the previous usage is calculated.
+"""
+function constraints_usage_sp(
+    m,
+    n::AbstractBattery,
+    prev_pers::PreviousPeriods{Nothing, Nothing, Nothing},
+    t_inv::TS.AbstractStrategicPeriod,
+    modeltype::EnergyModel,
+)
+
+    JuMP.fix(m[:bat_prev_use_sp][n, t_inv], 0; force=true)
+end
+function constraints_usage_sp(
+    m,
+    n::AbstractBattery,
+    prev_pers::PreviousPeriods{<:TS.AbstractStrategicPeriod, Nothing, Nothing},
+    t_inv::TS.AbstractStrategicPeriod,
+    modeltype::EnergyModel,
+)
+    t_inv_prev = strat_per(prev_pers)
+    p_stor = storage_resource(n)
+
+    @constraint(m,
+        m[:bat_prev_use_sp][n, t_inv] ==
+            # Initial usage in previous sp
+            m[:bat_prev_use][n, first(t_inv_prev)] -
+            m[:stor_charge_use][n, first(t_inv_prev)] * inputs(n, p_stor) *
+            duration(first(t_inv_prev)) +
+            # Increase in previous representative period
+            m[:bat_use_sp][n, t_inv_prev] * duration_strat(t_inv_prev)
+    )
+end
+
+"""
+    constraints_usage_iterate(
+        m,
+        n::AbstractBattery,
+        prev_pers::PreviousPeriods,
+        cyclic_pers::CyclicPeriods,
+        t_inv::TS.AbstractStrategicPeriod,
+        per,
+        ts::RepresentativePeriods,
+        modeltype::EnergyModel,
+    )
+
+Iterate through the individual time structures of an [`AbstractBattery`](@ref) node.
+
+In the case of `RepresentativePeriods`, additional constraints are calculated for the usage
+of the electrolyzer in representative periods through introducing the variable
+`bat_usage_rp[𝒩ᴱᴸ, 𝒯ʳᵖ]`.
+ """
+function constraints_usage_iterate(
+    m,
+    n::AbstractBattery,
+    prev_pers::PreviousPeriods,
+    cyclic_pers::CyclicPeriods,
+    t_inv::TS.AbstractStrategicPeriod,
+    per,
+    _::RepresentativePeriods,
+    modeltype::EnergyModel,
+)
+    # Declaration of the required subsets
+    𝒯ʳᵖ = repr_periods(per)
+    last_rp = last(𝒯ʳᵖ)
+    p_stor = storage_resource(n)
+
+    # Constraint for the total usage in a given representative period
+    @constraint(m, [t_rp ∈ 𝒯ʳᵖ],
+        m[:bat_usage_rp][n, t_rp] ==
+            sum(
+                m[:stor_charge_use][n, t] * inputs(n, p_stor) * scale_op_sp(per, t)
+            for t ∈ t_rp)
+    )
+
+    # Iterate through the operational structure
+    for (t_rp_prev, t_rp) ∈ withprev(𝒯ʳᵖ)
+        prev_pers = PreviousPeriods(EMB.strat_per(prev_pers), t_rp_prev, EMB.op_per(prev_pers));
+        cyclic_pers = CyclicPeriods(last_rp, t_rp)
+        ts = t_rp.operational.operational
+        constraints_usage_iterate(m, n, prev_pers, cyclic_pers, t_inv, t_rp, ts, modeltype)
+    end
+end
+"""
+In the case of `OperationalScenarios`, we purely iterate through the individual time
+structures.
+"""
+function constraints_usage_iterate(
+    m,
+    n::AbstractBattery,
+    prev_pers::PreviousPeriods,
+    cyclic_pers::CyclicPeriods,
+    t_inv::TS.AbstractStrategicPeriod,
+    per,
+    _::OperationalScenarios,
+    modeltype::EnergyModel,
+)
+    # Declaration of the required subsets
+    𝒯ˢᶜ = opscenarios(per)
+
+    # Iterate through the operational structure
+    for t_scp ∈ 𝒯ˢᶜ
+        ts = t_scp.operational.operational
+        constraints_usage_iterate(m, n, prev_pers, cyclic_pers, t_inv, t_scp, ts, modeltype)
+    end
+end
+
+"""
+In the case of `SimpleTimes`, the iterator function is at its lowest level. In this
+situation,the previous usage is calculated using the function [`previous_usage`](@ref).
+The approach for calculating the constraints is depending on the types in the parameteric
+type [`EMB.PreviousPeriods`](@extref EnergyModelsBase.PreviousPeriods).
+"""
+function constraints_usage_iterate(
+    m,
+    n::AbstractBattery,
+    prev_pers::PreviousPeriods,
+    cyclic_pers::CyclicPeriods,
+    t_inv::TS.AbstractStrategicPeriod,
+    per,
+    _::SimpleTimes,
+    modeltype::EnergyModel,
+)
+    # Declaration of the required subsets
+    p_stor = storage_resource(n)
+
+    # Constraint for the total charging of the battery including the current time step.
+    # This ensures that the last repetition of the strategic period is appropriately
+    # constrained.
+    # The conditional statement activates this constraint only for the last representative
+    # period, if representative periods are present as stack replacement is only feasible
+    # once per strategic period
+    if last_per(cyclic_pers) == current_per(cyclic_pers) && !isnothing(cycles(n))
+        t = last(per)
+        @constraint(m,
+            cycles(n) * m[:stor_level_inst][n, t] ≥
+                m[:bat_prev_use][n, t] +
+                m[:bat_use_sp][n, t_inv] * duration_strat(t_inv)
+        )
+    end
+
+    # Iterate through the operational structure
+    for (t_prev, t) ∈ withprev(per)
+        prev_pers = PreviousPeriods(strat_per(prev_pers), rep_per(prev_pers), t_prev);
+
+        # Add the constraints for the previous usage
+        prev_use = previous_usage(m, n, t_inv, prev_pers, modeltype)
+
+        @constraint(m,
+            m[:bat_prev_use][n, t] ==
+                prev_use + m[:stor_charge_use][n, t] * inputs(n, p_stor) * duration(t)
+        )
+    end
 end
 
 #! format: on
