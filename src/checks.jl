@@ -489,14 +489,14 @@ follows to the
 - The value of the field `degradation` must be smaller than 0.
 """
 function check_battery_life(
-    n::ReserveBattery,
+    n::AbstractBattery,
     bat_life::AbstractBatteryLife,
     𝒯,
     modeltype::EnergyModel
 )
 end
 function check_battery_life(
-    n::ReserveBattery,
+    n::AbstractBattery,
     bat_life::CycleLife,
     𝒯,
     modeltype::EnergyModel
