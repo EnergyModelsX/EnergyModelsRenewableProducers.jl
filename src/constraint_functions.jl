@@ -64,6 +64,8 @@ for providing reserve capacity to the system.
 """
 constraints_reserve(m, n::AbstractBattery, 𝒯::TimeStructure, modeltype::EnergyModel) = nothing
 function constraints_reserve(m, n::ReserveBattery, 𝒯::TimeStructure, modeltype::EnergyModel)
+    # Identify the reduction in storage level capacity
+    stor_level_red = capacity_reduction(m, n, 𝒯, modeltype)
 
     # Add the reserve constraints
     @constraint(m, [t ∈ 𝒯],
@@ -76,7 +78,7 @@ function constraints_reserve(m, n::ReserveBattery, 𝒯::TimeStructure, modeltyp
     )
     @constraint(m, [t ∈ 𝒯],
         m[:stor_level][n, t] + m[:bat_res_up][n, t]
-            ≤ m[:stor_level_inst][n, t]
+            ≤ m[:stor_level_inst][n, t] - stor_level_red[t]
     )
     @constraint(m, [t ∈ 𝒯],
         m[:stor_level][n, t] - m[:bat_res_down][n, t]
