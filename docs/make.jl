@@ -49,6 +49,7 @@ makedocs(
                 "nodes/det_hydropower/pump.md",
                 "nodes/det_hydropower/gate.md",
             ],
+            "Battery" => "nodes/battery.md",
         ],
         "How to" => Any[
             "Update models" => "how-to/update-models.md",

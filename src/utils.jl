@@ -117,7 +117,7 @@ end
     previous_usage(
         m,
         n::AbstractBattery,
-        t_inv::TimeStruct.AbstractStrategicPeriod,
+        t_inv::TS.AbstractStrategicPeriod,
         prev_pers::PreviousPeriods,
         modeltype::EnergyModel,
     )
@@ -131,7 +131,7 @@ The basic functionality is used in the case when the previous operational period
 function previous_usage(
     m,
     n::AbstractBattery,
-    t_inv::TimeStruct.AbstractStrategicPeriod,
+    t_inv::TS.AbstractStrategicPeriod,
     prev_pers::PreviousPeriods,
     modeltype::EnergyModel,
 )
@@ -145,7 +145,7 @@ When the previous operational and representative periods are `Nothing`, the vari
 function previous_usage(
     m,
     n::AbstractBattery,
-    t_inv::TimeStruct.AbstractStrategicPeriod,
+    t_inv::TS.AbstractStrategicPeriod,
     prev_pers::PreviousPeriods{<:EMB.NothingPeriod, Nothing, Nothing},
     modeltype::EnergyModel,
 )
@@ -161,7 +161,7 @@ The constraint then sums up the values from the previous representative period.
 function previous_usage(
     m,
     n::AbstractBattery,
-    t_inv::TimeStruct.AbstractStrategicPeriod,
+    t_inv::TS.AbstractStrategicPeriod,
     prev_pers::PreviousPeriods{<:EMB.NothingPeriod, <:TS.AbstractRepresentativePeriod, Nothing},
     modeltype::EnergyModel,
 )

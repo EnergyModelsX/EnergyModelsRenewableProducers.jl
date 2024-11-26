@@ -9,8 +9,10 @@ These nodes are
 3. a `Storage` node ([`PumpedHydroStor`](@ref)),
 4. a `Storage` node ([`HydroReservoir`](@ref)),
 5. a `NetworkNode` node ([`HydroGenerator`](@ref)),
-6. a `NetworkNode` node ([`HydroPump`](@ref)), and
+6. a `NetworkNode` node ([`HydroPump`](@ref)),
 7. a `NetworkNode` node ([`HydroGate`](@ref)).
+8. a `Storage` node ([`Battery`](@ref)), and
+9. a `Storage` node ([`ReserveBattery`](@ref)).
 
 The new introduced node types are also documented in the *[public library](@ref lib-pub)* as well as the corresponding nodal page.
 
@@ -34,6 +36,13 @@ Unlike [`HydroStorage`](@ref) nodes, these nodes allow for modelling of water as
 The [`HydroReservoir`](@ref) node is a storage node used for storing water, while [`HydroGenerator`](@ref), [`HydroPump`](@ref) and [`HydroGate`](@ref) nodes move water around in the system.
 [`HydroGenerator`](@ref) and [`HydroPump`](@ref) nodes convert potential energy to electric energy and *vice versa*.
 
+### Batteries
+
+Batteries can be modelled through both [`Battery`](@ref) and [`ReserveBattery`](@ref)
+[`Battery`](@ref) nodes allow for charge and discharge efficiencies as well as storage capacity degradation, if desired.
+[`ReserveBattery`](@ref) nodes include in addition a first implementation of the concept of capacity reserves within `EnergyModelsX`.
+A demand for reserve capacity can be implemented through a corresponding sink with penalties.
+
 ## Manual outline
 
 ```@contents
@@ -56,6 +65,7 @@ Pages = [
     "nodes/det_hydropower/generator.md",
     "nodes/det_hydropower/pump.md",
     "nodes/det_hydropower/gate.md",
+    "nodes/battery.md",
 ]
 Depth = 1
 ```

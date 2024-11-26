@@ -229,6 +229,7 @@ cycles of the node.
 # Called constraint functions
 - [`constraints_level`](@extref EnergyModelsBase.constraints_level),
 - [`constraints_usage`](@ref),
+- [`constraints_reserve`](@ref),
 - [`constraints_data`](@extref EnergyModelsBase.constraints_data) for all `node_data(n)`,
 - [`constraints_flow_in`](@extref EnergyModelsBase.constraints_flow_in),
 - [`constraints_flow_out`](@extref EnergyModelsBase.constraints_flow_out),
