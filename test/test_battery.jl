@@ -222,7 +222,7 @@ end
         for t ∈ 𝒯)
 
         # Test that stack replacement occurs once and the cost is correctly included
-        @test sum(value.(m[:bat_stack_replacement_b][stor, t_inv]) for t_inv ∈ 𝒯ᴵⁿᵛ) == 1
+        @test sum(value.(m[:bat_stack_replace_b][stor, t_inv]) for t_inv ∈ 𝒯ᴵⁿᵛ) == 1
         # - constraints_opex_fixed(m, n::AbstractBattery, 𝒯ᴵⁿᵛ, modeltype::EnergyModel)
         #   - 50 is the capacity
         #   - 2e4 is the cost for replacement
@@ -267,7 +267,7 @@ end
                 value.(m[:bat_prev_use][stor, first(t_rp_prev)]) -
                 value.(m[:stor_charge_use][stor, first(t_rp_prev)]) *
                 0.9 * duration(first(t_rp_prev)) +
-                value.(m[:bat_usage_rp][stor, t_rp_prev]) +
+                value.(m[:bat_use_rp][stor, t_rp_prev]) +
                 value.(m[:stor_charge_use][stor, first(t_rp)]) * 0.9 * duration(first(t_rp))
             for t_inv ∈ 𝒯ᴵⁿᵛ for (t_rp_prev, t_rp) ∈ withprev(repr_periods(t_inv))
         if !isnothing(t_rp_prev))

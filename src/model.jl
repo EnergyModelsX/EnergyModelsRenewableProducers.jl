@@ -178,10 +178,10 @@ The following reserve variables are declared:
   to investment period `t_inv`.
 - `bat_use_sp[n, t_inv]` is the accummulated charge effect of an `AbstractBattery` in
   investment period `t_inv`.
-- `bat_usage_rp[n, t_rp]` is the accummulated charge effect of an `AbstractBattery` in
+- `bat_use_rp[n, t_rp]` is the accummulated charge effect of an `AbstractBattery` in
   representative period `t_rp`. It is only declared if the `TimeStructure` includes
   `RepresentativePeriods`.
-- `bat_stack_replacement_b[n, t_inv]` is a binary variable for identification of battery
+- `bat_stack_replace_b[n, t_inv]` is a binary variable for identification of battery
   stack replacement. Stack replacement occurs before the first operational period of a
   strategic period. It is only declared for batterys which utilize an
   [`AbstractBatteryLife`](@ref) that includes degradation.
@@ -197,9 +197,9 @@ function EMB.variables_node(m, 𝒩::Vector{<:AbstractBattery}, 𝒯, modeltype:
     @variable(m, bat_use_sp[𝒩, 𝒯ᴵⁿᵛ] ≥ 0)
     if 𝒯 isa TwoLevel{S,T,U} where {S,T,U<:RepresentativePeriods}
         𝒯ʳᵖ = repr_periods(𝒯)
-        @variable(m, bat_usage_rp[𝒩, 𝒯ʳᵖ])
+        @variable(m, bat_use_rp[𝒩, 𝒯ʳᵖ])
     end
-    @variable(m, bat_stack_replacement_b[𝒩ᶜˡ, 𝒯ᴵⁿᵛ], Bin)
+    @variable(m, bat_stack_replace_b[𝒩ᶜˡ, 𝒯ᴵⁿᵛ], Bin)
 end
 
 """

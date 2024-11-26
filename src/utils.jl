@@ -100,7 +100,7 @@ function previous_usage(
         m[:stor_charge_use][n, first(t_rp_prev)] * inputs(n, p_stor) *
         duration(first(t_rp_prev)) +
         # Increase in previous representative period
-        m[:bat_usage_rp][n, t_rp_prev]
+        m[:bat_use_rp][n, t_rp_prev]
     )
 end
 """
@@ -159,16 +159,16 @@ end
     )
 
 Function for calculating the muliplication of the capacity of an [`AbstractBattery`](@ref)
-and the binary variable `:bat_stack_replacement_b`.
+and the binary variable `:bat_stack_replace_b`.
 
     modeltype::EnergyModel
 
 Multiplication of the installed capacity (expressed through `capacity(level(n), t_inv)`) and
-the binary variable `bat_stack_replacement_b` in a strategic period `t_inv`.
+the binary variable `bat_stack_replace_b` in a strategic period `t_inv`.
 
 ## Returns
 - **`prod[t]`**: Multiplication of `capacity(level(n), t_inv)` and
-  `bat_stack_replacement_b[n, t_inv]`.
+  `bat_stack_replace_b[n, t_inv]`.
 
 
     modeltype::AbstractInvestmentModel
@@ -194,7 +194,7 @@ function multiplication_variables(
 )
     # Calculation of the multiplication with the installed capacity of the node
     prod = @expression(m, [t_inv ∈ 𝒯ᴵⁿᵛ],
-        capacity(level(n), t_inv) * m[:bat_stack_replacement_b][n, t_inv]
+        capacity(level(n), t_inv) * m[:bat_stack_replace_b][n, t_inv]
     )
     return prod
 end

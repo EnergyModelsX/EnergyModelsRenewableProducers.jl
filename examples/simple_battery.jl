@@ -32,8 +32,8 @@ function generate_battery_example_data()
     # CO2 has to be defined, even if not used, as it is required for the `EnergyModel` type
     CO2 = ResourceEmit("CO2", 1.0)
     power = ResourceCarrier("power", 0.0)
-    reserve_up = ResourceCarrier("reserve up", 0.0)
-    products = [power, CO2, reserve_up]
+    reserve_down = ResourceCarrier("reserve up", 0.0)
+    products = [power, CO2, reserve_down]
 
     # Variables for the individual entries of the time structure:
     # - There are in total 10 operational periods.
@@ -81,8 +81,8 @@ function generate_battery_example_data()
             0.2,                # Capacity reduction at the end of the lifetime
             2e5,                # Battery stack replacement cost in EUR/MWh
         ),
-        [reserve_up],           # Upwards reserve resource, not included
-        ResourceCarrier[],      # Downwards reserve resource
+        ResourceCarrier[],      # Upwards reserve resource
+        [reserve_down],         # Downwards reserve resource, not included
     )
     sink = RefSink(
         "electricity demand",   # Node id
@@ -92,11 +92,11 @@ function generate_battery_example_data()
         Dict(power => 1),       # Energy demand and corresponding ratio
     )
     reserve_up_sink = RefSink(
-        "reserve up demand",  # Node id
+        "reserve down demand",  # Node id
         FixedProfile(10),       # Required reserve capacity in MW
         Dict(:surplus => FixedProfile(0), :deficit => FixedProfile(1e2)),
         # Line above: Surplus and deficit penalty for the node in EUR/MWh
-        Dict(reserve_up => 1),# Energy demand and corresponding ratio
+        Dict(reserve_down => 1),# Energy demand and corresponding ratio
     )
     nodes = [source, battery, sink, reserve_up_sink]
 
@@ -120,7 +120,6 @@ end
 case, model = generate_battery_example_data()
 optimizer = optimizer_with_attributes(HiGHS.Optimizer, MOI.Silent() => true)
 m = EMB.run_model(case, model, optimizer)
-value.(m[:bat_stack_replacement_b])
 
 """
     process_battery_results(m, case)
@@ -189,7 +188,7 @@ function process_battery_results(m, case)
     )
     replace = JuMP.Containers.rowtable(         # Battery stack replacement
         value,
-        m[:bat_stack_replacement_b][bat, collect(𝒯ᴵⁿᵛ)];
+        m[:bat_stack_replace_b][bat, collect(𝒯ᴵⁿᵛ)];
         header=[:sp, :replace]
     )
 
@@ -222,7 +221,8 @@ pretty_table(table_op[6:10])
     "Individual results from the battery system in the second strategic period:\n" *
     " - The battery operation changes as the maximum storage level is reduced due to degradation.\n" *
     " - While it still charges and discharges at periods with high and low prices, its level \n" *
-    "   is behaving differently.\n"
+    "   is behaving differently.\n" *
+    " - The source is no longer fully used due to issues in storage capacity.\n"
 )
 pretty_table(table_op[11:15])
 pretty_table(table_op[16:20])

@@ -77,11 +77,11 @@ function constraints_reserve(m, n::ReserveBattery, 𝒯::TimeStructure, modeltyp
             ≤ m[:stor_charge_inst][n, t]
     )
     @constraint(m, [t ∈ 𝒯],
-        m[:stor_level][n, t] + m[:bat_res_up][n, t]
+        m[:stor_level][n, t] + m[:bat_res_down][n, t]
             ≤ m[:stor_level_inst][n, t] - stor_level_red[t]
     )
     @constraint(m, [t ∈ 𝒯],
-        m[:stor_level][n, t] - m[:bat_res_down][n, t]
+        m[:stor_level][n, t] - m[:bat_res_up][n, t]
             ≥ 0
     )
 end
@@ -339,8 +339,8 @@ function replace_disjunct(
     # of a binary and a continuous variable.
     @constraints(m, begin
         var_aux ≥ 0
-        var_aux ≥ ub * ((1 - m[:bat_stack_replacement_b][n, t_inv]) - 1) + replace
-        var_aux ≤ ub * (1 - m[:bat_stack_replacement_b][n, t_inv])
+        var_aux ≥ ub * ((1 - m[:bat_stack_replace_b][n, t_inv]) - 1) + replace
+        var_aux ≤ ub * (1 - m[:bat_stack_replace_b][n, t_inv])
         var_aux ≤ replace
     end)
     return var_aux
@@ -362,7 +362,7 @@ Iterate through the individual time structures of an [`AbstractBattery`](@ref) n
 
 In the case of `RepresentativePeriods`, additional constraints are calculated for the usage
 of the electrolyzer in representative periods through introducing the variable
-`bat_usage_rp[𝒩ᴱᴸ, 𝒯ʳᵖ]`.
+`bat_use_rp[𝒩ᴱᴸ, 𝒯ʳᵖ]`.
  """
 function constraints_usage_iterate(
     m,
@@ -381,7 +381,7 @@ function constraints_usage_iterate(
 
     # Constraint for the total usage in a given representative period
     @constraint(m, [t_rp ∈ 𝒯ʳᵖ],
-        m[:bat_usage_rp][n, t_rp] ==
+        m[:bat_use_rp][n, t_rp] ==
             sum(
                 m[:stor_charge_use][n, t] * inputs(n, p_stor) * scale_op_sp(per, t)
             for t ∈ t_rp)
