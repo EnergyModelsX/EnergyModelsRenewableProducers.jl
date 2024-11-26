@@ -418,7 +418,8 @@ end
     # capacity and the level capacity
     # - EMB.constraints_capacity(m, n::ReserveBattery, 𝒯::TimeStructure, modeltype::EnergyModel)
     @test all(
-        value.(m[:bat_res_down][stor, t]) ≤ value.(m[:stor_level][stor, t]) + TEST_ATOL
+        value.(m[:bat_res_down][stor, t]) ≤
+            capacity(level(stor), t) - value.(m[:stor_level][stor, t]) + TEST_ATOL
     for t ∈ 𝒯)
     @test all(
         value.(m[:bat_res_down][stor, t]) ≤
@@ -426,8 +427,7 @@ end
             capacity(charge(stor), t) + TEST_ATOL
     for t ∈ 𝒯)
     @test all(
-        value.(m[:bat_res_up][stor, t]) ≤
-            capacity(level(stor), t) - value.(m[:stor_level][stor, t]) + TEST_ATOL
+        value.(m[:bat_res_up][stor, t]) ≤ value.(m[:stor_level][stor, t]) + TEST_ATOL
     for t ∈ 𝒯)
     @test all(
         value.(m[:bat_res_up][stor, t]) ≤

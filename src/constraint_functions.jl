@@ -121,7 +121,7 @@ function EMB.constraints_flow_in(m, n::PumpedHydroStor, 𝒯::TimeStructure, mod
 end
 
 """
-    constraints_flow_in(m, n::ReserveBattery, 𝒯::TimeStructure, modeltype::EnergyModel)
+    constraints_flow_out(m, n::ReserveBattery, 𝒯::TimeStructure, modeltype::EnergyModel)
 
 When `n::ReserveBattery`, the variable `:flow_out` is also declared for the different
 reserve resources as identified through the functions [`reserve_up`](@ref) and
