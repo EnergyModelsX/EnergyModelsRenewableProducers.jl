@@ -21,6 +21,8 @@ The battery life is unlimited and unimpacted by the use of the battery.
 [`CycleLife`](@ref) includes both linear battery degradation and a lifetime through the maximum number of cycles of the battery.
 The linear degradation is dependent on the charging of the battery although this is equivalent to the discharging.
 The type allows for replacement of the battery stack to reduce battery degradation to 0 at the beginning of an investment period.
+The cost for replacement has to be accessible through a strategic period.
+Hence, it can be either a `FixedProfile` or a `StrategicProfile`, but cannot include, *e.g.* `OperationalProfile`.
 
 !!! danger "Varying storage capacities with Batteries"
     If you use batteries with varying capacities, it is important to implement one battery node for each investment period.

@@ -376,7 +376,7 @@ function EMB.check_node(n::AbstractBattery, 𝒯, modeltype::EnergyModel, check_
             "The values of the input variables have to be non-negative."
         )
     end
-    check_battery_life(n, battery_life(n), 𝒯, modeltype)
+    check_battery_life(n, battery_life(n), 𝒯, modeltype, check_timeprofiles)
 end
 
 """
@@ -452,7 +452,7 @@ function EMB.check_node(n::ReserveBattery, 𝒯, modeltype::EnergyModel, check_t
             "The values of the input variables have to be non-negative."
         )
     end
-    check_battery_life(n, battery_life(n), 𝒯, modeltype)
+    check_battery_life(n, battery_life(n), 𝒯, modeltype, check_timeprofiles)
     if !isempty(reserve_up(n))
         @assert_or_log(
             any([!haskey(n.input, p) for p ∈ reserve_up(n)]),
@@ -475,8 +475,8 @@ function EMB.check_node(n::ReserveBattery, 𝒯, modeltype::EnergyModel, check_t
     end
 end
 """
-check_battery_life(n::AbstractBattery, bat_life::AbstractBatteryLife, 𝒯, modeltype::EnergyModel)
-check_battery_life(n::AbstractBattery, bat_life::CycleLife, 𝒯, modeltype::EnergyModel)
+check_battery_life(n::AbstractBattery, bat_life::AbstractBatteryLife, 𝒯, modeltype::EnergyModel, check_timeprofiles::Bool)
+check_battery_life(n::AbstractBattery, bat_life::CycleLife, 𝒯, modeltype::EnergyModel, check_timeprofiles::Bool)
 
 Check that the included [`AbstractBatteryLife`](@ref) types of an [`AbstractBattery`](@ref)
 follows to the
@@ -486,21 +486,27 @@ follows to the
 
 ## Checks [`CycleLife`](@ref)
 - All fields must be positive.
-- The value of the field `degradation` must be smaller than 0.
+- The value of the field `degradation` must be smaller than 1.
+- The value of the field `stack_cost` is required to be accessible through a
+  `StrategicPeriod` as outlined in the function
+  [`EMB.check_fixed_opex`](@extref EnergyModelsBase.check_fixed_opex).
 """
 function check_battery_life(
     n::AbstractBattery,
     bat_life::AbstractBatteryLife,
     𝒯,
-    modeltype::EnergyModel
+    modeltype::EnergyModel,
+    check_timeprofiles::Bool,
 )
 end
 function check_battery_life(
     n::AbstractBattery,
     bat_life::CycleLife,
     𝒯,
-    modeltype::EnergyModel
+    modeltype::EnergyModel,
+    check_timeprofiles::Bool,
 )
+    𝒯ᴵⁿᵛ = strategic_periods(𝒯)
     @assert_or_log(
         cycles(bat_life) > 0,
         "The value of the field `cycles` in the `CycleLife` must be positive."
@@ -513,8 +519,25 @@ function check_battery_life(
         degradation(bat_life) ≤ 1,
         "The value of the field `degradation` in the `CycleLife` must be smaller or equal to 1."
     )
-    @assert_or_log(
-        stack_cost(bat_life) > 0,
-        "The value of the field `stack_cost` in the `CycleLife` must be positive."
-    )
+
+    if isa(stack_cost(bat_life), StrategicProfile) && check_timeprofiles
+        @assert_or_log(
+            length(stack_cost(bat_life).vals) == length(𝒯ᴵⁿᵛ),
+            "The timeprofile provided for the field `stack_cost` does not match the " *
+            "strategic structure."
+        )
+    end
+
+    # Check for potential indexing problems
+    message = "are not allowed for the field `stack_cost`."
+    bool_sp = EMB.check_strategic_profile(stack_cost(n), message)
+
+    # Check that the value is positive in all cases
+    if bool_sp
+        @assert_or_log(
+            all(stack_cost(bat_life, t_inv) > 0 for t_inv ∈ 𝒯ᴵⁿᵛ),
+            "The values of the timeprofiles of the field `stack_cost` in the `CycleLife` " *
+            "must be positive."
+        )
+    end
 end

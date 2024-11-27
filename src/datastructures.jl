@@ -901,13 +901,13 @@ number of cycles.
 - **`cycles::Int`** is the number of cycles that the battery can tolerate.
 - **`degradation::Float64`** is the relative allowed capacity reduction at the end of life
   of the battery.
-- **`stack_cost::Float64`** is the relative cost for replacing a battery stack once it
+- **`stack_cost::TimeProfile`** is the relative cost for replacing a battery stack once it
   reached its maximum number of cycles.
 """
 struct CycleLife <: AbstractBatteryLife
     cycles::Int
     degradation::Float64
-    stack_cost::Float64
+    stack_cost::TimeProfile
 end
 
 """
@@ -1115,8 +1115,6 @@ has_degradation(n::AbstractBattery) = isa(battery_life(n), CycleLife)
 
 """
     cycles(n::AbstractBattery)
-    cycles(life::AbstractBatteryLife)
-    cycles(life::CycleLife)
 
 Returns the maximum number of cycles of AbstractBattery `n` through calling its subfunction.
 If the [`battery_life`](@ref) is an [`AbstractBatteryLife`](@ref), it will return `nothing`.
@@ -1127,8 +1125,6 @@ cycles(life::CycleLife) = life.cycles
 
 """
     degradation(n::AbstractBattery)
-    degradation(life::AbstractBatteryLife)
-    degradation(life::CycleLife)
 
 Returns the degradation of the battery storage capacity at the end of its lifetime through
 calling its subfunction. If the [`battery_life`](@ref) is an [`AbstractBatteryLife`](@ref),
@@ -1140,13 +1136,17 @@ degradation(life::CycleLife) = life.degradation
 
 """
     stack_cost(n::AbstractBattery)
-    stack_cost(life::AbstractBatteryLife)
-    stack_cost(life::CycleLife)
+    stack_cost(n::AbstractBattery, t_inv::TS.AbstractStrategicPeriod)
 
 Returns the relative stack cost of the battery storage capacity for replacing the existing
-battery capacity. If the [`battery_life`](@ref) is an [`AbstractBatteryLife`](@ref),
-it will return `nothing`.
+battery capacity as `TimeProfile` or in strategic period `t_inv`.
+
+If the [`battery_life`](@ref) is an [`AbstractBatteryLife`](@ref), it will return `nothing`.
 """
 stack_cost(n::AbstractBattery) = stack_cost(battery_life(n))
+stack_cost(n::AbstractBattery, t_inv::TS.AbstractStrategicPeriod) =
+    stack_cost(battery_life(n), t_inv)
 stack_cost(life::AbstractBatteryLife) = nothing
+stack_cost(life::AbstractBatteryLife, t_inv::TS.AbstractStrategicPeriod) = nothing
 stack_cost(life::CycleLife) = life.stack_cost
+stack_cost(life::CycleLife, t_inv::TS.AbstractStrategicPeriod) = life.stack_cost[t_inv]

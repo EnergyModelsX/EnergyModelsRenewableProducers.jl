@@ -138,12 +138,12 @@ function EMB.constraints_flow_out(m, n::ReserveBattery, 𝒯::TimeStructure, mod
 
     # Constraint for storage reserve up delivery
     @constraint(m, [t ∈ 𝒯],
-        m[:bat_res_up][n, t] == sum(m[:flow_out][n, t, p] for p in reserve_up(n))
+        m[:bat_res_up][n, t] == sum(m[:flow_out][n, t, p] for p ∈ reserve_up(n))
     )
 
     # Constraint for storage reserve down delivery
     @constraint(m, [t ∈ 𝒯],
-        m[:bat_res_down][n, t] == sum(m[:flow_out][n, t, p] for p in reserve_down(n))
+        m[:bat_res_down][n, t] == sum(m[:flow_out][n, t, p] for p ∈ reserve_down(n))
     )
 end
 
@@ -436,7 +436,7 @@ function EMB.constraints_opex_fixed(m, n::AbstractBattery, 𝒯ᴵⁿᵛ, modelt
         # Extraction of the battery stack replacement variable
         stack_replace = multiplication_variables(m, n, 𝒯ᴵⁿᵛ, modeltype)
         opex_fixed_degradation = @expression(m, [t_inv ∈ 𝒯ᴵⁿᵛ],
-            stack_replace[t_inv] * stack_cost(n)
+            stack_replace[t_inv] * stack_cost(n, t_inv)
             )
     else
         opex_fixed_degradation = @expression(m, [t_inv ∈ 𝒯ᴵⁿᵛ], 0)

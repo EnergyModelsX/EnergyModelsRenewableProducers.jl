@@ -1,6 +1,6 @@
 # Release notes
 
-## Unversioned
+## Version 0.6.3 (2024-11-27)
 
 ### Battery modelling
 

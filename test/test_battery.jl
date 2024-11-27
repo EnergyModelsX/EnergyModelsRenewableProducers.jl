@@ -189,7 +189,7 @@ end
         )
     end
     @testset "SimpleTimes - Cycle limit" begin
-        bat_life = CycleLife(900, 0.2, 2e4)
+        bat_life = CycleLife(900, 0.2, FixedProfile(2e4))
         m, case, modeltype = small_graph(supply_price, el_demand; bat_life)
 
         # Extract the data
@@ -206,7 +206,7 @@ end
     end
 
     @testset "SimpleTimes - Cycle limit, reinvest" begin
-        bat_life = CycleLife(900, 0.2, 2e4)
+        bat_life = CycleLife(900, 0.2, StrategicProfile([2e5, 1e5, 2e4, 2e4]))
         m, case, modeltype = small_graph(supply_price, el_demand; bat_life, n_sp=4)
 
         # Extract the data
@@ -284,7 +284,7 @@ end
     end
 
     @testset "RepresentativePeriods - Cycle limit" begin
-        bat_life = CycleLife(900, 0.2, 5e4)
+        bat_life = CycleLife(900, 0.2, FixedProfile(5e4))
         m, case, modeltype = small_graph(supply_price, el_demand; ops, bat_life)
 
         # Extract the data

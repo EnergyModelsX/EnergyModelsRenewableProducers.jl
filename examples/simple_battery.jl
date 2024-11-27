@@ -79,7 +79,7 @@ function generate_battery_example_data()
         CycleLife(
             900,                # Cycles before the battery reach the end of its lifetime
             0.2,                # Capacity reduction at the end of the lifetime
-            2e5,                # Battery stack replacement cost in EUR/MWh
+            FixedProfile(2e5),  # Battery stack replacement cost in EUR/MWh
         ),
         ResourceCarrier[],      # Upwards reserve resource
         [reserve_down],         # Downwards reserve resource, not included
