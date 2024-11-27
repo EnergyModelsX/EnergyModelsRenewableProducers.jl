@@ -1,6 +1,6 @@
 name = "EnergyModelsRenewableProducers"
 uuid = "b007c34f-ba52-4995-ba37-fffe79fbde35"
-authors = ["Sigmund Eggen Holm <Sigmund.Holm@sintef.no>, Julian Straus <Julian.Straus@sintef.no>"]
+authors = ["Sigmund Eggen Holm, Julian Straus, Per Aaslid, Linn Emelie Schäffer"]
 version = "0.6.3"
 
 [deps]
