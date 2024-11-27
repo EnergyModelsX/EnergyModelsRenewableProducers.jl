@@ -59,7 +59,7 @@ period) of a strategic period.
     strategic period and the initial value in the previous strategic period.
 
 !!! note "`CycleLife`"
-    In the case of a cycle life, it takes into account the potential for stack replacement
+    In the case of a cycle life, it takes into account the potential for battery stack replacement
     through a bilinear formulation. The bilinear formulation is simplifed due to the known
     lower bounds.
 """
@@ -89,7 +89,7 @@ function replace_disjunct(
 )
     t_inv_prev = strat_per(prev_pers)
 
-    # Calculate the expression if no stack replacement is taking place
+    # Calculate the expression if no battery stack replacement is taking place
     replace =  @expression(m,
         # Initial usage in previous sp
         m[:bat_prev_use_sp][n, t_inv_prev] +
@@ -105,8 +105,7 @@ function replace_disjunct(
     # McCormick envelopes which result in an exact reformulation for the multiplication
     # of a binary and a continuous variable.
     @constraints(m, begin
-        var_aux ≥ 0
-        var_aux ≥ ub * ((1 - m[:bat_stack_replace_b][n, t_inv]) - 1) + replace
+        var_aux ≥ ub * ( - m[:bat_stack_replace_b][n, t_inv]) + replace
         var_aux ≤ ub * (1 - m[:bat_stack_replace_b][n, t_inv])
         var_aux ≤ replace
     end)
@@ -176,6 +175,7 @@ function previous_usage(
         m[:bat_use_rp][n, t_rp_prev]
     )
 end
+
 """
     linear_reformulation(
         m,

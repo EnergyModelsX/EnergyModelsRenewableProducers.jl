@@ -334,21 +334,21 @@ function EMB.check_node(n::AbstractBattery, 𝒯, modeltype::EnergyModel, check_
     par_discharge = discharge(n)
 
     @assert_or_log(
-        sum(capacity(par_charge, t) ≥ 0 for t ∈ 𝒯) == length(𝒯),
+        all(capacity(par_charge, t) ≥ 0 for t ∈ 𝒯),
         "The charge capacity must be non-negative."
     )
     if isa(par_charge, EMB.UnionOpexFixed)
         EMB.check_fixed_opex(par_charge, 𝒯ᴵⁿᵛ, check_timeprofiles)
     end
     @assert_or_log(
-        sum(capacity(par_level, t) ≥ 0 for t ∈ 𝒯) == length(𝒯),
+        all(capacity(par_level, t) ≥ 0 for t ∈ 𝒯),
         "The level capacity must be non-negative."
     )
     if isa(par_level, EMB.UnionOpexFixed)
         EMB.check_fixed_opex(par_level, 𝒯ᴵⁿᵛ, check_timeprofiles)
     end
     @assert_or_log(
-        sum(capacity(par_discharge, t) ≥ 0 for t ∈ 𝒯) == length(𝒯),
+        all(capacity(par_discharge, t) ≥ 0 for t ∈ 𝒯),
         "The discharge capacity must be non-negative."
     )
     if isa(par_discharge, EMB.UnionOpexFixed)
@@ -410,21 +410,21 @@ function EMB.check_node(n::ReserveBattery, 𝒯, modeltype::EnergyModel, check_t
     par_discharge = discharge(n)
 
     @assert_or_log(
-        sum(capacity(par_charge, t) ≥ 0 for t ∈ 𝒯) == length(𝒯),
+        all(capacity(par_charge, t) ≥ 0 for t ∈ 𝒯),
         "The charge capacity must be non-negative."
     )
     if isa(par_charge, EMB.UnionOpexFixed)
         EMB.check_fixed_opex(par_charge, 𝒯ᴵⁿᵛ, check_timeprofiles)
     end
     @assert_or_log(
-        sum(capacity(par_level, t) ≥ 0 for t ∈ 𝒯) == length(𝒯),
+        all(capacity(par_level, t) ≥ 0 for t ∈ 𝒯),
         "The level capacity must be non-negative."
     )
     if isa(par_level, EMB.UnionOpexFixed)
         EMB.check_fixed_opex(par_level, 𝒯ᴵⁿᵛ, check_timeprofiles)
     end
     @assert_or_log(
-        sum(capacity(par_discharge, t) ≥ 0 for t ∈ 𝒯) == length(𝒯),
+        all(capacity(par_discharge, t) ≥ 0 for t ∈ 𝒯),
         "The discharge capacity must be non-negative."
     )
     if isa(par_discharge, EMB.UnionOpexFixed)

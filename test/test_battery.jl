@@ -104,13 +104,23 @@ end
         # - constraints_usage(m, n::AbstractBattery, 𝒯, modeltype::EnergyModel)
         # - previous_usage
         t_sp1 = first(𝒯ᴵⁿᵛ[1])
+        # The previous use in the first operational period of the first strategic period
+        # equals the change in the operational level through charging with an efficiency of
+        # 0.9 and its duration
         @test value.(m[:bat_prev_use][stor, t_sp1]) ≈
             value.(m[:stor_charge_use])[stor, t_sp1] * 0.9 * duration(t_sp1)
         t_sp2 = first(𝒯ᴵⁿᵛ[2])
+        # The previous use in the first operational period of the second strategic period
+        # is given by
         @test value.(m[:bat_prev_use][stor, t_sp2]) ≈
+            # The initial usage at the beginning of the first operational period in the first
+            # strategic period, hence the substraction
             value.(m[:bat_prev_use][stor, t_sp1]) -
             value.(m[:stor_charge_use])[stor, t_sp1] * 0.9 * duration(t_sp1) +
+            # The total use in the first strategic period times its duration (value of 2)
             2 * value.(m[:bat_use_sp][stor, first(𝒯ᴵⁿᵛ)]) +
+            # the change in the operational level through charging with an efficiency of
+            # 0.9 and its duration
             value.(m[:stor_charge_use])[stor, t_sp2] * 0.9 * duration(t_sp2)
 
         # Test that the previous usage is correctly calculated in each individual operational
@@ -221,7 +231,7 @@ end
                 50 - 0.2 * value.(m[:bat_prev_use][stor, t]) / 900
         for t ∈ 𝒯)
 
-        # Test that stack replacement occurs once and the cost is correctly included
+        # Test that battery stack replacement occurs once and the cost is correctly included
         @test sum(value.(m[:bat_stack_replace_b][stor, t_inv]) for t_inv ∈ 𝒯ᴵⁿᵛ) == 1
         # - constraints_opex_fixed(m, n::AbstractBattery, 𝒯ᴵⁿᵛ, modeltype::EnergyModel)
         #   - 50 is the capacity

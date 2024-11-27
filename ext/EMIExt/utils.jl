@@ -1,4 +1,4 @@
-function RMP.multiplication_variables(
+function EMRP.multiplication_variables(
     m,
     n::AbstractBattery,
     𝒯ᴵⁿᵛ,

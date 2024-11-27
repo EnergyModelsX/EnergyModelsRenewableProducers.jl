@@ -73,11 +73,10 @@ The standard fields are given as:
       In addition, all capacity and fixed OPEX values have to be non-negative.
 - **`stor_res::ResourceEmit`**:\
   The `stor_res` is the stored [`Resource`](@extref EnergyModelsBase.Resource).
-  The current implementation of `HydroStorage` nodes do not consider the conversion of potential energy of the stored water to electricity.
-  Hence, you must specifiy your *electricity* resource.
+  In the case of a battery, you must specifiy your *electricity* resource.
 - **`input::Dict{<:Resource, <:Real}`** and **`output::Dict{<:Resource, <:Real}`**:\
   Both fields describe the `input` and `output` [`Resource`](@extref EnergyModelsBase.Resource)s with their corresponding conversion factors as dictionaries.
-  The values correspond to charge and discharge efficiencies from the `HydroStorage` nodes.\
+  The values correspond to charge and discharge efficiencies from the `AbstractBattery` nodes.\
   All values have to be in the range ``[0, 1]``.
 - **`data::Vector{Data}`**:\
   An entry for providing additional data to the model.
@@ -97,11 +96,11 @@ These fields are given as:
 - **`reserve_up::Vector{<:ResourceCarrier}`**:\
   The upwards reserve is only included for [`ReserveBattery`](@ref) nodes.
   It corresponds to the potential of the node to *deliver* reserve electricity to the system in the given operational period.\
-  The specified resources cannot be part of either the `input` or `output` dictionary.
+  The specified resources cannot be part of the `input` or `output` dictionaries.
 - **`reserve_down::Vector{<:ResourceCarrier}`**:\
   The downwards reserve is only included for [`ReserveBattery`](@ref) nodes.
   It corresponds to the potential of the node to *receive* reserve electricity from the system in the given operational period.\
-  The specified resources cannot be part of either the `input` or `output` dictionary.
+  The specified resources cannot be part of the `input` or `output` dictionaries.
 
 ## [Mathematical description](@id nodes-battery-math)
 
@@ -120,7 +119,7 @@ with paranthesis.
 
 #### [Standard variables](@id nodes-battery-math-var-stand)
 
-The hydro power node types utilize all standard variables from `RefStorage`, as described on the page *[Optimization variables](@extref EnergyModelsBase man-opt_var)*.
+The battery node types utilize all standard variables from `RefStorage`, as described on the page *[Optimization variables](@extref EnergyModelsBase man-opt_var)*.
 The variables include:
 
 - [``\texttt{opex\_var}``](@extref EnergyModelsBase man-opt_var-opex)
@@ -150,7 +149,7 @@ Hence, the following additional variables are included through providing a new m
 - ``\texttt{bat\_use\_sp}[n, t_{inv}]``: Charging of battery ``n`` in investment period ``t_{inv}`` with a typical unit of MWh.\
   The use allows to see how many charging cycles are conducted within an investment period.
   It is utilized for calculating the degradation of the battery.
-- ``\texttt{bat\_use\_rp}[n, t_{inv}]``: Charging of battery ``n`` in representantive period ``t_{rp}`` with a typical unit of MWh.\
+- ``\texttt{bat\_use\_rp}[n, t_{rp}]``: Charging of battery ``n`` in representantive period ``t_{rp}`` with a typical unit of MWh.\
   The use allows to see how many charging cycles are conducted within a representative period.
   It is utilized for calculating the degradation of the battery.\
   It is only created if the time structure includes representative periods.
@@ -170,7 +169,7 @@ Hence, the following additional variables are included through providing a new m
 
 ### [Constraints](@id nodes-battery-math-con)
 
-The following sections omit the direct inclusion of the vector of hydropower storage nodes.
+The following sections omit the direct inclusion of the vector of battery storage nodes.
 Instead, it is implicitly assumed that the constraints are valid ``\forall n ∈ N`` for all [`Battery`](@ref) or [`ReserveBattery`](@ref) types if not stated differently.
 In addition, all constraints are valid ``\forall t \in T`` (that is in all operational periods) or ``\forall t_{inv} \in T^{Inv}`` (that is in all investment periods).
 
@@ -235,9 +234,6 @@ These standard constraints are:
     The fixed and variable OPEX constribubtion for the charge, the level, and the discharge capacities are only included if the corresponding *[storage parameters](@extref EnergyModelsBase lib-pub-nodes-stor_par)* have a field `opex_fixed` and `opex_var`, respectively.
     Otherwise, they are omitted.
 
-The function `constraints_flow_out` is extended with a new method for hydropower nodes to differentiate whether the node is a pumped hydropower node or not.
-The standard constraints given by
-
 Batteries require a new method for `constraints_capacity`.
 While the charge and discharge capacities are unaffected by the storage level degradation,
 
@@ -267,8 +263,8 @@ However, if the node utilizes [`CycleLife`](@ref), we have to include battery de
 The degradation corresponds to a linear degradation between a fresh battery with 0 cycles and a worn out battery at the maximum nubmer of cycles.
 It is implemented through the function [`capacity_reduction`](@ref EnergyModelsRenewableProducers.capacity_reduction).
 
-The outlet flow of a [`Battery`] node is similar to a [`RefStorage`](@extref EnergyModelsBase.RefStorage) node.
-It is reusing the functionality given by
+The outlet flow of a [`Battery`](@ref) node is similar to a [`RefStorage`](@extref EnergyModelsBase.RefStorage) node.
+It is reusing the functionality of the function `constraints_flow_out` for `Storage` nodes given by
 
 ```math
 \texttt{flow\_out}[n, t, stor\_res(n)] = \texttt{stor\_discharge\_use}[n, t]
@@ -310,13 +306,13 @@ This auxiliary variable is subsequently utilized in the calculation of the
   opex\_fixed(level(n), t_{inv}) \times \texttt{stor\_level\_inst}[n, first(t_{inv})] + \\ &
   opex\_fixed(charge(n), t_{inv}) \times \texttt{stor\_charge\_inst}[n, first(t_{inv})] + \\ &
   opex\_fixed(discharge(n), t_{inv}) \times \texttt{stor\_discharge\_inst}[n, first(t_{inv})] + \\ &
-  stack\_cost(n) \times stack\_replace[t_{inv}] / duration\_strat(t_inv)
+  stack\_cost(n) \times stack\_replace[t_{inv}] / duration\_strat(t_{inv})
 \end{aligned}
 ```
 
-!!! tip "Why do we devide by `duration_strat(t_inv)`"
+!!! tip "Why do we divide by `duration_strat(t_inv)`"
     Stack replace occurs always at the beginning of an investment period ``t_{inv}`` and only once in an investment period.
-    The variable ``\texttt{opex\_fixed}[n, t_{inv}]`` is multiplied in the objective function with ``duration\_strat(t_inv)``.
+    The variable ``\texttt{opex\_fixed}[n, t_{inv}]`` is multiplied in the objective function with ``duration\_strat(t_{inv})``.
     As a consequence, if the duration of the investment period is larger than 1, we would invest multiple times into a new stack.
     Consequently, we have to divide the costs by the duration of the investment period.
 
@@ -382,7 +378,7 @@ This function has two distinctive methods:
 
 The function subsequently calls the function [`constraints_usage_iterate`](@ref EnergyModelsRenewableProducers.constraints_usage_iterate) which iterates through the time structure and adds relevant constraints.
 
-If the `TImeStructure` includes representative periods, then the use in each representative period ``t_{rp}`` is calculated (in the function `constraints_usage_iterate`):
+If the `TimeStructure` includes representative periods, then the use in each representative period ``t_{rp}`` is calculated (in the function `constraints_usage_iterate`):
 
 ```math
 \begin{aligned}
@@ -421,7 +417,7 @@ The individual value of the auxiliary variable ``prev\_use`` can be differentiat
    ```
 
    with ``t_{inv, pre} < t_{inv}``.
-2. In the first operational period in subsequent representative period:\
+2. In the first operational period in subsequent representative periods:\
    The constraint is given as
 
    ```math
@@ -477,7 +473,7 @@ and downwards reserve:
 The second constraint is replaced by
 
 ```math
-\texttt{stor\_level}[n, t] + \texttt{bat\_res\_down}[n, t] \leq \texttt{stor\_level}[n, t]
+\texttt{stor\_level}[n, t] + \texttt{bat\_res\_down}[n, t] \leq \texttt{stor\_level\_inst}[n, t]
 ```
 
 if the node uses [`InfLife`](@ref), and hence, does not include battery degradation.
@@ -493,38 +489,18 @@ The level constraints are in general slightly more complex to understand.
 The overall structure is outlined on *[Constraint functions](@extref EnergyModelsBase man-con-stor_level)*.
 The level constraints are called through the function `constraints_level` which then calls additional functions depending on the chosen time structure (whether it includes representative periods and/or operational scenarios) and the chosen *[storage behaviour](@extref EnergyModelsBase lib-pub-nodes-stor_behav)*.
 
-The hydro power nodes utilize the majority of the concepts from `EnergyModelsBase` but require adjustments for both constraining the variable ``\texttt{stor\_level\_Δ\_op}`` and specifying how the storage node has to behave in the first operational period of an investment period.
+The battery nodes utilize the majority of the concepts from `EnergyModelsBase` but require adjustments for both constraining the variable ``\texttt{stor\_level\_Δ\_op}`` and specifying how the storage node has to behave in the first operational period of an investment period.
 This is achieved through dispatching on the functions `constraints_level_aux`.
 
-The constraints introduced in `constraints_level_aux`  can be divided in three groups:
+The constraints introduced in `constraints_level_aux` are given by the energy balance with ``p_{stor}`` corresponding to the stored resource:
 
-1. the energy balance with ``p_{stor}`` corresponding to the stored resource,
-
-   ```math
-   \begin{aligned}
-     \texttt{stor\_level\_Δ\_op}&[n, t] = \\ &
-     \texttt{stor\_charge\_use}[n, t] \times inputs(n, p_{stor}) - \\ &
-     \texttt{stor\_discharge\_use}[n, t] / outputs(n, p_{stor})
-   \end{aligned}
-   ```
-
-2. the initial storage level in the first operational period of an investment period, and
-
-   ```math
-   \begin{aligned}
-     \texttt{stor\_level}& [n, first(t_{inv})] = \\ &
-     level\_init(n, first(t_{inv})) + \\ &
-     \texttt{stor\_level\_Δ\_op}[n, first(t_{inv})] \times duration(first(t_{inv}))
-   \end{aligned}
-   ```
-
-3. the minimum level constraint
-
-   ```math
-   \texttt{stor\_level}[n, t] \geq level\_min(n, t) \times \texttt{stor\_level\_inst}[n, t]
-   ```
-
-corresponding to the change in the storage level in an operational period and investment period, respectively.
+```math
+\begin{aligned}
+  \texttt{stor\_level\_Δ\_op}&[n, t] = \\ &
+  \texttt{stor\_charge\_use}[n, t] \times inputs(n, p_{stor}) - \\ &
+  \texttt{stor\_discharge\_use}[n, t] / outputs(n, p_{stor})
+\end{aligned}
+```
 
 If the time structure includes representative periods, we also calculate the change of the storage level in each representative period within the function `constraints_level_iterate` (from `EnergyModelsBase`):
 
@@ -543,7 +519,7 @@ The general level constraint is calculated in the function `constraints_level_it
 in which the value ``prev\_level`` is depending on the type of the previous operational (``t_{prev}``) and investment period (``t_{inv,prev}``) (as well as the previous representative period (``t_{rp,prev}``)).
 It is calculated through the function `previous_level`.
 
-In the case of hydropower node, we can distinguish the following cases:
+In the case of battery nodes, we can distinguish the following cases:
 
 1. The first operational period in the first representative period in any investment period (given by ``typeof(t_{prev}) = typeof(t_{rp, prev})`` and ``typeof(t_{inv,prev}) = NothingPeriod``).
    In this situation, we can distinguish three cases, the time structure does not include representative periods:

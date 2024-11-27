@@ -289,8 +289,8 @@ end
 Iterate through the individual time structures of an [`AbstractBattery`](@ref) node.
 
 In the case of `RepresentativePeriods`, additional constraints are calculated for the usage
-of the electrolyzer in representative periods through introducing the variable
-`bat_use_rp[𝒩ᴱᴸ, 𝒯ʳᵖ]`.
+of the battery in representative periods through introducing the variable
+`bat_use_rp[𝒩, 𝒯ʳᵖ]`.
  """
 function constraints_usage_iterate(
     m,
@@ -370,8 +370,8 @@ function constraints_usage_iterate(
     # This ensures that the last repetition of the strategic period is appropriately
     # constrained.
     # The conditional statement activates this constraint only for the last representative
-    # period, if representative periods are present as stack replacement is only feasible
-    # once per strategic period
+    # period, if representative periods are present as battery stack replacement is only
+    # feasible once per strategic period
     if last_per(cyclic_pers) == current_per(cyclic_pers) && !isnothing(cycles(n))
         t = last(per)
         @constraint(m,
@@ -404,9 +404,9 @@ The functions nodes includes fixed OPEX for `charge`, `level`, and `discharge` i
 has the corresponding storage parameter. The individual contributions are in all situations
 calculated based on the installed capacities.
 
-In addition, stack replacement is included if the `battery_life` has a limited cycle lifetime.
-The division by duration_strat(t_inv) for the stack replacement is requried due to
-multiplication with the duration in the objective function calculation.
+In addition, battery stack replacement is included if the `battery_life` has a limited cycle
+lifetime. The division by duration_strat(t_inv) for the battery stack replacement is required
+due to the multiplication with the duration in the objective function calculation.
 """
 function EMB.constraints_opex_fixed(m, n::AbstractBattery, 𝒯ᴵⁿᵛ, modeltype::EnergyModel)
 
@@ -433,7 +433,7 @@ function EMB.constraints_opex_fixed(m, n::AbstractBattery, 𝒯ᴵⁿᵛ, modelt
         opex_fixed_discharge = @expression(m, [t_inv ∈ 𝒯ᴵⁿᵛ], 0)
     end
     if has_degradation(n)
-        # Extraction of the stack replacement variable
+        # Extraction of the battery stack replacement variable
         stack_replace = multiplication_variables(m, n, 𝒯ᴵⁿᵛ, modeltype)
         opex_fixed_degradation = @expression(m, [t_inv ∈ 𝒯ᴵⁿᵛ],
             stack_replace[t_inv] * stack_cost(n)

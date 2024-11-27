@@ -182,7 +182,7 @@ The following reserve variables are declared:
   representative period `t_rp`. It is only declared if the `TimeStructure` includes
   `RepresentativePeriods`.
 - `bat_stack_replace_b[n, t_inv]` is a binary variable for identification of battery
-  stack replacement. Stack replacement occurs before the first operational period of a
+  battery stack replacement. Stack replacement occurs before the first operational period of a
   strategic period. It is only declared for batterys which utilize an
   [`AbstractBatteryLife`](@ref) that includes degradation.
 """

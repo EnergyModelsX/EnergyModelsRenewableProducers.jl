@@ -23,5 +23,5 @@ include(joinpath(exdir, "simple_hydro_power.jl"))
 include(joinpath(exdir, "detailed_hydro_power.jl"))
 
 # Include the code into the Julia REPL to run the example of the battery storage
-include(joinpath(exdir, "simple_hydro_power.jl"))
+include(joinpath(exdir, "simple_battery.jl"))
 ```
