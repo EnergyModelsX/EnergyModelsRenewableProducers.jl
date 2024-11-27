@@ -12,19 +12,10 @@ Pages = ["types-EMRP.md"]
 EnergyModelsRenewableProducers.HydroUnit
 ```
 
-## [Constraint types](@id lib-int-types-con)
+## [Parameter supertypes](@id lib-int-types-para)
 
 ```@docs
 EnergyModelsRenewableProducers.AbstractScheduleType
-EnergyModelsRenewableProducers.MinSchedule
-EnergyModelsRenewableProducers.MaxSchedule
-EnergyModelsRenewableProducers.EqualSchedule
-EnergyModelsRenewableProducers.ScheduleConstraint
-```
-
-## [Power-flow curves](@id lib-int-types-pq)
-
-```@docs
 EnergyModelsRenewableProducers.AbstractPqCurve
-EnergyModelsRenewableProducers.PqPoints
+EnergyModelsRenewableProducers.AbstractBatteryLife
 ```

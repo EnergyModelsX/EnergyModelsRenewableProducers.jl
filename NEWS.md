@@ -1,6 +1,17 @@
 # Release notes
 
-## Unversioned
+## Version 0.6.3 (2024-11-27)
+
+### Battery modelling
+
+* Introduced two different battery nodes.
+* Both nodes utilize charge and discharge efficiencies as well as potential for battery stack degradation.
+* `Battery` nodes:
+  * Simplified version.
+  * Includes all standard battery behaviors.
+* `ReserveBattery` nodes:
+  * Extends `Battery` with the potential for specifying a reserve that the battery can supply.
+  * Reserve can be both upwards and downwards, that is providing capacity to the system and use surplus capacity from the system through charging.
 
 ### Detailed hydropower modelling
 

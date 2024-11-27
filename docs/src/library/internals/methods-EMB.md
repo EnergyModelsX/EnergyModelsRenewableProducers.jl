@@ -22,6 +22,7 @@ EnergyModelsBase.constraints_flow_in
 EnergyModelsBase.constraints_flow_out
 EnergyModelsBase.constraints_level_aux
 EnergyModelsBase.constraints_opex_var
+EnergyModelsBase.constraints_opex_fixed
 ```
 
 ## [Check methods](@id lib-int-met_emb-check)

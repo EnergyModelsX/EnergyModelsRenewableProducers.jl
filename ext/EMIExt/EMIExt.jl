@@ -13,6 +13,7 @@ const TS = TimeStruct
 
 include("checks.jl")
 include("model.jl")
+include("utils.jl")
 include("constraint_functions.jl")
 
 end

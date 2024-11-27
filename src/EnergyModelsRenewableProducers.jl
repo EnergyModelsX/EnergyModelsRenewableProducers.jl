@@ -29,15 +29,25 @@ const TS = TimeStruct
 include("datastructures.jl")
 include("model.jl")
 include("checks.jl")
+include("utils.jl")
 include("constraint_functions.jl")
 
 # Legacy constructors for node types
 include("legacy_constructor.jl")
 
+# Non-dispatchable renewable energy sources types
 export AbstractNonDisRES, NonDisRES
+
+# Simple hydro power types
 export HydroStorage, RegHydroStor, HydroStor, PumpedHydroStor
+
+# Detailed hydro power types
 export HydroReservoir, HydroGenerator, HydroPump, HydroGate
 export PqPoints
 export ScheduleConstraint, MinSchedule, MaxSchedule, EqualSchedule
+
+# Battery types
+export AbstractBattery, Battery, ReserveBattery
+export InfLife, CycleLife
 
 end # module

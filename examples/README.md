@@ -16,6 +16,12 @@ exdir = joinpath(pkgdir(EnergyModelsRenewableProducers), "examples")
 # Include the code into the Julia REPL to run the example of the NonDisRes node
 include(joinpath(exdir, "simple_nondisres.jl"))
 
-# Include the code into the Julia REPL to run the example of the Hydropower node
+# Include the code into the Julia REPL to run the example of the simple hydropower node
 include(joinpath(exdir, "simple_hydro_power.jl"))
+
+# Include the code into the Julia REPL to run the example of the detailed hydro power structure
+include(joinpath(exdir, "detailed_hydro_power.jl"))
+
+# Include the code into the Julia REPL to run the example of the battery storage
+include(joinpath(exdir, "simple_battery.jl"))
 ```

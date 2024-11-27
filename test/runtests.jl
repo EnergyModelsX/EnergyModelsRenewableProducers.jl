@@ -11,6 +11,7 @@ const EMRP = EnergyModelsRenewableProducers
 
 @testset "RenewableProducers" begin
     include("utils.jl")
+
     @testset "RP | Non-dispatchable renewable energy source" begin
         include("test_nondisres.jl")
     end
@@ -21,6 +22,10 @@ const EMRP = EnergyModelsRenewableProducers
 
     @testset "RP | Detailed hydropower" begin
         include("test_detailed_hydro.jl")
+    end
+
+    @testset "RP | Battery storage" begin
+        include("test_battery.jl")
     end
 
     @testset "RP | examples" begin

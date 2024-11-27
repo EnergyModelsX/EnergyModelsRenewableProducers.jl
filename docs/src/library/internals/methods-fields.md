@@ -48,7 +48,18 @@ EnergyModelsRenewableProducers.water_resource
 EnergyModelsRenewableProducers.electricity_resource
 ```
 
-## [`Constraint`](@id lib-int-met_field-constraint)
+## [Battery fields](@id lib-int-met_field-bat)
+
+```@docs
+EnergyModelsRenewableProducers.battery_life
+EnergyModelsRenewableProducers.cycles
+EnergyModelsRenewableProducers.degradation
+EnergyModelsRenewableProducers.stack_cost
+EnergyModelsRenewableProducers.reserve_up
+EnergyModelsRenewableProducers.reserve_down
+```
+
+## [Scheduling constraints](@id lib-int-met_field-scheduling)
 
 ```@docs
 EnergyModelsRenewableProducers.resource

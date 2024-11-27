@@ -330,7 +330,7 @@ In the case of hydropower node, we can distinguish the following cases:
    \end{aligned}
    ```
 
-2. The first operational period in subsequent representative periods in any strategic period (given by ``typeof(t_{prev}) = nothing``) f the the storage behavior is given as [`CyclicStrategic`](@extref EnergyModelsBase.CyclicStrategic):\
+2. The first operational period in subsequent representative periods in any strategic period (given by ``typeof(t_{prev}) = nothing``) if the the storage behavior is given as [`CyclicStrategic`](@extref EnergyModelsBase.CyclicStrategic):\
 
    ```math
    \begin{aligned}
