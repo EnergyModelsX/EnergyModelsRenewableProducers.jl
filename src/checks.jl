@@ -4,7 +4,7 @@
 This method checks that the *[`NonDisRES`](@ref)* node is valid.
 
 It reuses the standard checks of a `Source` node through calling the function
-[`EMB.check_node_default`](@extef EnergyModelsBase.check_node_default), but adds an
+[`EMB.check_node_default`](@extref EnergyModelsBase.check_node_default), but adds an
 additional check on the data.
 
 ## Checks
@@ -35,7 +35,7 @@ end
 This method checks that the *[`HydroStorage`](@ref)* node is valid.
 
 It reuses the standard checks of a `Storage` node through calling the function
-[`EMB.check_node_default`](@extef EnergyModelsBase.check_node_default), but adds an
+[`EMB.check_node_default`](@extref EnergyModelsBase.check_node_default), but adds an
 additional check on the data.
 
 ## Checks
@@ -265,7 +265,7 @@ end
 This method checks that the *[`AbstractBattery`](@ref)* node is valid.
 
 It reuses the standard checks of a `Storage` node through calling the function
-[`EMB.check_node_default`](@extef EnergyModelsBase.check_node_default), but adds an
+[`EMB.check_node_default`](@extref EnergyModelsBase.check_node_default), but adds an
 additional check on the data.
 
 ## Checks
@@ -303,7 +303,7 @@ end
 This method checks that the *[`ReserveBattery`](@ref)* node is valid.
 
 It reuses the standard checks of a `Storage` node through calling the function
-[`EMB.check_node_default`](@extef EnergyModelsBase.check_node_default), but adds an
+[`EMB.check_node_default`](@extref EnergyModelsBase.check_node_default), but adds an
 additional check on the data.
 
 ## Checks
