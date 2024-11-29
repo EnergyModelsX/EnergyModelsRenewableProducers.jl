@@ -1,4 +1,3 @@
-
 # Set the global to true to suppress the error message
 EMB.TEST_ENV = true
 
@@ -185,6 +184,229 @@ end
     type = HydroStor{CyclicRepresentative}
     level_min = FixedProfile(-0.5)
     @test_throws AssertionError check_graph(; type, level_min)
+end
+
+# Test that the fields of a HydroReservoir are correctly checked
+# - check_node(n::HydroReservoir, 𝒯, modeltype::EnergyModel)
+@testset "HydroReservoir" begin
+    using EnergyModelsInvestments
+    Water = ResourceCarrier("Water", 0.0)
+
+    # Function for setting up the system for testing a `HydroReservoir` node
+    function check_graph(;
+        level_cap = FixedProfile(50),
+        level_opex = FixedProfile(1),
+        level_inflow = OperationalProfile([5, 10, 15, 20]),
+        data = Data[],
+    )
+
+        products = [Water]
+        # Creation of the node to be tested
+        reservoir = HydroReservoir{CyclicStrategic}(
+            "hydro_reservoir",
+            StorCapOpexFixed(level_cap, level_opex),
+            level_inflow,
+            Water,
+            data
+        )
+
+        nodes = [reservoir]
+        links = EMB.Link[]
+
+        # Creation of the time structure and the used global data
+        op_per_strat = 8760.0
+        T = TwoLevel(2, 2, SimpleTimes(10,1); op_per_strat)
+        modeltype = InvestmentModel(
+            Dict(CO2 => FixedProfile(10)),
+            Dict(CO2 => FixedProfile(0)),
+            CO2,
+            0.07,
+        )
+
+        # Creation of the case dictionary
+        case = Dict(:nodes => nodes, :links => links, :products => products, :T => T)
+
+        return create_model(case, modeltype), case, modeltype
+    end
+
+    # Test that a wrong capacity is caught by the checks
+    @test_throws AssertionError check_graph(; level_cap=FixedProfile(-25))
+
+    # Test that a wrong fixed OPEX is caught by the checks
+    @test_throws AssertionError check_graph(; level_opex=FixedProfile(-5))
+    @test_throws AssertionError check_graph(; level_opex=OperationalProfile([10]))
+
+    # Test that a wrong inflow is caught by the checks
+    @test_throws AssertionError check_graph(; level_inflow=FixedProfile(-5))
+
+    # Test that providing investment data is caught by the checks
+    data = [StorageInvData(
+        level = NoStartInvData(
+            FixedProfile(600),
+            FixedProfile(40),
+            SemiContinuousInvestment(FixedProfile(5), FixedProfile(40)),
+        )
+    )]
+    @test_throws AssertionError check_graph(; data)
+
+    # Test that providing wrong ScheduleConstraint is caught by the test
+    data = [ScheduleConstraint{EqualSchedule}(
+        Water, FixedProfile(10), FixedProfile(true), FixedProfile(2)
+    )]
+    @test_throws AssertionError check_graph(; data)
+    data = [ScheduleConstraint{EqualSchedule}(
+        Water, FixedProfile(-1), FixedProfile(true), FixedProfile(2)
+    )]
+    @test_throws AssertionError check_graph(; data)
+    data = [ScheduleConstraint{EqualSchedule}(
+        Water, FixedProfile(1), FixedProfile(true), FixedProfile(-10)
+    )]
+    @test_throws AssertionError check_graph(; data)
+end
+
+# Test that the fields of a HydroGate are correctly checked
+# - check_node(n::HydroGate, 𝒯, modeltype::EnergyModel)
+@testset "HydroGate" begin
+    using EnergyModelsInvestments
+    Water = ResourceCarrier("Water", 0.0)
+
+    # Function for setting up the system for testing a `HydroGate` node
+    function check_graph(;
+        cap = FixedProfile(50),
+        opex_fixed = FixedProfile(10),
+        data = Data[],
+    )
+        products = [Water]
+        # Creation of the node to be tested
+        nodes = [HydroGate(
+            "hydro_gate",
+            cap,
+            FixedProfile(0),
+            opex_fixed,
+            Water,
+            data,
+        )]
+
+        links = EMB.Link[]
+
+        # Creation of the time structure and the used global data
+        op_per_strat = 8760.0
+        T = TwoLevel(2, 2, SimpleTimes(10,1); op_per_strat)
+        modeltype = InvestmentModel(
+            Dict(CO2 => FixedProfile(10)),
+            Dict(CO2 => FixedProfile(0)),
+            CO2,
+            0.07,
+        )
+
+        # Creation of the case dictionary
+        case = Dict(:nodes => nodes, :links => links, :products => products, :T => T)
+
+        return create_model(case, modeltype), case, modeltype
+    end
+
+    # Test that a wrong capacity is caught by the checks
+    @test_throws AssertionError check_graph(; cap=FixedProfile(-25))
+
+    # Test that a wrong fixed OPEX is caught by the checks
+    @test_throws AssertionError check_graph(; opex_fixed=FixedProfile(-5))
+    @test_throws AssertionError check_graph(; opex_fixed=OperationalProfile([10]))
+
+    # Test that providing investment data is caught by the checks
+    data = Data[SingleInvData(
+            FixedProfile(600),
+            FixedProfile(40),
+            SemiContinuousInvestment(FixedProfile(5), FixedProfile(40)),
+    )]
+    @test_throws AssertionError check_graph(; data)
+
+    # Test that providing wrong ScheduleConstraint is caught by the test
+    data = [ScheduleConstraint{EqualSchedule}(
+        Water, FixedProfile(10), FixedProfile(true), FixedProfile(2)
+    )]
+    @test_throws AssertionError check_graph(; data)
+end
+
+# Test that the fields of a HydroUnit are correctly checked
+# - check_node(n::HydroUnit, 𝒯, modeltype::EnergyModel)
+@testset "HydroUnit" begin
+    using EnergyModelsInvestments
+    Water = ResourceCarrier("Water", 0.0)
+
+    # Function for setting up the system for testing a `HydroUnit` node
+    function check_graph(;
+        type = HydroGenerator,
+        cap = FixedProfile(50),
+        pq_1 = [0, 0.5, 1.0],
+        pq_2 = [0, 0.5, 1.2],
+        opex_fixed = FixedProfile(10),
+        data = Data[],
+    )
+        products = [Water]
+        # Creation of the node to be tested
+        nodes = [type(
+            "hydro_unit",
+            cap,
+            PqPoints(pq_1, pq_2),
+            FixedProfile(0),
+            opex_fixed,
+            Power,
+            Water,
+            data,
+        )]
+
+        links = []
+
+        # Creation of the time structure and the used global data
+        op_per_strat = 8760.0
+        T = TwoLevel(2, 2, SimpleTimes(10,1); op_per_strat)
+        modeltype = InvestmentModel(
+            Dict(CO2 => FixedProfile(10)),
+            Dict(CO2 => FixedProfile(0)),
+            CO2,
+            0.07,
+        )
+
+        # Creation of the case dictionary
+        case = Dict(:nodes => nodes, :links => links, :products => products, :T => T)
+
+        return create_model(case, modeltype), case, modeltype
+    end
+
+    # Test that a wrong capacity is caught by the checks
+    @test_throws AssertionError check_graph(; cap=FixedProfile(-25))
+
+    # Test that a wrong fixed OPEX is caught by the checks
+    @test_throws AssertionError check_graph(; opex_fixed=FixedProfile(-5))
+    @test_throws AssertionError check_graph(; opex_fixed=OperationalProfile([10]))
+
+    # Test that providing investment data is caught by the checks
+    data = Data[SingleInvData(
+            FixedProfile(600),
+            FixedProfile(40),
+            SemiContinuousInvestment(FixedProfile(5), FixedProfile(40)),
+    )]
+    @test_throws AssertionError check_graph(; data)
+
+    # Test that providing wrong ScheduleConstraint is caught by the test
+    data = [ScheduleConstraint{EqualSchedule}(
+        CO2, FixedProfile(0.5), FixedProfile(true), FixedProfile(2)
+    )]
+    @test_throws AssertionError check_graph(; data)
+
+    # Test that providing wrong PqPoints is caught by the test
+    @test_throws AssertionError check_graph(; pq_1 = [0.0, 1.0])
+    @test_throws AssertionError check_graph(; pq_1 = [1.0, 0.0, 0.5])
+    @test_throws AssertionError check_graph(; pq_2 = [1.0, 0.0, 0.5])
+    @test_throws AssertionError check_graph(; pq_1 = [0.0, 1.0, 0.5])
+    @test_throws AssertionError check_graph(; pq_2 = [0.0, 1.0, 0.5])
+    @test_throws AssertionError check_graph(; pq_1 = [0.0, 0.5, 1.2])
+    @test_throws AssertionError check_graph(; pq_1 = [0.0, 0.1, 1.0])
+
+    # Test that the correct function is also called for HydroStor
+    type = HydroPump
+    @test_throws AssertionError check_graph(; type, pq_2 = [0.0, 0.1, 0.8])
+    @test_throws AssertionError check_graph(; type, cap=FixedProfile(-25))
 end
 
 # Test that the fields of a `AbstractBattery` are correctly checked
