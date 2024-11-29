@@ -1,7 +1,7 @@
 name = "EnergyModelsRenewableProducers"
 uuid = "b007c34f-ba52-4995-ba37-fffe79fbde35"
 authors = ["Sigmund Eggen Holm, Julian Straus, Per Aaslid, Linn Emelie Schäffer"]
-version = "0.6.3"
+version = "0.6.4"
 
 [deps]
 EnergyModelsBase = "5d7e687e-f956-46f3-9045-6f5a5fd49f50"

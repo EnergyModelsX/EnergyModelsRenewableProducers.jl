@@ -1,5 +1,11 @@
 # Release notes
 
+## Version 0.6.4 (2024-11-29)
+
+* Fixed errors overseen from the inclusion of batteries and detailed hydropower.
+* Extended on tests to avoid errors like these in the future.
+* Provided a comprehensive testset for checks.
+
 ## Version 0.6.3 (2024-11-27)
 
 ### Battery modelling
