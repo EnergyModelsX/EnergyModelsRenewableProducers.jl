@@ -18,20 +18,20 @@ function EMB.check_node(n::NonDisRES, 𝒯, modeltype::EnergyModel, check_timepr
     𝒯ᴵⁿᵛ = strategic_periods(𝒯)
 
     @assert_or_log(
-        sum(capacity(n, t) ≥ 0 for t ∈ 𝒯) == length(𝒯),
+        all(capacity(n, t) ≥ 0 for t ∈ 𝒯),
         "The capacity must be non-negative."
     )
     EMB.check_fixed_opex(n, 𝒯ᴵⁿᵛ, check_timeprofiles)
     @assert_or_log(
-        sum(outputs(n, p) ≥ 0 for p ∈ outputs(n)) == length(outputs(n)),
+        all(outputs(n, p) ≥ 0 for p ∈ outputs(n)),
         "The values for the Dictionary `output` must be non-negative."
     )
     @assert_or_log(
-        sum(profile(n, t) ≤ 1 for t ∈ 𝒯) == length(𝒯),
+        all(profile(n, t) ≤ 1 for t ∈ 𝒯),
         "The profile field must be less or equal to 1."
     )
     @assert_or_log(
-        sum(profile(n, t) ≥ 0 for t ∈ 𝒯) == length(𝒯),
+        all(profile(n, t) ≥ 0 for t ∈ 𝒯),
         "The profile field must be non-negative."
     )
 end
@@ -68,7 +68,7 @@ function EMB.check_node(n::HydroStorage, 𝒯, modeltype::EnergyModel, check_tim
 
     if isa(par_charge, EMB.UnionCapacity)
         @assert_or_log(
-            sum(capacity(par_charge, t) ≥ 0 for t ∈ 𝒯) == length(𝒯),
+            all(capacity(par_charge, t) ≥ 0 for t ∈ 𝒯),
             "The charge capacity must be non-negative."
         )
     end
@@ -76,7 +76,7 @@ function EMB.check_node(n::HydroStorage, 𝒯, modeltype::EnergyModel, check_tim
         EMB.check_fixed_opex(par_charge, 𝒯ᴵⁿᵛ, check_timeprofiles)
     end
     @assert_or_log(
-        sum(capacity(par_level, t) ≥ 0 for t ∈ 𝒯) == length(𝒯),
+        all(capacity(par_level, t) ≥ 0 for t ∈ 𝒯),
         "The level capacity must be non-negative."
     )
     if isa(par_level, EMB.UnionOpexFixed)
@@ -84,7 +84,7 @@ function EMB.check_node(n::HydroStorage, 𝒯, modeltype::EnergyModel, check_tim
     end
     if isa(par_discharge, EMB.UnionCapacity)
         @assert_or_log(
-            sum(capacity(par_discharge, t) ≥ 0 for t ∈ 𝒯) == length(𝒯),
+            all(capacity(par_discharge, t) ≥ 0 for t ∈ 𝒯),
             "The discharge capacity must be non-negative."
         )
     end
@@ -120,7 +120,7 @@ function EMB.check_node(n::HydroStorage, 𝒯, modeltype::EnergyModel, check_tim
     end
 
     @assert_or_log(
-        sum(level_init(n, t) ≤ capacity(par_level, t) for t ∈ 𝒯) == length(𝒯),
+        all(level_init(n, t) ≤ capacity(par_level, t) for t ∈ 𝒯),
         "The initial level `level_init` has to be less or equal to the max storage capacity."
     )
     for t_inv ∈ 𝒯ᴵⁿᵛ
@@ -132,17 +132,17 @@ function EMB.check_node(n::HydroStorage, 𝒯, modeltype::EnergyModel, check_tim
     end
 
     @assert_or_log(
-        sum(level_init(n, t) < 0 for t ∈ 𝒯) == 0,
+        all(level_init(n, t) ≥ 0 for t ∈ 𝒯),
         "The field `level_init` can not be negative."
     )
 
     # level_min
     @assert_or_log(
-        sum(level_min(n, t) < 0 for t ∈ 𝒯) == 0,
+        all(level_min(n, t) ≥ 0 for t ∈ 𝒯),
         "The field `level_min` can not be negative."
     )
     @assert_or_log(
-        sum(level_min(n, t) > 1 for t ∈ 𝒯) == 0,
+        all(level_min(n, t) ≤ 1 for t ∈ 𝒯),
         "The field `level_min` can not be larger than 1."
     )
 end
@@ -218,7 +218,7 @@ function EMB.check_node(n::HydroUnit, 𝒯, modeltype::EnergyModel, check_timepr
     𝒯ᴵⁿᵛ = strategic_periods(𝒯)
 
     @assert_or_log(
-        sum(capacity(n, t) ≥ 0 for t ∈ 𝒯) == length(𝒯),
+        all(capacity(n, t) ≥ 0 for t ∈ 𝒯),
         "The capacity must be non-negative."
     )
 
