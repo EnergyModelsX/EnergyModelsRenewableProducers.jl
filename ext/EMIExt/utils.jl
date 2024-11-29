@@ -25,17 +25,17 @@ function EMRP.multiplication_variables(
     else
         # Calculation of the multiplication with the installed capacity of the node
         prod = @expression(m, [t_inv ∈ 𝒯ᴵⁿᵛ],
-            capacity(level(n), t_inv) * [:bat_stack_replace_b][n, t_inv]
+            capacity(level(n), t_inv) * m[:bat_stack_replace_b][n, t_inv]
         )
     end
     return prod
 end
 
-function capacity_max(n::AbstractBattery, t_inv, modeltype::AbstractInvestmentModel)
+function EMRP.capacity_max(n::AbstractBattery, t_inv, modeltype::AbstractInvestmentModel)
     if EMI.has_investment(n, :level)
-        max_installed = capacity(level(n), t_inv) * cycles(n)
+        max_installed = EMI.max_installed(EMI.investment_data(n, :level), t_inv) * EMRP.cycles(n)
     else
-        max_installed = EMI.max_installed(EMI.investment_data(n, :level)) * cycles(n)
+        max_installed = capacity(level(n), t_inv) * EMRP.cycles(n)
     end
     return max_installed
 end

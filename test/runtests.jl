@@ -28,6 +28,10 @@ const EMRP = EnergyModelsRenewableProducers
         include("test_battery.jl")
     end
 
+    @testset "RP | Checks" begin
+        include("test_checks.jl")
+    end
+
     @testset "RP | examples" begin
         include("test_examples.jl")
     end

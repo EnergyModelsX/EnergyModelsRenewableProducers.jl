@@ -8,7 +8,7 @@ utilize investments at the time being, a separate function is required
 - No investment data is allowed
 """
 function EMB.check_node_data(
-    n::Union{HydroReservoir,HydroUnit,HydroGate},
+    n::Union{HydroReservoir,EMRP.HydroUnit,HydroGate},
     data::InvestmentData,
     𝒯,
     modeltype::AbstractInvestmentModel,
