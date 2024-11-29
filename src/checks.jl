@@ -3,6 +3,10 @@
 
 This method checks that the *[`NonDisRES`](@ref)* node is valid.
 
+It reuses the standard checks of a `Source` node through calling the function
+[`EMB.check_node_default`](@extef EnergyModelsBase.check_node_default), but adds an
+additional check on the data.
+
 ## Checks
  - The field `cap` is required to be non-negative (similar to the `Source` check).
  - The value of the field `fixed_opex` is required to be non-negative and
@@ -14,18 +18,7 @@ This method checks that the *[`NonDisRES`](@ref)* node is valid.
    ``t ∈ \\mathcal{T}``.
 """
 function EMB.check_node(n::NonDisRES, 𝒯, modeltype::EnergyModel, check_timeprofiles::Bool)
-
-    𝒯ᴵⁿᵛ = strategic_periods(𝒯)
-
-    @assert_or_log(
-        all(capacity(n, t) ≥ 0 for t ∈ 𝒯),
-        "The capacity must be non-negative."
-    )
-    EMB.check_fixed_opex(n, 𝒯ᴵⁿᵛ, check_timeprofiles)
-    @assert_or_log(
-        all(outputs(n, p) ≥ 0 for p ∈ outputs(n)),
-        "The values for the Dictionary `output` must be non-negative."
-    )
+    EMB.check_node_default(n, 𝒯, modeltype, check_timeprofiles)
     @assert_or_log(
         all(profile(n, t) ≤ 1 for t ∈ 𝒯),
         "The profile field must be less or equal to 1."
@@ -40,6 +33,10 @@ end
     EMB.check_node(n::HydroStorage, 𝒯, modeltype::EnergyModel, check_timeprofiles::Bool)
 
 This method checks that the *[`HydroStorage`](@ref)* node is valid.
+
+It reuses the standard checks of a `Storage` node through calling the function
+[`EMB.check_node_default`](@extef EnergyModelsBase.check_node_default), but adds an
+additional check on the data.
 
 ## Checks
 - The `TimeProfile` of the field `capacity` in the type in the field `charge` is required
@@ -62,62 +59,21 @@ This method checks that the *[`HydroStorage`](@ref)* node is valid.
 function EMB.check_node(n::HydroStorage, 𝒯, modeltype::EnergyModel, check_timeprofiles::Bool)
 
     𝒯ᴵⁿᵛ = strategic_periods(𝒯)
-    par_charge = charge(n)
     par_level = level(n)
-    par_discharge = discharge(n)
 
-    if isa(par_charge, EMB.UnionCapacity)
-        @assert_or_log(
-            all(capacity(par_charge, t) ≥ 0 for t ∈ 𝒯),
-            "The charge capacity must be non-negative."
-        )
-    end
-    if isa(par_charge, EMB.UnionOpexFixed)
-        EMB.check_fixed_opex(par_charge, 𝒯ᴵⁿᵛ, check_timeprofiles)
-    end
-    @assert_or_log(
-        all(capacity(par_level, t) ≥ 0 for t ∈ 𝒯),
-        "The level capacity must be non-negative."
-    )
-    if isa(par_level, EMB.UnionOpexFixed)
-        EMB.check_fixed_opex(par_level, 𝒯ᴵⁿᵛ, check_timeprofiles)
-    end
-    if isa(par_discharge, EMB.UnionCapacity)
-        @assert_or_log(
-            all(capacity(par_discharge, t) ≥ 0 for t ∈ 𝒯),
-            "The discharge capacity must be non-negative."
-        )
-    end
-    if isa(par_discharge, EMB.UnionOpexFixed)
-        EMB.check_fixed_opex(par_discharge, 𝒯ᴵⁿᵛ, check_timeprofiles)
-    end
-
+    EMB.check_node_default(n, 𝒯, modeltype, check_timeprofiles)
     @assert_or_log(
         length(outputs(n)) == 1,
         "Only one resource can be stored, so only this one can flow out."
     )
-
-    for v ∈ values(n.output)
-        @assert_or_log(
-            v ≤ 1,
-            "The value of the `output` resource has to be less than or equal to 1."
-        )
-        @assert_or_log(
-            v ≥ 0,
-            "The value of the `output` resource has to be non-negative."
-        )
-    end
-
-    for v ∈ values(n.input)
-        @assert_or_log(
-            v ≤ 1,
-            "The values of the input variables have to be less than or equal to 1."
-        )
-        @assert_or_log(
-            v ≥ 0,
-            "The values of the input variables have to be non-negative."
-        )
-    end
+    has_input(n) && @assert_or_log(
+        all(inputs(n, p) ≤ 1 for p ∈ inputs(n)),
+        "The values for the Dictionary `input` must be less than or equal to 1."
+    )
+    has_output(n) && @assert_or_log(
+        all(outputs(n, p) ≤ 1 for p ∈ outputs(n)),
+        "The values for the Dictionary `output` must be less than or equal to 1."
+    )
 
     @assert_or_log(
         all(level_init(n, t) ≤ capacity(par_level, t) for t ∈ 𝒯),
@@ -128,22 +84,19 @@ function EMB.check_node(n::HydroStorage, 𝒯, modeltype::EnergyModel, check_tim
         # Check that the reservoir isn't underfilled from the start.
         @assert_or_log(
             level_init(n, t_inv) + level_inflow(n, t) ≥ level_min(n, t) * capacity(par_level, t),
-            "The reservoir can't be underfilled from the start (" * string(t) * ").")
+            "The reservoir cannot be underfilled from the start (" * string(t) * ").")
     end
-
     @assert_or_log(
         all(level_init(n, t) ≥ 0 for t ∈ 𝒯),
-        "The field `level_init` can not be negative."
+        "The field `level_init` cannot be negative."
     )
-
-    # level_min
     @assert_or_log(
         all(level_min(n, t) ≥ 0 for t ∈ 𝒯),
-        "The field `level_min` can not be negative."
+        "The field `level_min` cannot be negative."
     )
     @assert_or_log(
         all(level_min(n, t) ≤ 1 for t ∈ 𝒯),
-        "The field `level_min` can not be larger than 1."
+        "The field `level_min` cannot be larger than 1."
     )
 end
 
@@ -190,8 +143,6 @@ This method checks that the *[`HydroGate`](@ref)* node is valid.
  - The field `cap` is required to be non-negative.
 """
 function EMB.check_node(n::HydroGate, 𝒯, modeltype::EnergyModel, check_timeprofiles::Bool)
-    𝒯ᴵⁿᵛ = strategic_periods(𝒯)
-
     @assert_or_log(
         all(capacity(n, t) ≥ 0 for t ∈ 𝒯),
         "The capacity must be non-negative."
@@ -310,6 +261,10 @@ end
 
 This method checks that the *[`AbstractBattery`](@ref)* node is valid.
 
+It reuses the standard checks of a `Storage` node through calling the function
+[`EMB.check_node_default`](@extef EnergyModelsBase.check_node_default), but adds an
+additional check on the data.
+
 ## Checks
 - The `TimeProfile` of the field `capacity` in the type in the field `charge` is required
   to be non-negative.
@@ -327,55 +282,15 @@ This method checks that the *[`AbstractBattery`](@ref)* node is valid.
   function [`check_battery_life`](@ref).
 """
 function EMB.check_node(n::AbstractBattery, 𝒯, modeltype::EnergyModel, check_timeprofiles::Bool)
-
-    𝒯ᴵⁿᵛ = strategic_periods(𝒯)
-    par_charge = charge(n)
-    par_level = level(n)
-    par_discharge = discharge(n)
-
-    @assert_or_log(
-        all(capacity(par_charge, t) ≥ 0 for t ∈ 𝒯),
-        "The charge capacity must be non-negative."
+    EMB.check_node_default(n, 𝒯, modeltype, check_timeprofiles)
+    has_input(n) && @assert_or_log(
+        all(inputs(n, p) ≤ 1 for p ∈ inputs(n)),
+        "The values for the Dictionary `input` must be less than or equal to 1."
     )
-    if isa(par_charge, EMB.UnionOpexFixed)
-        EMB.check_fixed_opex(par_charge, 𝒯ᴵⁿᵛ, check_timeprofiles)
-    end
-    @assert_or_log(
-        all(capacity(par_level, t) ≥ 0 for t ∈ 𝒯),
-        "The level capacity must be non-negative."
+    has_output(n) && @assert_or_log(
+        all(outputs(n, p) ≤ 1 for p ∈ outputs(n)),
+        "The values for the Dictionary `output` must be less than or equal to 1."
     )
-    if isa(par_level, EMB.UnionOpexFixed)
-        EMB.check_fixed_opex(par_level, 𝒯ᴵⁿᵛ, check_timeprofiles)
-    end
-    @assert_or_log(
-        all(capacity(par_discharge, t) ≥ 0 for t ∈ 𝒯),
-        "The discharge capacity must be non-negative."
-    )
-    if isa(par_discharge, EMB.UnionOpexFixed)
-        EMB.check_fixed_opex(par_discharge, 𝒯ᴵⁿᵛ, check_timeprofiles)
-    end
-
-    for v ∈ values(n.output)
-        @assert_or_log(
-            v ≤ 1,
-            "The value of the `output` resource has to be less than or equal to 1."
-        )
-        @assert_or_log(
-            v ≥ 0,
-            "The value of the `output` resource has to be non-negative."
-        )
-    end
-
-    for v ∈ values(n.input)
-        @assert_or_log(
-            v ≤ 1,
-            "The values of the input variables have to be less than or equal to 1."
-        )
-        @assert_or_log(
-            v ≥ 0,
-            "The values of the input variables have to be non-negative."
-        )
-    end
     check_battery_life(n, battery_life(n), 𝒯, modeltype, check_timeprofiles)
 end
 
@@ -383,6 +298,10 @@ end
     EMB.check_node(n::ReserveBattery, 𝒯, modeltype::EnergyModel, check_timeprofiles::Bool)
 
 This method checks that the *[`ReserveBattery`](@ref)* node is valid.
+
+It reuses the standard checks of a `Storage` node through calling the function
+[`EMB.check_node_default`](@extef EnergyModelsBase.check_node_default), but adds an
+additional check on the data.
 
 ## Checks
 - The `TimeProfile` of the field `capacity` in the type in the field `charge` is required
@@ -403,55 +322,15 @@ This method checks that the *[`ReserveBattery`](@ref)* node is valid.
   dictionaries `input` and `output`.
 """
 function EMB.check_node(n::ReserveBattery, 𝒯, modeltype::EnergyModel, check_timeprofiles::Bool)
-
-    𝒯ᴵⁿᵛ = strategic_periods(𝒯)
-    par_charge = charge(n)
-    par_level = level(n)
-    par_discharge = discharge(n)
-
-    @assert_or_log(
-        all(capacity(par_charge, t) ≥ 0 for t ∈ 𝒯),
-        "The charge capacity must be non-negative."
+    EMB.check_node_default(n, 𝒯, modeltype, check_timeprofiles)
+    has_input(n) && @assert_or_log(
+        all(inputs(n, p) ≤ 1 for p ∈ inputs(n)),
+        "The values for the Dictionary `input` must be less than or equal to 1."
     )
-    if isa(par_charge, EMB.UnionOpexFixed)
-        EMB.check_fixed_opex(par_charge, 𝒯ᴵⁿᵛ, check_timeprofiles)
-    end
-    @assert_or_log(
-        all(capacity(par_level, t) ≥ 0 for t ∈ 𝒯),
-        "The level capacity must be non-negative."
+    has_output(n) && @assert_or_log(
+        all(outputs(n, p) ≤ 1 for p ∈ outputs(n)),
+        "The values for the Dictionary `output` must be less than or equal to 1."
     )
-    if isa(par_level, EMB.UnionOpexFixed)
-        EMB.check_fixed_opex(par_level, 𝒯ᴵⁿᵛ, check_timeprofiles)
-    end
-    @assert_or_log(
-        all(capacity(par_discharge, t) ≥ 0 for t ∈ 𝒯),
-        "The discharge capacity must be non-negative."
-    )
-    if isa(par_discharge, EMB.UnionOpexFixed)
-        EMB.check_fixed_opex(par_discharge, 𝒯ᴵⁿᵛ, check_timeprofiles)
-    end
-
-    for v ∈ values(n.output)
-        @assert_or_log(
-            v ≤ 1,
-            "The value of the `output` resource has to be less than or equal to 1."
-        )
-        @assert_or_log(
-            v ≥ 0,
-            "The value of the `output` resource has to be non-negative."
-        )
-    end
-
-    for v ∈ values(n.input)
-        @assert_or_log(
-            v ≤ 1,
-            "The values of the input variables have to be less than or equal to 1."
-        )
-        @assert_or_log(
-            v ≥ 0,
-            "The values of the input variables have to be non-negative."
-        )
-    end
     check_battery_life(n, battery_life(n), 𝒯, modeltype, check_timeprofiles)
     if !isempty(reserve_up(n))
         @assert_or_log(
@@ -474,6 +353,7 @@ function EMB.check_node(n::ReserveBattery, 𝒯, modeltype::EnergyModel, check_t
         )
     end
 end
+
 """
 check_battery_life(n::AbstractBattery, bat_life::AbstractBatteryLife, 𝒯, modeltype::EnergyModel, check_timeprofiles::Bool)
 check_battery_life(n::AbstractBattery, bat_life::CycleLife, 𝒯, modeltype::EnergyModel, check_timeprofiles::Bool)
