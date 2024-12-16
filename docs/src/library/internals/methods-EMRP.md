@@ -30,13 +30,13 @@ EnergyModelsRenewableProducers.has_penalty_down
 EnergyModelsRenewableProducers.has_degradation
 ```
 
-## [Check methods](@id lib-int-met-check)
+## [Check functions](@id lib-int-met-check)
 
 ```@docs
 EnergyModelsRenewableProducers.check_battery_life
 ```
 
-## [Utility methods](@id lib-int-met-util)
+## [Utility functions](@id lib-int-met-util)
 
 ```@docs
 EnergyModelsRenewableProducers.capacity_max
