@@ -1,5 +1,12 @@
 # Release notes
 
+## Version 0.6.5 (2025-02-10)
+
+* Adjusted to [`EnergyModelsBase` v0.9.0](https://github.com/EnergyModelsX/EnergyModelsBase.jl/releases/tag/v0.9.0):
+  * Increased version nubmer for EMB.
+  * Model worked without adjustments.
+  * Adjustments only required for simple understanding of changes.
+
 ## Version 0.6.4 (2024-11-29)
 
 * Fixed errors overseen from the inclusion of batteries and detailed hydropower.

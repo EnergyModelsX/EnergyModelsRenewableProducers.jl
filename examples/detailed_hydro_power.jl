@@ -216,14 +216,8 @@ function generate_detailed_hydropower()
         Direct("market_buy-availability", market_buy, av),
     ]
 
-    # WIP data structure
-    case = Dict(
-        :nodes => nodes,
-        :links => links,
-        :products => products,
-        :T => T
-    )
-
+    # Input data structure
+    case = Case(T, products, [nodes, links], [[get_nodes, get_links]])
     return case, model
 end
 
@@ -239,8 +233,8 @@ Function for processing the results to be represented in the a table afterwards.
 """
 function process_det_hydro_results(m, case)
     # Extract the nodes and the first strategic period from the data
-    upper, lower, generator_up, generator_low, pump = case[:nodes][[2,3,4,5,6]]
-    sp1 = first(strategic_periods(case[:T]))
+    upper, lower, generator_up, generator_low, pump = get_nodes(case)[[2, 3, 4, 5, 6]]
+    sp1 = first(strategic_periods(get_time_struct(case)))
 
     # System variables
     lvl_up = JuMP.Containers.rowtable(      # Upper reservoir level

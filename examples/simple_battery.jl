@@ -110,9 +110,8 @@ function generate_battery_example_data()
         Direct("battery-reserve_down", nodes[2], nodes[4])
     ]
 
-    # Create the case dictionary
-    case = Dict(:nodes => nodes, :links => links, :products => products, :T => T)
-
+    # Input data structure
+    case = Case(T, products, [nodes, links], [[get_nodes, get_links]])
     return case, model
 end
 
@@ -128,9 +127,10 @@ Function for processing the results to be represented in the a table afterwards.
 """
 function process_battery_results(m, case)
     # Extract the nodes and the first strategic period from the data
-    source, bat, sink = case[:nodes][[1, 2, 3]]
-    𝒯ᴵⁿᵛ = strategic_periods(case[:T])
-    ops = collect(case[:T])[1:20]
+    source, bat, sink = get_nodes(case)[[1, 2, 3]]
+    𝒯 = get_time_struct(case)
+    𝒯ᴵⁿᵛ = strategic_periods(𝒯)
+    ops = collect(𝒯)[1:20]
 
     # System variables for operational periods
     source_use = JuMP.Containers.rowtable(      # Source usage

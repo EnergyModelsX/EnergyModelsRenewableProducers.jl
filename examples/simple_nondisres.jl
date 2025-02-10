@@ -66,15 +66,6 @@ function generate_nondisres_example_data()
         # Line above: Surplus and deficit penalty for the node in EUR/MWh
         Dict(Power => 1),   # Energy demand and corresponding ratio
     )
-    nodes = [source, sink]
-
-    # Connect the two nodes with each other
-    links = [
-        Direct("source-demand", nodes[1], nodes[2], Linear())
-    ]
-
-    # Create the case dictionary
-    case = Dict(:nodes => nodes, :links => links, :products => products, :T => T)
 
     # Create the additonal non-dispatchable power source
     wind = NonDisRES(
@@ -86,11 +77,16 @@ function generate_nondisres_example_data()
         Dict(Power => 1),   # Output from the Node, in this case, Power
     )
 
-    # Update the case data with the non-dispatchable power source and link
-    push!(case[:nodes], wind)
-    link = Direct("wind-demand", case[:nodes][3], case[:nodes][2], Linear())
-    push!(case[:links], link)
+    nodes = [source, wind, sink]
 
+    # Connect the two nodes with each other
+    links = [
+        Direct("source-demand", nodes[1], nodes[3], Linear()),
+        Direct("wind-demand", nodes[2], nodes[3], Linear())
+    ]
+
+    # Input data structure
+    case = Case(T, products, [nodes, links], [[get_nodes, get_links]])
     return case, model
 end
 
@@ -112,7 +108,7 @@ pretty_table(
 pretty_table(
     JuMP.Containers.rowtable(
         value,
-        m[:cap_use][case[:nodes][1],:];
+        m[:cap_use][get_nodes(case)[1],:];
         header = [:TimePeriod, :Usage],
     ),
 )

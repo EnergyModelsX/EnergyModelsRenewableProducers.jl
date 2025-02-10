@@ -61,12 +61,8 @@ function build_case_gate()
         Direct("hydro_gate-ocean", hydro_gate, hydro_ocean)
     ]
 
-    case = Dict(
-        :nodes => nodes,
-        :links => links,
-        :products => products,
-        :T => T
-    )
+    # Input data structure
+    case = Case(T, products, [nodes, links], [[get_nodes, get_links]])
     return case, model
 end
 
@@ -75,10 +71,9 @@ end
     optimizer = optimizer_with_attributes(HiGHS.Optimizer, MOI.Silent() => true)
     m = EMB.run_model(case, model, optimizer)
 
-    𝒯 = case[:T]
-    hydro_reservoir = case[:nodes][1]
-    hydro_gate = case[:nodes][2]
-    Water = case[:products][3]
+    𝒯 = get_time_struct(case)
+    hydro_reservoir, hydro_gate = get_nodes(case)[[1, 2]]
+    Water = get_products(case)[3]
 
     level_Δ = value.([m[:stor_level_Δ_op][hydro_reservoir, t] for t in 𝒯])
     discharge = value.([m[:flow_in][hydro_gate, t, Water] for t in 𝒯])
@@ -91,11 +86,9 @@ end
     case, model = build_case_gate()
     optimizer = optimizer_with_attributes(HiGHS.Optimizer, MOI.Silent() => true)
 
-    𝒯 = case[:T]
-    hydro_reservoir = case[:nodes][1]
-    hydro_gate = case[:nodes][2]
-    hydro_ocean = case[:nodes][3]
-    Water = case[:products][3]
+    𝒯 = get_time_struct(case)
+    hydro_reservoir, hydro_gate, hydro_ocean = get_nodes(case)[[1, 2, 3]]
+    Water = get_products(case)[3]
     max_profile = [0.2, 0.8, 0.8, 1]
     push!(hydro_reservoir.data,
         ScheduleConstraint{MaxSchedule}(
@@ -138,10 +131,9 @@ end
     case, model = build_case_gate()
     optimizer = optimizer_with_attributes(HiGHS.Optimizer, MOI.Silent() => true)
 
-    𝒯 = case[:T]
-    hydro_reservoir = case[:nodes][1]
-    hydro_gate = case[:nodes][2]
-    Water = case[:products][3]
+    𝒯 = get_time_struct(case)
+    hydro_reservoir, hydro_gate = get_nodes(case)[[1,2]]
+    Water = get_products(case)[3]
 
     # Verify reservoir minimum/maximum hard constraint
     max_profile = [1, 0, 0.8, 1]
@@ -180,10 +172,9 @@ end
     case, model = build_case_gate()
     optimizer = optimizer_with_attributes(HiGHS.Optimizer, MOI.Silent() => true)
 
-    𝒯 = case[:T]
-    hydro_reservoir = case[:nodes][1]
-    hydro_gate = case[:nodes][2]
-    Water = case[:products][3]
+    𝒯 = get_time_struct(case)
+    hydro_reservoir, hydro_gate, = get_nodes(case)[[1,2]]
+    Water = get_products(case)[3]
 
     # Verify reservoir minimum/maximum hard constraint
     schedule_profile = 0.1 * ones(4)
@@ -211,11 +202,9 @@ end
     case, model = build_case_gate()
     optimizer = optimizer_with_attributes(HiGHS.Optimizer, MOI.Silent() => true)
 
-    𝒯 = case[:T]
-    hydro_reservoir = case[:nodes][1]
-    hydro_gate = case[:nodes][2]
-    hydro_ocean = case[:nodes][3]
-    Water = case[:products][3]
+    𝒯 = get_time_struct(case)
+    hydro_reservoir, hydro_gate, hydro_ocean = get_nodes(case)[[1, 2, 3]]
+    Water = get_products(case)[3]
 
     # Verify reservoir minimum/maximum hard constraint
     schedule_profile = 0.1 * ones(4)
@@ -254,8 +243,7 @@ end
 
 function build_case_generator()
     case, model = build_case_gate()
-    Power = case[:products][2]
-    Water = case[:products][3]
+    Power, Water = get_products(case)[[2, 3]]
     hydro_gen_cap = 20
     hydro_generator = HydroGenerator(
         "hydro_generator", # Node ID
@@ -281,15 +269,14 @@ function build_case_generator()
         Data[]
     )
 
-    hydro_reservoir = case[:nodes][1]
-    hydro_ocean = case[:nodes][3]
+    hydro_reservoir, hydro_ocean = get_nodes(case)[[1, 3]]
 
-    push!(case[:nodes], hydro_generator)
-    push!(case[:links], Direct("hydro_res-hydro_gen", hydro_reservoir, hydro_generator))
-    push!(case[:links], Direct("hydro_gen-hydro_ocean", hydro_generator, hydro_ocean))
+    push!(get_nodes(case), hydro_generator)
+    push!(get_links(case), Direct("hydro_res-hydro_gen", hydro_reservoir, hydro_generator))
+    push!(get_links(case), Direct("hydro_gen-hydro_ocean", hydro_generator, hydro_ocean))
 
-    push!(case[:nodes], electricty_market)
-    push!(case[:links], Direct("hydro_gen-market", hydro_generator, electricty_market))
+    push!(get_nodes(case), electricty_market)
+    push!(get_links(case), Direct("hydro_gen-market", hydro_generator, electricty_market))
 
     return case, model
 end
@@ -299,19 +286,15 @@ end
     optimizer = optimizer_with_attributes(HiGHS.Optimizer, MOI.Silent() => true)
     m = EMB.run_model(case, model, optimizer)
 
-    hydro_reservoir = case[:nodes][1]
-    hydro_gate = case[:nodes][2]
-    hydro_ocean = case[:nodes][3]
-    hydro_generator = case[:nodes][4]
-
-    Power = case[:products][2]
-    Water = case[:products][3]
+    hydro_reservoir, hydro_gate, hydro_ocean, hydro_generator =
+        get_nodes(case)[[1, 2, 3, 4]]
+    Power, Water = get_products(case)[[2, 3]]
 
     # Check that production and discharge follows PQ-curve
     # Check the total costs sums up to the objective
     # 1. Costs for violating minimum discharge
     # 2. Production costs (negative since they are income)
-    total_cost = map(strategic_periods(case[:T])) do sp
+    total_cost = map(strategic_periods(get_time_struct(case))) do sp
         plant_discharge = value.([m[:flow_out][hydro_generator, t, Water] for t in sp])
         gate_discharge = value.([m[:flow_out][hydro_gate, t, Water] for t in sp])
         total_discharge = plant_discharge + gate_discharge
@@ -334,7 +317,7 @@ end
         # Check that points are on curve
         @test discharge ≈ discharge_estimated atol=1e-12
 
-        price = [case[:nodes][5].penalty[:surplus][t] for t in sp]
+        price = [get_nodes(case)[5].penalty[:surplus][t] for t in sp]
         production_cost = production .* price
 
         total_cost = (min_discharge_cost + production_cost) .* [duration(t) for t in sp]
@@ -347,14 +330,9 @@ end
     case, model = build_case_generator()
     optimizer = optimizer_with_attributes(HiGHS.Optimizer, MOI.Silent() => true)
 
-    hydro_reservoir = case[:nodes][1]
-    hydro_gate = case[:nodes][2]
-    hydro_ocean = case[:nodes][3]
-    hydro_generator = case[:nodes][4]
-    market = case[:nodes][5]
-
-    Power = case[:products][2]
-    Water = case[:products][3]
+    hydro_reservoir, hydro_gate, hydro_ocean, hydro_generator, market =
+        get_nodes(case)[[1, 2, 3, 4, 5]]
+    Power, Water = get_products(case)[[2, 3]]
 
     # Modify price to increase production in first hours to ensure schedule changes solution
     market.penalty[:surplus] = OperationalProfile(-[50, 50, 10, 10])
@@ -372,7 +350,7 @@ end
     )
     m = EMB.run_model(case, model, optimizer)
 
-    res = map(strategic_periods(case[:T])) do sp
+    res = map(strategic_periods(get_time_struct(case))) do sp
         production = value.([m[:flow_out][hydro_generator, t, Power] for t in sp])
         discharge = value.([m[:flow_out][hydro_generator, t, Water] for t in sp])
         production_cap = [capacity(hydro_generator, t) for t in sp]
@@ -380,7 +358,7 @@ end
     end
 
     # Test that production equal capacity * schedule_profile when schedule_flag is set
-    for sp in strategic_periods(case[:T])
+    for sp in strategic_periods(get_time_struct(case))
         production = value.([m[:flow_out][hydro_generator, t, Power] for t in sp])
         discharge = value.([m[:flow_out][hydro_generator, t, Water] for t in sp])
         production_cap = [capacity(hydro_generator, t) for t in sp]
@@ -392,14 +370,9 @@ end
     case, model = build_case_generator()
     optimizer = optimizer_with_attributes(HiGHS.Optimizer, MOI.Silent() => true)
 
-    hydro_reservoir = case[:nodes][1]
-    hydro_gate = case[:nodes][2]
-    hydro_ocean = case[:nodes][3]
-    hydro_generator = case[:nodes][4]
-    market = case[:nodes][5]
-
-    Power = case[:products][2]
-    Water = case[:products][3]
+    hydro_reservoir, hydro_gate, hydro_ocean, hydro_generator, market =
+        get_nodes(case)[[1, 2, 3, 4, 5]]
+    Power, Water = get_products(case)[[2, 3]]
 
     # Verify power schedule
     min_discharge_factor = 0.5
@@ -413,7 +386,7 @@ end
     )
     m = EMB.run_model(case, model, optimizer)
 
-    for sp in strategic_periods(case[:T])
+    for sp in strategic_periods(get_time_struct(case))
         discharge = value.([m[:flow_out][hydro_generator, t, Water] for t in sp])
         discharge_cap = [capacity(hydro_generator, t, Water) for t in sp]
         @test discharge ≥ discharge_cap * min_discharge_factor
@@ -524,12 +497,8 @@ function build_case_pump()
         Direct("market-pump", market_buy, hydro_pump),
     ]
 
-    case = Dict(
-        :nodes => nodes,
-        :links => links,
-        :products => products,
-        :T => T
-    )
+    # Input data structure
+    case = Case(T, products, [nodes, links], [[get_nodes, get_links]])
     return case, model
 end
 
@@ -537,19 +506,20 @@ end
     case, model = build_case_pump()
     optimizer = optimizer_with_attributes(HiGHS.Optimizer, MOI.Silent() => true)
 
-    reservoir_up = case[:nodes][1]
-    reservoir_down = case[:nodes][2]
-    hydro_generator = case[:nodes][3]
-    hydro_pump = case[:nodes][4]
-    market = case[:nodes][5]
+    reservoir_up = get_nodes(case)[1]
+    reservoir_down = get_nodes(case)[2]
+    hydro_generator = get_nodes(case)[3]
+    hydro_pump = get_nodes(case)[4]
+    market = get_nodes(case)[5]
 
-    Power = case[:products][2]
-    Water = case[:products][3]
+    reservoir_up, reservoir_down, hydro_generator, hydro_pump, market =
+        get_nodes(case)[[1, 2, 3, 4, 5]]
+    Power, Water = get_products(case)[[2, 3]]
 
     m = EMB.run_model(case, model, optimizer)
 
     # Verify that sum upflow and discharge is equal
-    for sp in strategic_periods(case[:T])
+    for sp in strategic_periods(get_time_struct(case))
         discharge = map(sp) do t
             value(m[:flow_out][hydro_generator, t, Water]) * duration(t)
         end
@@ -564,14 +534,10 @@ end
     case, model = build_case_pump()
     optimizer = optimizer_with_attributes(HiGHS.Optimizer, MOI.Silent() => true)
 
-    reservoir_up = case[:nodes][1]
-    reservoir_down = case[:nodes][2]
-    hydro_generator = case[:nodes][3]
-    hydro_pump = case[:nodes][4]
-    market = case[:nodes][5]
+    reservoir_up, reservoir_down, hydro_generator, hydro_pump, market =
+        get_nodes(case)[[1, 2, 3, 4, 5]]
+    Power, Water = get_products(case)[[2, 3]]
 
-    Power = case[:products][2]
-    Water = case[:products][3]
 
     gen_flag = [true, false, false, false]
     push!(hydro_generator.data,
@@ -596,7 +562,7 @@ end
     m = EMB.run_model(case, model, optimizer)
 
     # Verify that minimum constraint is respected
-    for sp in strategic_periods(case[:T])
+    for sp in strategic_periods(get_time_struct(case))
         gen_discharge = value.([m[:flow_out][hydro_generator, t, Water] for t in sp])
         @test (gen_discharge[1] ≥ 0.6 * 20) | (gen_discharge[1] ≈ 0.6 * 20)
         pump_discharge = value.([m[:flow_out][hydro_pump, t, Water] for t in sp])

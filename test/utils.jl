@@ -42,8 +42,8 @@ function small_graph(; source = nothing, sink = nothing, ops = SimpleTimes(24, 2
         CO2,
     )
 
-    # Creation of the case dictionary
-    case = Dict(:nodes => nodes, :links => links, :products => products, :T => T)
+    # Input data structure
+    case = Case(T, products, [nodes, links], [[get_nodes, get_links]])
     return case, modeltype
 end
 

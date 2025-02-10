@@ -2,7 +2,7 @@
 function general_node_tests(m, case, n::EMRP.HydroStorage)
 
     # Extract time structure and storage node
-    𝒯 = case[:T]
+    𝒯 = get_time_struct(case)
     p_stor = EMB.storage_resource(n)
 
     @testset "stor_level bounds" begin
@@ -102,7 +102,7 @@ end
 
     # Regular nice hydro storage node.
     hydro1 = HydroStor{CyclicStrategic}(
-        "-hydro",
+        "hydro",
         StorCapOpexFixed(max_storage, FixedProfile(10)),
         StorCapOpexVar(FixedProfile(2.0), FixedProfile(10)),
         initial_reservoir,
@@ -116,7 +116,7 @@ end
     # Gives infeasible model without spill-variable (because without spill, the inflow is
     # much greater than what the Rate_cap can handle, given the Stor_cap of the storage).
     hydro2 = HydroStor{CyclicStrategic}(
-        "-hydro",
+        "hydro",
         StorCapOpexFixed(FixedProfile(40), FixedProfile(10)),
         StorCapOpexVar(FixedProfile(2.0), FixedProfile(10)),
         initial_reservoir,
@@ -131,17 +131,19 @@ end
         case, modeltype = small_graph()
 
         # Updating the nodes and the links
-        push!(case[:nodes], hydro)
-        link_from = EMB.Direct(41, case[:nodes][4], case[:nodes][1], EMB.Linear())
-        push!(case[:links], link_from)
-        link_to = EMB.Direct(14, case[:nodes][1], case[:nodes][4], EMB.Linear())
-        push!(case[:links], link_to)
+        𝒩 = get_nodes(case)
+        ℒ = get_links(case)
+        push!(𝒩, hydro)
+        link_from = EMB.Direct(41, 𝒩[4], 𝒩[1], EMB.Linear())
+        push!(ℒ, link_from)
+        link_to = EMB.Direct(14, 𝒩[1], 𝒩[4], EMB.Linear())
+        push!(ℒ, link_to)
 
         # Run the model
         m = EMB.run_model(case, modeltype, OPTIMIZER)
 
         # Extraction of the time structure
-        𝒯 = case[:T]
+        𝒯 = get_time_struct(case)
 
         # Run of the general and node tests
         general_tests(m)
@@ -168,17 +170,20 @@ end
         case, modeltype = small_graph(ops = ops)
 
         # Updating the nodes and the links
-        push!(case[:nodes], hydro1)
-        link_from = EMB.Direct(41, case[:nodes][4], case[:nodes][1], EMB.Linear())
-        push!(case[:links], link_from)
-        link_to = EMB.Direct(14, case[:nodes][1], case[:nodes][4], EMB.Linear())
-        push!(case[:links], link_to)
+        𝒩 = get_nodes(case)
+        ℒ = get_links(case)
+
+        push!(𝒩, hydro1)
+        link_from = EMB.Direct(41, 𝒩[4], 𝒩[1], EMB.Linear())
+        push!(ℒ, link_from)
+        link_to = EMB.Direct(14, 𝒩[1], 𝒩[4], EMB.Linear())
+        push!(ℒ, link_to)
 
         # Run the model
         m = EMB.run_model(case, modeltype, OPTIMIZER)
 
         # Extraction of the time structure
-        𝒯 = case[:T]
+        𝒯 = get_time_struct(case)
         𝒯ᴵⁿᵛ = strategic_periods(𝒯)
 
         # Run of the general and node tests
@@ -188,7 +193,7 @@ end
         # Test the objective value
         @test objective_value(m) ≈ -116160.0
 
-        # All the tests following er for the function
+        # All the tests following are for the function
         # - constraints_level(m, n::HydroStorage, 𝒯, 𝒫, modeltype::EnergyModel)
         for t_inv ∈ 𝒯ᴵⁿᵛ
             𝒯ʳᵖ = repr_periods(t_inv)
@@ -278,15 +283,19 @@ end
         Dict(Power => 1),
         Dict(Power => 0.9),
     )
-
     # Updating the nodes and the links
-    push!(case[:nodes], hydro)
-    link_from = EMB.Direct(41, case[:nodes][4], case[:nodes][1], EMB.Linear())
-    push!(case[:links], link_from)
-    link_to = EMB.Direct(14, case[:nodes][1], case[:nodes][4], EMB.Linear())
-    push!(case[:links], link_to)
+    𝒫 = get_products(case)
+    𝒩 = get_nodes(case)
+    ℒ = get_links(case)
 
-    case[:T] = TwoLevel(2, 1, SimpleTimes(10, 1); op_per_strat=10)
+    push!(𝒩, hydro)
+    link_from = EMB.Direct(41, 𝒩[4], 𝒩[1], EMB.Linear())
+    push!(ℒ, link_from)
+    link_to = EMB.Direct(14, 𝒩[1], 𝒩[4], EMB.Linear())
+    push!(ℒ, link_to)
+
+    𝒯 = TwoLevel(2, 1, SimpleTimes(10, 1); op_per_strat=10)
+    case = Case(𝒯, 𝒫, [𝒩, ℒ], [[get_nodes, get_links]])
 
     # Run the model
     modeltype = OperationalModel(
@@ -297,7 +306,7 @@ end
     m = EMB.run_model(case, modeltype, OPTIMIZER)
 
     # Extraction of the time structure
-    𝒯 = case[:T]
+    𝒯 = get_time_struct(case)
 
     # Run of the general and node tests
     general_tests(m)
@@ -308,7 +317,7 @@ end
     @test objective_value(m) ≈ -6850.0
 
     # Check that the input flow is not fixed to 0 for Power
-    @test sum(is_fixed(m[:flow_in][hydro, t, Power]) for t ∈ 𝒯) == 0
+    @test all(!is_fixed(m[:flow_in][hydro, t, Power]) for t ∈ 𝒯)
 
     @testset "deficit" begin
         if sum(value.(m[:sink_deficit][sink, t]) for t ∈ 𝒯) > 0
