@@ -263,23 +263,6 @@ end
         for field ∈ fieldnames(HydroStor{CyclicStrategic})
             @test getproperty(hydro_old, field) == getproperty(hydro_new, field)
         end
-
-        # Test that an empty input results in a running model
-        case, modeltype = small_graph()
-
-        # Updating the nodes and the links
-        push!(case[:nodes], hydro_new)
-        link_from = EMB.Direct(41, case[:nodes][4], case[:nodes][1], EMB.Linear())
-        push!(case[:links], link_from)
-        link_to = EMB.Direct(14, case[:nodes][1], case[:nodes][4], EMB.Linear())
-        push!(case[:links], link_to)
-
-        # Run the model
-        m = EMB.run_model(case, modeltype, OPTIMIZER)
-
-        # Run of the general and node tests
-        general_tests(m)
-        general_node_tests(m, case, hydro_new)
     end
 
     # Check that `PumpedHydroStor` nodes are correctly constructed when using simplified

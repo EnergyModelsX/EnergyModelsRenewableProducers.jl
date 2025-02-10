@@ -14,7 +14,7 @@
     m = EMB.run_model(case, modeltype, OPTIMIZER)
 
     # Extraction of the time structure
-    𝒯 = case[:T]
+    𝒯 = get_time_struct(case)
 
     # Run of the general tests
     general_tests(m)

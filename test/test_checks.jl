@@ -43,8 +43,8 @@ EMB.TEST_ENV = true
             CO2,
         )
 
-        # Creation of the case dictionary
-        case = Dict(:nodes => nodes, :links => links, :products => products, :T => T)
+        # Input data structure
+        case = Case(T, products, [nodes, links], [[get_nodes, get_links]])
 
         return create_model(case, modeltype), case, modeltype
     end
@@ -141,8 +141,8 @@ end
             CO2,
         )
 
-        # Creation of the case dictionary
-        case = Dict(:nodes => nodes, :links => links, :products => products, :T => T)
+        # Input data structure
+        case = Case(T, products, [nodes, links], [[get_nodes, get_links]])
 
         return create_model(case, modeltype), case, modeltype
     end
@@ -223,8 +223,8 @@ end
             0.07,
         )
 
-        # Creation of the case dictionary
-        case = Dict(:nodes => nodes, :links => links, :products => products, :T => T)
+        # Input data structure
+        case = Case(T, products, [nodes, links], [[get_nodes, get_links]])
 
         return create_model(case, modeltype), case, modeltype
     end
@@ -299,8 +299,8 @@ end
             0.07,
         )
 
-        # Creation of the case dictionary
-        case = Dict(:nodes => nodes, :links => links, :products => products, :T => T)
+        # Input data structure
+        case = Case(T, products, [nodes, links], [[get_nodes, get_links]])
 
         return create_model(case, modeltype), case, modeltype
     end
@@ -344,7 +344,7 @@ end
     )
         products = [Water]
         # Creation of the node to be tested
-        nodes = [type(
+        nodes = EMB.Node[type(
             "hydro_unit",
             cap,
             PqPoints(pq_1, pq_2),
@@ -354,8 +354,6 @@ end
             Water,
             data,
         )]
-
-        links = []
 
         # Creation of the time structure and the used global data
         op_per_strat = 8760.0
@@ -367,8 +365,8 @@ end
             0.07,
         )
 
-        # Creation of the case dictionary
-        case = Dict(:nodes => nodes, :links => links, :products => products, :T => T)
+        # Input data structure
+        case = Case(T, products, Vector[nodes], [Function[]])
 
         return create_model(case, modeltype), case, modeltype
     end
@@ -475,8 +473,8 @@ end
             CO2,
         )
 
-        # Creation of the case dictionary
-        case = Dict(:nodes => nodes, :links => links, :products => products, :T => T)
+        # Input data structure
+        case = Case(T, products, [nodes, links], [[get_nodes, get_links]])
 
         return create_model(case, modeltype), case, modeltype
     end
@@ -581,8 +579,8 @@ end
             CO2,
         )
 
-        # Creation of the case dictionary
-        case = Dict(:nodes => nodes, :links => links, :products => products, :T => T)
+        # Input data structure
+        case = Case(T, products, [nodes, links], [[get_nodes, get_links]])
 
         return create_model(case, modeltype), case, modeltype
     end

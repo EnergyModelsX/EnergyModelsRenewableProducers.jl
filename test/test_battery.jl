@@ -1,8 +1,7 @@
 function general_battery_tests(m, case)
     # Extract the data
-    𝒯 = case[:T]
-    𝒩 = case[:nodes]
-    stor = 𝒩[2]
+    𝒯 = get_time_struct(case)
+    stor = get_nodes(case)[2]
 
     # Test that the level balance is correct for standard periods
     @test all(
@@ -96,8 +95,8 @@ end
         op_per_strat = 8760.0
         T = TwoLevel(n_sp, 2, ops; op_per_strat)
 
-        # Creation of the case dictionary
-        case = Dict(:nodes => nodes, :links => links, :products => products, :T => T)
+        # Input data structure
+        case = Case(T, products, [nodes, links], [[get_nodes, get_links]])
 
         # Creation and solving of the model
         m = create_model(case, modeltype)
@@ -109,9 +108,9 @@ end
 
     function battery_prev_usage_tests(m, case)
         # Extract the data
-        𝒯 = case[:T]
+        𝒯 = get_time_struct(case)
         𝒯ᴵⁿᵛ = strategic_periods(𝒯)
-        stor = case[:nodes][2]
+        stor = get_nodes(case)[2]
         # Test that the charge usage is correctly calculated and accounting for the length of
         # both operational and strategic periods in the first operational period of a
         # strategic period
@@ -148,11 +147,10 @@ end
 
     function battery_degradation_tests(m, case)
         # Extract the data
-        𝒯 = case[:T]
+        𝒯 = get_time_struct(case)
         𝒯ᴵⁿᵛ = strategic_periods(𝒯)
-        𝒩 = case[:nodes]
-        stor = 𝒩[2]
-        sink = 𝒩[3]
+        stor, sink = get_nodes(case)[[2, 3]]
+
         # Test that the capacity limit is correctly enforced in the complete horizon
         # - constraints_usage_iterate:
         #   - Division by 50 to account for the installed storage capacity of the battery
@@ -185,9 +183,9 @@ end
         m, case, modeltype = small_graph(supply_price, el_demand)
 
         # Extract the data
-        𝒯 = case[:T]
+        𝒯 = get_time_struct(case)
         𝒯ᴵⁿᵛ = strategic_periods(𝒯)
-        stor = case[:nodes][2]
+        stor = get_nodes(case)[2]
 
         # Run the standard tests
         general_battery_tests(m, case)
@@ -207,11 +205,9 @@ end
         m, case, modeltype = small_graph(supply_price, el_demand; bat_life)
 
         # Extract the data
-        𝒯 = case[:T]
+        𝒯 = get_time_struct(case)
         𝒯ᴵⁿᵛ = strategic_periods(𝒯)
-        𝒩 = case[:nodes]
-        stor = 𝒩[2]
-        sink = 𝒩[3]
+        stor, sink = get_nodes(case)[[2, 3]]
 
         # Run the standard tests
         general_battery_tests(m, case)
@@ -224,11 +220,9 @@ end
         m, case, modeltype = small_graph(supply_price, el_demand; bat_life, n_sp=4)
 
         # Extract the data
-        𝒯 = case[:T]
+        𝒯 = get_time_struct(case)
         𝒯ᴵⁿᵛ = strategic_periods(𝒯)
-        𝒩 = case[:nodes]
-        stor = 𝒩[2]
-        sink = 𝒩[3]
+        stor, sink = get_nodes(case)[[2, 3]]
 
         # Run the standard tests
         general_battery_tests(m, case)
@@ -263,11 +257,9 @@ end
         )
 
         # Extract the data
-        𝒯 = case[:T]
+        𝒯 = get_time_struct(case)
         𝒯ᴵⁿᵛ = strategic_periods(𝒯)
-        𝒩 = case[:nodes]
-        stor = 𝒩[2]
-        sink = 𝒩[3]
+        stor, sink = get_nodes(case)[[2, 3]]
 
         # Run the standard tests
         general_battery_tests(m, case)
@@ -312,11 +304,9 @@ end
         )
 
         # Extract the data
-        𝒯 = case[:T]
+        𝒯 = get_time_struct(case)
         𝒯ᴵⁿᵛ = strategic_periods(𝒯)
-        𝒩 = case[:nodes]
-        stor = 𝒩[2]
-        sink = 𝒩[3]
+        stor, sink = get_nodes(case)[[2, 3]]
 
         # Run the standard tests
         general_battery_tests(m, case)
@@ -363,10 +353,9 @@ end
         m, case, modeltype = small_graph(supply_price, el_demand; ops)
 
         # Extract the data
-        𝒯 = case[:T]
+        𝒯 = get_time_struct(case)
         𝒯ᴵⁿᵛ = strategic_periods(𝒯)
-        𝒩 = case[:nodes]
-        stor = 𝒩[2]
+        stor = get_nodes(case)[2]
 
         # Run the standard tests
         general_battery_tests(m, case)
@@ -390,11 +379,9 @@ end
         m, case, modeltype = small_graph(supply_price, el_demand; ops, bat_life)
 
         # Extract the data
-        𝒯 = case[:T]
+        𝒯 = get_time_struct(case)
         𝒯ᴵⁿᵛ = strategic_periods(𝒯)
-        𝒩 = case[:nodes]
-        stor = 𝒩[2]
-        sink = 𝒩[3]
+        stor, sink = get_nodes(case)[[2, 3]]
 
         # Run the standard tests
         general_battery_tests(m, case)
@@ -490,8 +477,8 @@ end
             CO2,
         )
 
-        # Creation of the case dictionary
-        case = Dict(:nodes => nodes, :links => links, :products => products, :T => T)
+        # Input data structure
+        case = Case(T, products, [nodes, links], [[get_nodes, get_links]])
 
         # Creation and solving of the model
         m = create_model(case, modeltype)
@@ -507,10 +494,9 @@ end
     m, case, modeltype = small_graph(supply_price, el_demand)
 
     # Extract the data
-    𝒯 = case[:T]
+    𝒯 = get_time_struct(case)
     𝒯ᴵⁿᵛ = strategic_periods(𝒯)
-    𝒩 = case[:nodes]
-    stor = 𝒩[2]
+    stor = get_nodes(case)[2]
 
     # Run the standard tests
     general_battery_tests(m, case)
