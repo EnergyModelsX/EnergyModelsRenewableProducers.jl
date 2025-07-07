@@ -358,11 +358,12 @@ Returns vector of `Data` that are of type `ScheduleConstraint`.
 constraint_data(n::EMB.Node) = filter(is_constraint_data, node_data(n))
 
 """
-    is_constraint_resource(data::ScheduleConstraint, resource::Resource)
+    is_constraint_resource(data::ScheduleConstraint, p::Resource)
 
-Returns true if `Data` is of type `ScheduleConstraint` and `ScheduleConstraint` resource type is `resource`.
+Returns true if `Data` is of type `ScheduleConstraint` and `ScheduleConstraint` resource
+type is `p`.
 """
-is_constraint_resource(data::ScheduleConstraint, resource::Resource) = resource == resource(data)
+is_constraint_resource(data::ScheduleConstraint, p::Resource) = p == resource(data)
 
 """
     is_active(data::ScheduleConstraint, t)
@@ -504,13 +505,10 @@ EMB.outputs(n::HydroReservoir, p::Resource) = 1
 
 """
     level(n::HydroReservoir)
-    level(n::HydroReservoir, t)
 
-Returns the `vol` parameter field of the HydroReservoir `n` either as `TimeProfile` or in
-operational period `t`.
+Returns the `vol` parameter field of the HydroReservoir `n`.
 """
 EMB.level(n::HydroReservoir) = n.vol
-EMB.level(n::HydroReservoir, t) = n.vol[t]
 
 """
     vol_inflow(n::HydroReservoir)

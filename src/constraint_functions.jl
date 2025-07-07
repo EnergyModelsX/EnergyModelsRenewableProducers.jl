@@ -482,7 +482,7 @@ function build_hydro_reservoir_vol_constraints(m, n::HydroReservoir, c::Schedule
         EMB.capacity(EMB.level(n), t) * value(c, t))
     for t ∈ 𝒯
         if is_active(c, t) & !has_penalty(c, t)
-            JuMP.fix(m[:stor_level][n, t], EMB.capacity(EMB.level(n), t) * value(c, t))
+            JuMP.fix(m[:stor_level][n, t], EMB.capacity(EMB.level(n), t) * value(c, t); force=true)
         end
     end
 end
@@ -513,7 +513,7 @@ function EMB.constraints_level_aux(m, n::HydroReservoir{T} where T<:EMB.StorageB
 end
 
 """
-    EMB.constraints_opex_var(m, n::HydroResevoir{T}, 𝒯ᴵⁿᵛ, modeltype::EnergyModel)
+    EMB.constraints_opex_var(m, n::HydroReservoir{T}, 𝒯ᴵⁿᵛ, modeltype::EnergyModel)
     EMB.constraints_opex_var(m, n::HydroGate, 𝒯ᴵⁿᵛ, modeltype::EnergyModel)
     EMB.constraints_opex_var(m, n::HydroUnit, 𝒯ᴵⁿᵛ, modeltype::EnergyModel)
 
@@ -553,8 +553,7 @@ function EMB.constraints_opex_var(m, n::HydroGate, 𝒯ᴵⁿᵛ, modeltype::Ene
             penalty_down_var[t_inv]
     )
 end
-function EMB.constraints_opex_var(m, n::HydroReservoir{T}, 𝒯ᴵⁿᵛ,
-    modeltype::EnergyModel) where {T <: EMB.StorageBehavior}
+function EMB.constraints_opex_var(m, n::HydroReservoir, 𝒯ᴵⁿᵛ, modeltype::EnergyModel)
 
     # Extracts the contribution from the individual components
     if EMB.has_level_OPEX_var(n)
