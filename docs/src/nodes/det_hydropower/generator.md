@@ -95,7 +95,7 @@ The following variables are created if required by the *[additional constraints]
 
 ### [Constraints](@id nodes-det_hydro_power-generator-math-con)
 
-In the following sections the vector of [`HydroGenerator`](@ref) nodes are omitted from the descriptions.
+The following sections omit the direct inclusion of the vector of [`HydroGenerator`](@ref) nodes.
 Instead, it is implicitly assumed that the constraints are valid ``\forall n ∈ N`` for all [`HydroGenerator`](@ref) types if not stated differently.
 In addition, all constraints are valid ``\forall t \in T`` (that is in all operational periods) or ``\forall t_{inv} \in T^{Inv}`` (that is in all strategic periods).
 

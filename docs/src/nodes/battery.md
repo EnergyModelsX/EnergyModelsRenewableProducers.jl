@@ -1,4 +1,4 @@
-# [Hydro storage node](@id nodes-battery)
+# [Battery nodes](@id nodes-battery)
 
 As outlined in the section on *[simple hydro storage](@ref nodes-hydro_power)*, the reference storage node[`RefStorage`](@extref EnergyModelsBase.RefStorage) has some built in limitations.
 In the case of battery storage, the main limitations are related to not limiting the discharge use, not being able to include charge and discharge efficiencies, and not allowing for degradation of the storage capacity.
@@ -97,11 +97,11 @@ These fields are given as:
   It is explained in more detail *[above](@ref nodes-battery-phil-life)*.
 - **`reserve_up::Vector{<:ResourceCarrier}`**:\
   The upwards reserve is only included for [`ReserveBattery`](@ref) nodes.
-  It corresponds to the potential of the node to *deliver* reserve electricity to the system in the given operational period.\
+  It corresponds to the potential of the node to *deliver* reserve electricity to the system in a given operational period.\
   The specified resources cannot be part of the `input` or `output` dictionaries.
 - **`reserve_down::Vector{<:ResourceCarrier}`**:\
   The downwards reserve is only included for [`ReserveBattery`](@ref) nodes.
-  It corresponds to the potential of the node to *receive* reserve electricity from the system in the given operational period.\
+  It corresponds to the potential of the node to *receive* reserve electricity from the system in a given operational period.\
   The specified resources cannot be part of the `input` or `output` dictionaries.
 
 ## [Mathematical description](@id nodes-battery-math)

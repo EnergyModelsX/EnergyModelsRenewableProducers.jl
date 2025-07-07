@@ -1,5 +1,9 @@
 # Release notes
 
+## Unversioned
+
+* Minor updates to the documentation.
+
 ## Version 0.6.5 (2025-02-10)
 
 * Adjusted to [`EnergyModelsBase` v0.9.0](https://github.com/EnergyModelsX/EnergyModelsBase.jl/releases/tag/v0.9.0):

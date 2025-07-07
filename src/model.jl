@@ -92,8 +92,7 @@ function EMB.variables_node(m, 𝒩::Vector{HydroGate}, 𝒯, modeltype::EnergyM
 end
 
 """
-    EMB.variables_node(m, 𝒩::Vector{HydroReservoir{T}}, 𝒯, modeltype::EnergyModel) where \
-    {T <: EMB.StorageBehavior}
+    EMB.variables_node(m, 𝒩::Vector{HydroReservoir{T}}, 𝒯, modeltype::EnergyModel) where {T <: EMB.StorageBehavior}
 
 Creates the following additional variables for **ALL** [`HydroReservoir`](@ref) nodes that
 have additional constraints through [`ScheduleConstraint`](@ref):
@@ -107,9 +106,12 @@ instead of providing a strict bound. They hence transform the constraint to a so
 constraint. Without these penalty variables, too strict volume restrictions may cause an
 infeasible model.
 """
-function EMB.variables_node(m, 𝒩::Vector{<:HydroReservoir{T}}, 𝒯,
-    modeltype::EnergyModel) where {T <: EMB.StorageBehavior}
-
+function EMB.variables_node(
+    m,
+    𝒩::Vector{<:HydroReservoir{T}},
+    𝒯,
+    modeltype::EnergyModel,
+) where {T <: EMB.StorageBehavior}
     @variable(m, rsv_penalty_up[
         n ∈ 𝒩,
         t ∈ 𝒯,

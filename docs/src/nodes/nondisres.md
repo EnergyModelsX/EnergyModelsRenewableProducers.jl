@@ -10,8 +10,10 @@ Hence, it is necessary to implement a source node representing intermittent rene
 
 !!! note "Abstract supertype"
     We implemented an abstract supertype [`AbstractNonDisRES`](@ref).
-    This supertype is used for introducing the variable ``\texttt{curtailment}[n, t]`` and updateing the capacity constraints.
+    This supertype is used for introducing the variable ``\texttt{curtailment}[n, t]`` and for updating the capacity constraints.
     Hence, if you plan to create a new non-dispatchable renewable energy source, you can create it as subtype of `AbstractNonDisRES`, resulting in the variable being available.
+
+    The function `constraints_capacity` is alsoe declared *via* this abstract supertype.
 
 ## [Introduced type and its field](@id nodes-nondisres-fields)
 
@@ -52,7 +54,7 @@ The standard fields are given as:
 [`NonDisRES`](@ref) nodes add a single additional field  compared to a [`RefSource`](@extref EnergyModelsBase.RefSource):
 
 - **`profile::TimeProfile`**:\
-  The profile is used as a multiplier to the installed capacity to represent the maximum actual capacity in each operational period.\
+  The profile is used as a multiplier to the installed capacity to represent the maximum actual capacity in each operational period.
   The profile should be provided as `OperationalProfile` or at least as `RepresentativeProfile`.
   In addition, all values should be in the range ``[0, 1]``.
 
@@ -102,7 +104,7 @@ Hence, a single additional variable is declared through dispatching on the metho
 
 ### [Constraints](@id nodes-nondisres-math-con)
 
-The following sections omit the direction inclusion of the vector of CO₂ source nodes.
+The following sections omit the direct inclusion of the vector of non dispatchable renewable energy nodes.
 Instead, it is implicitly assumed that the constraints are valid ``\forall n ∈ N^{\text{NonDisRES}\_source}`` for all [`NonDisRES`](@ref) types if not stated differently.
 In addition, all constraints are valid ``\forall t \in T`` (that is in all operational periods) or ``\forall t_{inv} \in T^{Inv}`` (that is in all strategic periods).
 

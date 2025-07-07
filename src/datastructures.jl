@@ -20,7 +20,7 @@ the strategic level.
 - **`opex_var::TimeProfile`** is the variable operating expense per energy unit produced.
 - **`opex_fixed::TimeProfile`** is the fixed operating expense.
 - **`output::Dict{Resource, Real}`** are the generated `Resource`s, normally Power.
-- **`data::Vector{Data}`** is the additional data (e.g. for investments). The field `data`
+- **`data::Vector{Data}`** is the additional data (*e.g.*, for investments). The field `data`
   is conditional through usage of a constructor.
 """
 struct NonDisRES <: AbstractNonDisRES
