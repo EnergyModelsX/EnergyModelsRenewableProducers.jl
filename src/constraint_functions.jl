@@ -630,7 +630,7 @@ function EMB.constraints_opex_var(m, n::HydroUnit, 𝒯ᴵⁿᵛ, modeltype::Ene
         sum(penalty(c, t) * scale_op_sp(t_inv, t) * m[:gen_penalty_up][n, t, p]
             for t ∈ t_inv
             for p ∈ [water_resource(n), electricity_resource(n)]
-            for c in constraints
+            for c ∈ constraints
             if has_penalty_up(c, t, p)
         )
     )
@@ -638,7 +638,7 @@ function EMB.constraints_opex_var(m, n::HydroUnit, 𝒯ᴵⁿᵛ, modeltype::Ene
         sum(penalty(c, t) * scale_op_sp(t_inv, t) * m[:gen_penalty_down][n, t, p]
             for t ∈ t_inv
             for p ∈ [water_resource(n), electricity_resource(n)]
-            for c in constraints
+            for c ∈ constraints
             if has_penalty_down(c, t, p)
         )
     )
@@ -729,7 +729,7 @@ function EMB.constraints_flow_out(m, n::HydroGate, 𝒯::TimeStructure, modeltyp
     @constraint(m, [t ∈ 𝒯], m[:flow_out][n, t, p] == m[:cap_use][n, t] * outputs(n, p))
 
     # If HydroGate has constraint data, build the required constraints
-    for c in constraint_data(n)
+    for c ∈ constraint_data(n)
         build_schedule_constraint(m, n, c, 𝒯, p, "flow_out", "gate_penalty")
     end
 end
