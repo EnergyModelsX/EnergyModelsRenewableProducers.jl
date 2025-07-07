@@ -32,7 +32,7 @@ function generate_battery_example_data()
     # CO2 has to be defined, even if not used, as it is required for the `EnergyModel` type
     CO2 = ResourceEmit("CO2", 1.0)
     power = ResourceCarrier("power", 0.0)
-    reserve_down = ResourceCarrier("reserve up", 0.0)
+    reserve_down = ResourceCarrier("reserve down", 0.0)
     products = [power, CO2, reserve_down]
 
     # Variables for the individual entries of the time structure:
