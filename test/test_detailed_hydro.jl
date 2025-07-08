@@ -1,4 +1,3 @@
-
 # CO₂ has to be defined, even if not used, as it is required for the `EnergyModel` type
 co2 = ResourceEmit("CO₂", 1.0)
 power = ResourceCarrier("Power", 0.0)
@@ -7,7 +6,7 @@ water = ResourceCarrier("Water", 0.0)
 """
     gate_res_test_case(;data_res=Data[], data_gate=Data[])
 
-Simple test case for testing the hydro gate and hydro reservoirs
+Simple test case for testing the hydro gate and hydro reservoirs.
 """
 function gate_res_test_case(;res_data=Data[], gate_data=Data[])
     # Declare the used resources
@@ -534,150 +533,251 @@ end
     end
 end
 
-function gen_test_case()
-    case, modeltype = gate_res_test_case()
-    power, water = get_products(case)[[2, 3]]
-    hydro_gen_cap = 20
-    hydro_generator = HydroGenerator(
-        "hydro_generator", # Node ID
-        FixedProfile(hydro_gen_cap),                # Installed discharge capacity
-        PqPoints(
-            [0, 10, 20] / hydro_gen_cap,
-            [0, 10, 22] / hydro_gen_cap
-        ),          # PQ-curve
-        FixedProfile(0),   # opex_var
-        FixedProfile(0),   # opex_fixed
-        power,
-        water
+@testset "HydroGenerator" begin
+    """
+        gen_test_case()
+
+    Simple test case for testing the hydro generator, including the PQ curve implementation and
+    the `ScheduleConstraint`s.
+    """
+    function gen_test_case(;
+        data=Data[],
+        profit=OperationalProfile(-[10, 11, 12, 13]),
     )
-
-    electricty_market = RefSink(
-        "market",
-        FixedProfile(0),
-        Dict(
-            :surplus => OperationalProfile(-[10, 11, 12, 13]),
-            :deficit => FixedProfile(1000)
-        ),
-        Dict(power => 1.0),
-        Data[]
-    )
-
-    hydro_reservoir, hydro_ocean = get_nodes(case)[[1, 3]]
-
-    push!(get_nodes(case), hydro_generator)
-    push!(get_links(case), Direct("hydro_res-hydro_gen", hydro_reservoir, hydro_generator))
-    push!(get_links(case), Direct("hydro_gen-hydro_ocean", hydro_generator, hydro_ocean))
-
-    push!(get_nodes(case), electricty_market)
-    push!(get_links(case), Direct("hydro_gen-market", hydro_generator, electricty_market))
-
-    return case, modeltype
-end
-
-@testset "Test plant production income and PQ relation" begin
-    case, modeltype = gen_test_case()
-    m = EMB.run_model(case, modeltype, OPTIMIZER)
-
-    hydro_reservoir, hydro_gate, hydro_ocean, hydro_generator =
-        get_nodes(case)[[1, 2, 3, 4]]
-    power, water = get_products(case)[[2, 3]]
-
-    # Check that production and discharge follows PQ-curve
-    # Check the total costs sums up to the objective
-    # 1. Costs for violating minimum discharge
-    # 2. Production costs (negative since they are income)
-    total_cost = map(strategic_periods(get_time_struct(case))) do t_inv
-        plant_discharge = value.([m[:flow_out][hydro_generator, t, water] for t ∈ t_inv])
-        gate_discharge = value.([m[:flow_out][hydro_gate, t, water] for t ∈ t_inv])
-        total_discharge = plant_discharge + gate_discharge
-        min_discharge = [hydro_ocean.cap[t] for t ∈ t_inv]
-        min_discharge_penalty = [hydro_ocean.penalty[:deficit][t] for t ∈ t_inv]
-        min_discharge_cost = max.(min_discharge - total_discharge, 0) .* min_discharge_penalty
-
-        production = value.([m[:flow_out][hydro_generator, t, power] for t ∈ t_inv])
-        discharge = value.([m[:flow_out][hydro_generator, t, water] for t ∈ t_inv])
-        discharge_estimated = map(t_inv) do t
-            prod_to_discharge = Interpolations.linear_interpolation(
-                hydro_generator.pq_curve.power_levels * capacity(hydro_generator, t),
-                hydro_generator.pq_curve.discharge_levels * capacity(hydro_generator, t)
-            )
-            discharge_estimated = prod_to_discharge(
-                value(m[:flow_out][hydro_generator, t, power])
-            )
-        end
-
-        # Check that points are on curve
-        @test discharge ≈ discharge_estimated atol=TEST_ATOL
-
-        price = [get_nodes(case)[5].penalty[:surplus][t] for t ∈ t_inv]
-        production_cost = production .* price
-
-        total_cost = (min_discharge_cost + production_cost) .* [duration(t) for t ∈ t_inv]
-        return sum(total_cost)
-    end
-    @test objective_value(m) + sum(total_cost) ≈ 0 atol=TEST_ATOL
-end
-
-@testset "Test plant production schedule" begin
-    case, modeltype = gen_test_case()
-    hydro_reservoir, hydro_gate, hydro_ocean, hydro_generator, market =
-        get_nodes(case)[[1, 2, 3, 4, 5]]
-    power, water = get_products(case)[[2, 3]]
-
-    # Modify price to increase production in first hours to ensure schedule changes solution
-    market.penalty[:surplus] = OperationalProfile(-[50, 50, 10, 10])
-
-    # Verify power schedule
-    schedule_profile = 0.8 * ones(4)
-    schedule_flag = [false, false, true, true]
-    push!(hydro_generator.data,
-        ScheduleConstraint{EqualSchedule}(
+        case, modeltype = gate_res_test_case()
+        power, water = get_products(case)[[2, 3]]
+        hydro_gen_cap = 20
+        gen = HydroGenerator(
+            "hydro_generator", # Node ID
+            FixedProfile(hydro_gen_cap),    # Installed power capacity
+            PqPoints(
+                [0, 10, 20] / hydro_gen_cap,
+                [0, 10, 22] / hydro_gen_cap
+            ),          # PQ-curve
+            FixedProfile(0),   # opex_var
+            FixedProfile(0),   # opex_fixed
             power,
-            OperationalProfile(schedule_profile),  # value
-            OperationalProfile(schedule_flag),     # flag
-            FixedProfile(Inf),                     # penalty
-        )
-    )
-    m = EMB.run_model(case, modeltype, OPTIMIZER)
-
-    res = map(strategic_periods(get_time_struct(case))) do t_inv
-        production = value.([m[:flow_out][hydro_generator, t, power] for t ∈ t_inv])
-        discharge = value.([m[:flow_out][hydro_generator, t, water] for t ∈ t_inv])
-        production_cap = [capacity(hydro_generator, t) for t ∈ t_inv]
-        discharge, production, production_cap
-    end
-
-    # Test that production equal capacity * schedule_profile when schedule_flag is set
-    for t_inv ∈ strategic_periods(get_time_struct(case))
-        production = value.([m[:flow_out][hydro_generator, t, power] for t ∈ t_inv])
-        discharge = value.([m[:flow_out][hydro_generator, t, water] for t ∈ t_inv])
-        production_cap = [capacity(hydro_generator, t) for t ∈ t_inv]
-        @test all(.!schedule_flag .| (production .≈ production_cap .* schedule_profile))
-    end
-end
-
-@testset "Test plant minimum discharge" begin
-    case, modeltype = gen_test_case()
-    hydro_reservoir, hydro_gate, hydro_ocean, hydro_generator, market =
-        get_nodes(case)[[1, 2, 3, 4, 5]]
-    power, water = get_products(case)[[2, 3]]
-
-    # Verify power schedule
-    min_discharge_factor = 0.5
-    push!(hydro_generator.data,
-        ScheduleConstraint{MinSchedule}(
             water,
-            FixedProfile(min_discharge_factor), # value
-            FixedProfile(true),                 # flag
-            FixedProfile(50),                   # penalty
+            data,
         )
-    )
-    m = EMB.run_model(case, modeltype, OPTIMIZER)
 
-    for t_inv ∈ strategic_periods(get_time_struct(case))
-        discharge = value.([m[:flow_out][hydro_generator, t, water] for t ∈ t_inv])
-        discharge_cap = [capacity(hydro_generator, t, water) for t ∈ t_inv]
-        @test discharge ≥ discharge_cap * min_discharge_factor
+        el_market = RefSink(
+            "market",
+            FixedProfile(0),
+            Dict(
+                :surplus => profit,
+                :deficit => FixedProfile(1000)
+            ),
+            Dict(power => 1.0),
+            Data[]
+        )
+
+        res, water_sink = get_nodes(case)[[1, 3]]
+
+        # Update the nodes and links
+        push!(get_nodes(case), gen)
+        push!(get_nodes(case), el_market)
+
+        push!(get_links(case), Direct("hydro_res-hydro_gen", res, gen))
+        push!(get_links(case), Direct("hydro_gen-water_sink", gen, water_sink))
+        push!(get_links(case), Direct("hydro_gen-market", gen, el_market))
+
+        return case, modeltype
+    end
+
+    @testset "Utlities" begin
+        # Create the model and extract the data
+        val = OperationalProfile(0.1 * ones(4))
+        flag = OperationalProfile([false, true, true, false])
+        data = [ScheduleConstraint{EqualSchedule}(
+            water,
+            val,                # value
+            flag,               # flag
+            FixedProfile(57),   # penalty
+        )]
+        case, _ = gen_test_case(;data)
+        𝒯 = get_time_struct(case)
+        gen = get_nodes(case)[4]
+
+        # Test the schedule data
+        @test EMRP.resource(data[1]) == water
+        @test EMRP.is_constraint_resource(data[1], water)
+        @test !EMRP.is_constraint_resource(data[1], power)
+        @test EMRP.is_constraint_data(data[1]) == true
+        @test !EMRP.is_constraint_resource(data[1], power)
+        @test EMRP.constraint_data(gen) == data
+        @test all(EMRP.is_active(data[1], t) == flag[t] for t ∈ 𝒯)
+        @test all(EMRP.value(data[1], t) == val[t] for t ∈ 𝒯)
+        @test all(EMRP.penalty(data[1], t) == 57 for t ∈ 𝒯)
+        @test all(EMRP.has_penalty(data[1], t) == flag[t] for t ∈ 𝒯)
+        @test EMRP.has_penalty_up(data[1])
+        @test EMRP.has_penalty_down(data[1])
+
+        # Test the EMB utility functions
+        @test capacity(gen) == FixedProfile(20)
+        @test all(capacity(gen, t) == 20 for t ∈ 𝒯)
+        @test all(capacity(gen, t, power) == capacity(gen, t) for t ∈ 𝒯)
+        @test all(capacity(gen, t, water) == capacity(gen, t) * 1.1 for t ∈ 𝒯)
+        @test opex_var(gen) == FixedProfile(0)
+        @test all(opex_var(gen, t) == 0 for t ∈ 𝒯)
+        @test opex_fixed(gen) == FixedProfile(0)
+        @test all(opex_fixed(gen, t) == 0 for t ∈ 𝒯)
+        @test inputs(gen) == [water]
+        @test inputs(gen, water) == 1
+        @test all(p ∈ [water, power] for p ∈ outputs(gen))
+        @test all(val == 1 for p ∈ outputs(gen) for val ∈ outputs(gen, p))
+        @test node_data(gen) == data
+
+        # Test the EMRP utility functions
+        @test EMRP.max_normalized_power(gen) == 1
+        @test EMRP.max_normalized_flow(gen) == 1.1
+        @test EMRP.water_resource(gen) == water
+        @test EMRP.electricity_resource(gen) == power
+        pq_val = EMRP.pq_curve(gen)
+        @test EMRP.power_level(pq_val) == [0, 10, 20] / 20
+        @test EMRP.power_level(pq_val, 2) == 0.5
+        @test EMRP.discharge_level(pq_val) == [0, 10, 22] / 20
+        @test EMRP.discharge_level(pq_val, 3) == 1.1
+        @test EMRP.discharge_segments(pq_val) == range(1, 2)
+    end
+
+    @testset "Plant production income and PQ relation" begin
+        # Create and solve the model
+        case, modeltype = gen_test_case()
+        m = EMB.run_model(case, modeltype, OPTIMIZER)
+
+        # Extract the data
+        𝒯 = get_time_struct(case)
+        𝒯ⁱⁿᵛ = strategic_periods(𝒯)
+        gate, sink, gen = get_nodes(case)[2:4]
+        pq_val = EMRP.pq_curve(gen)
+        gen_out = value.(m[:flow_out][gen, :, :])
+
+        # Test that the penalty variables are not created except for discharge_segments
+        # - EMB.variables_node(m, 𝒩::Vector{HydroUnit}, 𝒯, modeltype::EnergyModel)
+        @test isempty(m[:gen_penalty_up])
+        @test isempty(m[:gen_penalty_down])
+        @test !isempty(m[:discharge_segment][gen, :, :])
+        @test all(length(m[:discharge_segment][gen, t, :]) == 2  for t ∈ 𝒯)
+
+        # Check that the total capacity constraint is enforced
+        # - EMB.constraints_capacity(m, n::HydroUnit, 𝒯::TimeStructure, modeltype::EnergyModel)
+        @test all(
+            value.(m[:cap_use])[gen, t] ≤
+                value.(m[:cap_inst])[gen, t] * EMRP.max_normalized_power(gen)
+        for t ∈ 𝒯)
+
+        # Check that the discharge segments are correctly calculated
+        # - build_pq_constaints(m, n::HydroUnit, pq::PqPoints, 𝒯::TimeStructure)
+        Q = EMRP.discharge_segments(pq_val)
+        η = [
+            (EMRP.power_level(pq_val, q+1) - EMRP.power_level(pq_val, q)) /
+            (EMRP.discharge_level(pq_val, q+1) - EMRP.discharge_level(pq_val, q))
+        for q ∈ Q]
+        @test all(
+            value.(m[:discharge_segment])[gen, t, q] ≤
+                capacity(gen, t) * (EMRP.discharge_level(pq_val, q+1) - EMRP.discharge_level(pq_val, q))
+        for t ∈ 𝒯, q ∈ Q)
+        @test all(
+            gen_out[t, water] ≈
+                sum(value.(m[:discharge_segment])[gen, t, q] for q ∈ Q)
+        for t ∈ 𝒯)
+        @test all(
+            value.(m[:cap_use])[gen, t] ≈
+                sum(value.(m[:discharge_segment])[gen, t, q] * η[q] for q ∈ Q)
+        for t ∈ 𝒯)
+        prod_to_discharge = Interpolations.linear_interpolation(
+            EMRP.power_level(pq_val) * 20,
+            EMRP.discharge_level(pq_val) * 20
+        )
+        @test all(
+            gen_out[t, water] ≈ prod_to_discharge(gen_out[t, power])
+        for t ∈ 𝒯)
+
+        # Check that the hydro flow balance is enforced
+        # - EMB.constraints_flow_in(m, n::HydroGenerator, 𝒯::TimeStructure, modeltype::EnergyModel)
+        @test all(gen_out[t, water] ≈ value.(m[:flow_in])[gen, t, water] for t ∈ 𝒯)
+
+        # Check that the electricity balance is enforced
+        # - EMB.constraints_flow_out(m, n::HydroGenerator, 𝒯::TimeStructure, modeltype::EnergyModel)
+        @test all(gen_out[t, power] ≈ value.(m[:cap_use][gen, t]) for t ∈ 𝒯)
+    end
+
+    @testset "HydroGenerator - Hard EqualSchedule for power" begin
+        # Modify the input data
+        schedule_profile = OperationalProfile(0.8 * ones(4))
+        schedule_flag = OperationalProfile([false, false, true, true])
+        data = [
+            ScheduleConstraint{EqualSchedule}(
+                power,
+                schedule_profile,   # value
+                schedule_flag,      # flag
+                FixedProfile(Inf),  # penalty
+            )
+        ]
+        profit = OperationalProfile(-[50, 50, 10, 10])
+
+        # Create and solve the model
+        case, modeltype = gen_test_case(; data, profit)
+        m = EMB.run_model(case, modeltype, OPTIMIZER)
+
+        # Extract the data
+        𝒯 = get_time_struct(case)
+        𝒯ⁱⁿᵛ = strategic_periods(𝒯)
+        gate, sink, gen = get_nodes(case)[2:4]
+        pq_val = EMRP.pq_curve(gen)
+        gen_out = value.(m[:flow_out][gen, :, :])
+
+        # Test that the penalty variables are not created except for discharge_segments
+        # - EMB.variables_node(m, 𝒩::Vector{HydroUnit}, 𝒯, modeltype::EnergyModel)
+        @test isempty(m[:gen_penalty_up])
+        @test isempty(m[:gen_penalty_down])
+        @test !isempty(m[:discharge_segment][gen, :, :])
+        @test all(length(m[:discharge_segment][gen, t, :]) == 2  for t ∈ 𝒯)
+
+        # Test that the penalty variables are not created
+        # - EMB.variables_node(m, 𝒩::Vector{HydroUnit}, 𝒯, modeltype::EnergyModel)
+        @test isempty(m[:gen_penalty_up])
+        @test isempty(m[:gen_penalty_down])
+
+        # Test that there are no violations and the outflow variables are fixed when required
+        # - build_schedule_constraint(m, n::Union{HydroGate, HydroUnit}, c::ScheduleConstraint{EqualSchedule}, 𝒯::TimeStructure, p::ResourceCarrier)
+        @test all(gen_out[t, power] ≈ schedule_profile[t] * capacity(gen, t) for t ∈ 𝒯 if schedule_flag[t])
+        @test all(is_fixed(m[:flow_out][gen, t, power]) for t ∈ 𝒯 if schedule_flag[t])
+    end
+
+    @testset "HydroGenerator - Soft MinSchedule for water" begin
+        # Modify the input data
+        schedule_profile = FixedProfile(0.5)
+        schedule_flag = FixedProfile(true)
+        data = [
+            ScheduleConstraint{EqualSchedule}(
+                water,
+                schedule_profile,   # value
+                schedule_flag,      # flag
+                FixedProfile(50),   # penalty
+            )
+        ]
+
+        # Create and solve the model
+        case, modeltype = gen_test_case(; data)
+        m = EMB.run_model(case, modeltype, OPTIMIZER)
+
+        # Extract the data
+        𝒯 = get_time_struct(case)
+        𝒯ⁱⁿᵛ = strategic_periods(𝒯)
+        gate, sink, gen = get_nodes(case)[2:4]
+        pq_val = EMRP.pq_curve(gen)
+        gen_out = value.(m[:flow_out][gen, :, :])
+
+        # Test that the penalty variables are created
+        # - EMB.variables_node(m, 𝒩::Vector{HydroUnit}, 𝒯, modeltype::EnergyModel)
+        @test !isempty(m[:gen_penalty_up])
+        @test !isempty(m[:gen_penalty_down])
+
+        # Test that outflow is constrained due to the large penalty
+        # - build_schedule_constraint(m, n::Union{HydroGate, HydroUnit}, c::ScheduleConstraint{EqualSchedule}, 𝒯::TimeStructure, p::ResourceCarrier)
+        @test all(gen_out[t, water] ≈ schedule_profile[t] * capacity(gen, t, water) for t ∈ 𝒯)
     end
 end
 
