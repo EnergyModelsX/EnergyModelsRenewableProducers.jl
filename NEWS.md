@@ -3,6 +3,13 @@
 ## Unversioned
 
 * Minor updates to the documentation.
+* Rework of the tests for detailed hydropower modelling to prepare for a rework of the scheduling constraints
+
+### Bugfixes
+
+* Fixed a bug in the internal function `is_constraint_resource`.
+* Fixed a bug in hard `ScheduleConstraint{EqualSchedule}` constraint for `HydroReservoir`.
+* Removed the function `EMB.level(n::HydroReservoir, t)` as it would not work in the current design.
 
 ## Version 0.6.5 (2025-02-10)
 
