@@ -326,6 +326,13 @@ end
         𝒯ⁱⁿᵛ = strategic_periods(𝒯)
         res, gate, sink = get_nodes(case)[[1, 2, 3]]
 
+        # Test that the variable extraction functions are working
+        @test EMRP.get_var_pen_up(m, res, 𝒯, res_data[1]) ==
+            m[:rsv_penalty_up][res, :, water]
+        @test EMRP.get_var_pen_down(m, res, 𝒯, res_data[1]) ==
+            m[:rsv_penalty_down][res, :, water]
+        @test EMRP.get_var_schedule(m, res, 𝒯, res_data[1]) == m[:stor_level][res, :]
+
         # Test that the penalty variables are created
         # - EMB.variables_node(m, 𝒩::Vector{<:HydroReservoir}, 𝒯, modeltype::EnergyModel)
         @test !isempty(m[:rsv_penalty_up])
@@ -416,14 +423,21 @@ end
         res, gate, sink = get_nodes(case)[[1, 2, 3]]
         gate_flow = value.(m[:flow_out][gate, :, water])
 
-        # Test that the outflow is high when there are no penalties
-        prof = OperationalProfile([5, 10, 10, 22.5])
-        @test all(gate_flow[t] ≈ prof[t] for t ∈ 𝒯)
+        # Test that the variable extraction functions are working
+        @test EMRP.get_var_pen_up(m, gate, 𝒯, gate_data[1]) ==
+            m[:gate_penalty_up][gate, :, water]
+        @test EMRP.get_var_pen_down(m, gate, 𝒯, gate_data[1]) ==
+            m[:gate_penalty_down][gate, :, water]
+        @test EMRP.get_var_schedule(m, gate, 𝒯, gate_data[1]) == m[:flow_out][gate, :, water]
 
         # Test that the penalty variables are created and non-empty
         # - EMB.variables_node(m, 𝒩::Vector{HydroGate}, 𝒯, modeltype::EnergyModel)
         @test !isempty(m[:gate_penalty_up])
         @test !isempty(m[:gate_penalty_down])
+
+        # Test that the outflow is high when there are no penalties
+        prof = OperationalProfile([5, 10, 10, 22.5])
+        @test all(gate_flow[t] ≈ prof[t] for t ∈ 𝒯)
 
         # Test that the constraint is enforced
         @test all(iszero(value.(m[:gate_penalty_up][gate, t, water])) for t ∈ 𝒯 if flags[t])
@@ -735,15 +749,55 @@ end
         @test !isempty(m[:discharge_segment][gen, :, :])
         @test all(length(m[:discharge_segment][gen, t, :]) == 2  for t ∈ 𝒯)
 
-        # Test that the penalty variables are not created
-        # - EMB.variables_node(m, 𝒩::Vector{HydroUnit}, 𝒯, modeltype::EnergyModel)
-        @test isempty(m[:gen_penalty_up])
-        @test isempty(m[:gen_penalty_down])
-
         # Test that there are no violations and the outflow variables are fixed when required
         # - build_schedule_constraint(m, n::Union{HydroGate, HydroUnit}, c::ScheduleConstraint{EqualSchedule}, 𝒯::TimeStructure, p::ResourceCarrier)
         @test all(gen_out[t, power] ≈ schedule_profile[t] * capacity(gen, t) for t ∈ 𝒯 if schedule_flag[t])
         @test all(is_fixed(m[:flow_out][gen, t, power]) for t ∈ 𝒯 if schedule_flag[t])
+    end
+
+    @testset "Soft EqualSchedule for power" begin
+        # Modify the input data
+        schedule_profile = OperationalProfile(0.8 * ones(4))
+        schedule_flag = OperationalProfile([false, false, true, true])
+        data = [
+            ScheduleConstraint{EqualSchedule}(
+                power,
+                schedule_profile,   # value
+                schedule_flag,      # flag
+                FixedProfile(200),  # penalty
+            )
+        ]
+        profit = OperationalProfile(-[50, 50, 10, 10])
+
+        # Create and solve the model
+        case, modeltype = gen_test_case(; data, profit)
+        m = EMB.run_model(case, modeltype, OPTIMIZER)
+
+        # Extract the data
+        𝒯 = get_time_struct(case)
+        𝒯ⁱⁿᵛ = strategic_periods(𝒯)
+        gate, sink, gen = get_nodes(case)[2:4]
+        pq_val = EMRP.pq_curve(gen)
+        gen_out = value.(m[:flow_out][gen, :, :])
+
+        # Test that the penalty variables are created including discharge_segments
+        # - EMB.variables_node(m, 𝒩::Vector{HydroUnit}, 𝒯, modeltype::EnergyModel)
+        @test !isempty(m[:gen_penalty_up])
+        @test !isempty(m[:gen_penalty_down])
+        @test !isempty(m[:discharge_segment][gen, :, :])
+        @test all(length(m[:discharge_segment][gen, t, :]) == 2  for t ∈ 𝒯)
+
+        # Test that the variable extraction functions are working
+        @test EMRP.get_var_pen_up(m, gen, 𝒯, data[1]) ==
+            m[:gen_penalty_up][gen, :, power]
+        @test EMRP.get_var_pen_down(m, gen, 𝒯, data[1]) ==
+            m[:gen_penalty_down][gen, :, power]
+        @test EMRP.get_var_schedule(m, gen, 𝒯, data[1]) == m[:flow_out][gen, :, power]
+
+        # Test that there are no violations and the outflow variables are not fixed
+        # - build_schedule_constraint(m, n::Union{HydroGate, HydroUnit}, c::ScheduleConstraint{EqualSchedule}, 𝒯::TimeStructure, p::ResourceCarrier)
+        @test all(gen_out[t, power] ≈ schedule_profile[t] * capacity(gen, t) for t ∈ 𝒯 if schedule_flag[t])
+        @test all(!is_fixed(m[:flow_out][gen, t, power]) for t ∈ 𝒯)
     end
 
     @testset "Soft MinSchedule for water" begin
@@ -891,7 +945,6 @@ end
         case = Case(𝒯, 𝒫, [𝒩, ℒ])
         return case, modeltype
     end
-
 
     @testset "Utlities" begin
         # Create the model and extract the data
@@ -1047,6 +1100,55 @@ end
         @test isempty(m[:gen_penalty_down])
         @test !isempty(m[:discharge_segment][pump, :, :])
         @test all(length(m[:discharge_segment][pump, t, :]) == 2  for t ∈ 𝒯)
+
+        # Test that there are no violations on the scheduling constraints
+        # - build_schedule_constraint(m, n::Union{HydroGate, HydroUnit}, c::ScheduleConstraint{EqualSchedule}, 𝒯::TimeStructure, p::ResourceCarrier)
+        @test all(gen_out[t, water] ≥ 0.6 * capacity(gen, t, water) for t ∈ 𝒯 if gen_flag[t])
+        @test all(pump_out[t, water] ≥ 0.4 * capacity(pump, t, water) for t ∈ 𝒯 if pump_flag[t])
+    end
+    @testset "Soft MinSchedule for water" begin
+        # Modify the input data
+        gen_flag = OperationalProfile([true, false, false, false])
+        gen_data = [ScheduleConstraint{MinSchedule}(
+            water,
+            FixedProfile(0.6),  # value
+            gen_flag,           # flag
+            FixedProfile(Inf),  # penalty
+        )]
+        pump_flag = OperationalProfile([false, true, false, false])
+        pump_data = [ScheduleConstraint{EqualSchedule}(
+            water,
+            FixedProfile(0.4),  # value
+            pump_flag,          # flag
+            FixedProfile(50),  # penalty
+        )]
+
+        # Create and solve the model
+        case, modeltype = pump_test_case(; gen_data, pump_data)
+        m = EMB.run_model(case, modeltype, OPTIMIZER)
+
+        # Extract the pump_data
+        𝒯 = get_time_struct(case)
+        𝒯ⁱⁿᵛ = strategic_periods(𝒯)
+        gen, pump = get_nodes(case)[3:4]
+        pq_val = EMRP.pq_curve(pump)
+        gen_out = value.(m[:flow_out][gen, :, :])
+        pump_in = value.(m[:flow_in][pump, :, :])
+        pump_out = value.(m[:flow_out][pump, :, :])
+
+        # Test that the penalty variables are created, including discharge_segments
+        # - EMB.variables_node(m, 𝒩::Vector{HydroUnit}, 𝒯, modeltype::EnergyModel)
+        @test !isempty(m[:gen_penalty_up])
+        @test !isempty(m[:gen_penalty_down])
+        @test !isempty(m[:discharge_segment][pump, :, :])
+        @test all(length(m[:discharge_segment][pump, t, :]) == 2  for t ∈ 𝒯)
+
+        # Test that the variable extraction functions are working
+        @test EMRP.get_var_pen_up(m, pump, 𝒯, pump_data[1]) ==
+            m[:gen_penalty_up][pump, :, water]
+        @test EMRP.get_var_pen_down(m, pump, 𝒯, pump_data[1]) ==
+            m[:gen_penalty_down][pump, :, water]
+        @test EMRP.get_var_schedule(m, pump, 𝒯, pump_data[1]) == m[:flow_in][pump, :, water]
 
         # Test that there are no violations on the scheduling constraints
         # - build_schedule_constraint(m, n::Union{HydroGate, HydroUnit}, c::ScheduleConstraint{EqualSchedule}, 𝒯::TimeStructure, p::ResourceCarrier)

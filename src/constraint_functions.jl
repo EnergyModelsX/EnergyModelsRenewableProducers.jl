@@ -462,27 +462,40 @@ the constraint.
 Penalty variables are included unless the  penalty value is not set or `Inf`.
 """
 function build_hydro_reservoir_vol_constraints(m, n::HydroReservoir, c::ScheduleConstraint{MinSchedule}, 𝒯)
-    p = storage_resource(n)
+    # Extract the variables
+    var_schedule = get_var_schedule(m, n, 𝒯, c)
+    var_pen_up = get_var_pen_up(m, n, 𝒯, c)
+
+    # Add the constraints for the scheduling variable
     @constraint(m, [t ∈ 𝒯; is_active(c, t) & has_penalty(c, t)],
-        m[:stor_level][n, t] + m[:rsv_penalty_up][n, t, p] ≥ EMB.capacity(EMB.level(n), t) * value(c, t))
+        var_schedule[t] + var_pen_up[t] ≥ EMB.capacity(EMB.level(n), t) * value(c, t))
     @constraint(m, [t ∈ 𝒯; is_active(c, t) & !has_penalty(c, t)],
-        m[:stor_level][n, t] ≥ EMB.capacity(EMB.level(n), t) * value(c, t))
+        var_schedule[t] ≥ EMB.capacity(EMB.level(n), t) * value(c, t))
 end
 function build_hydro_reservoir_vol_constraints(m, n::HydroReservoir, c::ScheduleConstraint{MaxSchedule}, 𝒯)
-    p = storage_resource(n)
+    # Extract the variables
+    var_schedule = get_var_schedule(m, n, 𝒯, c)
+    var_pen_down = get_var_pen_down(m, n, 𝒯, c)
+
+    # Add the constraints for the scheduling variable
     @constraint(m, [t ∈ 𝒯; is_active(c, t) & has_penalty(c, t)],
-        m[:stor_level][n, t] - m[:rsv_penalty_down][n, t, p] ≤ EMB.capacity(EMB.level(n), t) * value(c, t))
+        var_schedule[t] - var_pen_down[t] ≤ EMB.capacity(EMB.level(n), t) * value(c, t))
     @constraint(m, [t ∈ 𝒯; is_active(c, t) & !has_penalty(c, t)],
-        m[:stor_level][n, t] ≤ EMB.capacity(EMB.level(n), t) * value(c, t))
+        var_schedule[t] ≤ EMB.capacity(EMB.level(n), t) * value(c, t))
 end
 function build_hydro_reservoir_vol_constraints(m, n::HydroReservoir, c::ScheduleConstraint{EqualSchedule}, 𝒯)
-    p = storage_resource(n)
+    # Extract the variables
+    var_schedule = get_var_schedule(m, n, 𝒯, c)
+    var_pen_up = get_var_pen_up(m, n, 𝒯, c)
+    var_pen_down = get_var_pen_down(m, n, 𝒯, c)
+
+    # Add the constraints for the scheduling variable
     @constraint(m, [t ∈ 𝒯; is_active(c, t) & has_penalty(c, t)],
-        m[:stor_level][n, t] + m[:rsv_penalty_up][n, t, p] - m[:rsv_penalty_down][n, t, p] ==
+        var_schedule[t] +var_pen_up[t] - var_pen_down[t] ==
         EMB.capacity(EMB.level(n), t) * value(c, t))
     for t ∈ 𝒯
         if is_active(c, t) & !has_penalty(c, t)
-            JuMP.fix(m[:stor_level][n, t], EMB.capacity(EMB.level(n), t) * value(c, t); force=true)
+            JuMP.fix(var_schedule[t], EMB.capacity(EMB.level(n), t) * value(c, t); force=true)
         end
     end
 end
@@ -665,14 +678,16 @@ function build_schedule_constraint(
     var_name,
     penalty_name
 )
+    # Extract the variables
+    var_schedule = get_var_schedule(m, n, 𝒯, c)
+    var_pen_up = get_var_pen_up(m, n, 𝒯, c)
 
+    # Add the constraints for the scheduling variable
     @constraint(m, [t ∈ 𝒯; is_active(c, t) & has_penalty(c, t)],
-        m[Symbol(var_name)][n, t, p] + m[Symbol(penalty_name * "_up")][n, t, p] ≥
-            EMB.capacity(n, t, p) * value(c, t)
+        var_schedule[t] + var_pen_up[t] ≥ EMB.capacity(n, t, p) * value(c, t)
     )
     @constraint(m, [t ∈ 𝒯; is_active(c, t) & !has_penalty(c, t)],
-        m[Symbol(var_name)][n, t, p] ≥
-            EMB.capacity(n, t, p) * value(c, t)
+        var_schedule[t] ≥ EMB.capacity(n, t, p) * value(c, t)
     )
 end
 function build_schedule_constraint(
@@ -684,13 +699,16 @@ function build_schedule_constraint(
     var_name,
     penalty_name
 )
+    # Extract the variables
+    var_schedule = get_var_schedule(m, n, 𝒯, c)
+    var_pen_down = get_var_pen_down(m, n, 𝒯, c)
+
+    # Add the constraints for the scheduling variable
     @constraint(m, [t ∈ 𝒯; is_active(c, t) & has_penalty(c, t)],
-        m[Symbol(var_name)][n, t, p] - m[Symbol(penalty_name * "_down")][n, t, p] ≤
-            EMB.capacity(n, t, p) * value(c, t)
+        var_schedule[t] - var_pen_down[t] ≤ EMB.capacity(n, t, p) * value(c, t)
     )
     @constraint(m, [t ∈ 𝒯; is_active(c, t) & !has_penalty(c, t)],
-        m[Symbol(var_name)][n, t, p] ≤
-            EMB.capacity(n, t, p) * value(c, t)
+        var_schedule[t] ≤ EMB.capacity(n, t, p) * value(c, t)
     )
 end
 function build_schedule_constraint(m,
@@ -701,15 +719,19 @@ function build_schedule_constraint(m,
     var_name,
     penalty_name,
 )
+    # Extract the variables
+    var_schedule = get_var_schedule(m, n, 𝒯, c)
+    var_pen_up = get_var_pen_up(m, n, 𝒯, c)
+    var_pen_down = get_var_pen_down(m, n, 𝒯, c)
 
+    # Add the constraints for the scheduling variable
     @constraint(m, [t ∈ 𝒯; is_active(c, t) & has_penalty(c, t)],
-        m[Symbol(var_name)][n, t, p] + m[Symbol(penalty_name * "_up")][n, t, p] -
-        m[Symbol(penalty_name * "_down")][n, t, p] ==
+        var_schedule[t] + var_pen_up[t] - var_pen_down[t] ==
             EMB.capacity(n, t, p) * value(c, t)
     )
     for t ∈ 𝒯
         if is_active(c, t) & !has_penalty(c, t)
-            JuMP.fix(m[Symbol(var_name)][n, t, p], EMB.capacity(n, t, p) * value(c, t); force=true)
+            JuMP.fix(var_schedule[t], EMB.capacity(n, t, p) * value(c, t); force=true)
         end
     end
 end

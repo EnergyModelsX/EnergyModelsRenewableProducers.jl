@@ -9,13 +9,13 @@ Pages = ["types-EMRP.md"]
 ## [Nodal supertypes](@id lib-int-types-node)
 
 ```@docs
-EnergyModelsRenewableProducers.HydroUnit
+EMRP.HydroUnit
 ```
 
 ## [Parameter supertypes](@id lib-int-types-para)
 
 ```@docs
-EnergyModelsRenewableProducers.AbstractScheduleType
-EnergyModelsRenewableProducers.AbstractPqCurve
-EnergyModelsRenewableProducers.AbstractBatteryLife
+EMRP.AbstractScheduleType
+EMRP.AbstractPqCurve
+EMRP.AbstractBatteryLife
 ```

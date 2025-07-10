@@ -294,3 +294,61 @@ replaced.
 """
 capacity_max(n::AbstractBattery, t_inv, modeltype::EnergyModel) =
     capacity(level(n), t_inv) * cycles(n)
+
+"""
+    get_var_schedule(m, n::HydroReservoir, 𝒯::TimeStructure, data::ScheduleConstraint)
+    get_var_schedule(m, n::HydroGate, 𝒯::TimeStructure, data::ScheduleConstraint)
+    get_var_schedule(m, n::HydroPump, 𝒯::TimeStructure, data::ScheduleConstraint)
+    get_var_schedule(m, n::HydroGenerator, 𝒯::TimeStructure, data::ScheduleConstraint)
+
+Extracts the variable for which scheduling constraints are included. The variables are
+
+* `n::HydroReservoir` - `:stor_level[n, :]`,
+* `n::HydroGate` - `:flow_out[n, :, n.resource]`,
+* `n::HydroPump` - `:flow_in[n, :, resource(data)]`, and
+* `n::HydroGenerator` - `:flow_out[n, :, resource(data)]`.
+"""
+get_var_schedule(m, n::HydroReservoir, 𝒯::TimeStructure, data::ScheduleConstraint) =
+    m[:stor_level][n, :]
+get_var_schedule(m, n::HydroGate, 𝒯::TimeStructure, data::ScheduleConstraint) =
+    m[:flow_out][n, :, n.resource]
+get_var_schedule(m, n::HydroPump, 𝒯::TimeStructure, data::ScheduleConstraint) =
+    m[:flow_in][n, :, resource(data)]
+get_var_schedule(m, n::HydroGenerator, 𝒯::TimeStructure, data::ScheduleConstraint) =
+    m[:flow_out][n, :, resource(data)]
+
+"""
+    get_var_pen_up(m, n::HydroReservoir, 𝒯::TimeStructure, data::ScheduleConstraint)
+    get_var_pen_up(m, n::HydroGate, 𝒯::TimeStructure, data::ScheduleConstraint)
+    get_var_pen_up(m, n::HydroUnit, 𝒯::TimeStructure, data::ScheduleConstraint)
+
+Extracts the variable for which scheduling constraints are included. The variables are
+
+* `n::HydroReservoir` - `:rsv_penalty_up[n, :, storage_resource(n)]`,
+* `n::HydroGate` - `:gate_penalty_up[n, :, n.resource]`, and
+* `n::HydroUnit` - `:gen_penalty_up[n, :, resource(data)]`.
+"""
+get_var_pen_up(m, n::HydroReservoir, 𝒯::TimeStructure, data::ScheduleConstraint) =
+    m[:rsv_penalty_up][n, :, storage_resource(n)]
+get_var_pen_up(m, n::HydroGate, 𝒯::TimeStructure, data::ScheduleConstraint) =
+    m[:gate_penalty_up][n, :, n.resource]
+get_var_pen_up(m, n::HydroUnit, 𝒯::TimeStructure, data::ScheduleConstraint) =
+    m[:gen_penalty_up][n, :, resource(data)]
+
+"""
+    get_var_pen_down(m, n::HydroReservoir, 𝒯::TimeStructure, data::ScheduleConstraint)
+    get_var_pen_down(m, n::HydroGate, 𝒯::TimeStructure, data::ScheduleConstraint)
+    get_var_pen_down(m, n::HydroUnit, 𝒯::TimeStructure, data::ScheduleConstraint)
+
+Extracts the variable for which scheduling constraints are included. The variables are
+
+* `n::HydroReservoir` - `:rsv_penalty_down[n, :, storage_resource(n)]`,
+* `n::HydroGate` - `:gate_penalty_down[n, :, n.resource]`, and
+* `n::HydroUnit` - `:gen_penalty_down[n, :, resource(data)]`.
+"""
+get_var_pen_down(m, n::HydroReservoir, 𝒯::TimeStructure, data::ScheduleConstraint) =
+    m[:rsv_penalty_down][n, :, storage_resource(n)]
+get_var_pen_down(m, n::HydroGate, 𝒯::TimeStructure, data::ScheduleConstraint) =
+    m[:gate_penalty_down][n, :, n.resource]
+get_var_pen_down(m, n::HydroUnit, 𝒯::TimeStructure, data::ScheduleConstraint) =
+    m[:gen_penalty_down][n, :, resource(data)]

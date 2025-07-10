@@ -39,8 +39,8 @@ The nodes should be connected by [`links`](@extref lib-pub-links) to represent t
     The current implementation of nodes described below does not allow their usage in capacity expansion models.
     This is checked through the function `EMB.check_node_data` in the `EnergyModelsInvestments` extension.
 
-Some of the node types has similar functionality and use some of the same code.
-The following, describes some general functionality before a more detailed description of the nodes are provided.
+Some of the node types have similar functionality, and hence, use the same code for certain functionality.
+The following describes some general functionality before more detailed descriptions of the nodes are provided in the respective subsections.
 
 The illustration below shows a typical hydropower system where the dotted lines illustrate the links between the nodes.
 
@@ -60,7 +60,7 @@ The PQ-points are provided as input through the `pq_curve` field of the  [`Hydro
 
 !!! note "Energy equivalent"
     Alternatively, a single value representing the energy equivalent can be provided as input in the field `pq_curve`.
-    By the use of a constuctor, a [`PqPoints`](@ref) struct consisting of a minimum and maximum point is then created based on the energy equvalent.
+    By the use of a constuctor, a [`PqPoints`](@ref) composite type consisting of a minimum and maximum point is then created based on the energy equvalent.
     If a single energy equivalent is given as input, the installed capacity (provided in the field `cap::TimeProfile`) must refer to the power capacity of the [`HydroGenerator`](@ref) or [`HydroPump`](@ref) nodes.
 
 ## [Additional constraints](@id nodes-det_hydro_power-phil-con)

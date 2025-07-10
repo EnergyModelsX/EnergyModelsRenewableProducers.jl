@@ -9,40 +9,48 @@ Pages = ["methods-EMRP.md"]
 ## [Constraint functions](@id lib-int-met-con)
 
 ```@docs
-EnergyModelsRenewableProducers.build_hydro_reservoir_vol_constraints
-EnergyModelsRenewableProducers.build_pq_constaints
-EnergyModelsRenewableProducers.build_schedule_constraint
-EnergyModelsRenewableProducers.constraints_usage
-EnergyModelsRenewableProducers.constraints_usage_iterate
-EnergyModelsRenewableProducers.constraints_usage_sp
-EnergyModelsRenewableProducers.constraints_reserve
+EMRP.build_hydro_reservoir_vol_constraints
+EMRP.build_pq_constaints
+EMRP.build_schedule_constraint
+EMRP.constraints_usage
+EMRP.constraints_usage_iterate
+EMRP.constraints_usage_sp
+EMRP.constraints_reserve
 ```
 
 ## [Identification functions](@id lib-int-met-ident)
 
 ```@docs
-EnergyModelsRenewableProducers.is_constraint_data
-EnergyModelsRenewableProducers.is_constraint_resource
-EnergyModelsRenewableProducers.is_active
-EnergyModelsRenewableProducers.has_penalty
-EnergyModelsRenewableProducers.has_penalty_up
-EnergyModelsRenewableProducers.has_penalty_down
-EnergyModelsRenewableProducers.has_degradation
+EMRP.is_constraint_data
+EMRP.is_constraint_resource
+EMRP.is_active
+EMRP.has_penalty
+EMRP.has_penalty_up
+EMRP.has_penalty_down
+EMRP.has_degradation
 ```
 
 ## [Check functions](@id lib-int-met-check)
 
 ```@docs
-EnergyModelsRenewableProducers.check_battery_life
+EMRP.check_battery_life
 ```
 
 ## [Utility functions](@id lib-int-met-util)
 
 ```@docs
-EnergyModelsRenewableProducers.capacity_max
-EnergyModelsRenewableProducers.linear_reformulation
-EnergyModelsRenewableProducers.multiplication_variables
-EnergyModelsRenewableProducers.previous_usage
-EnergyModelsRenewableProducers.capacity_reduction
-EnergyModelsRenewableProducers.replace_disjunct
+EMRP.capacity_max
+EMRP.linear_reformulation
+EMRP.multiplication_variables
+EMRP.previous_usage
+EMRP.capacity_reduction
+EMRP.replace_disjunct
+```
+
+## [Variable extraction functions](@id lib-int-met-fun_var_extract)
+
+```@docs
+EMRP.get_var_schedule
+EMRP.get_var_pen_up
+EMRP.get_var_pen_down
 ```
