@@ -50,6 +50,7 @@ EMRP.replace_disjunct
 ## [Variable extraction functions](@id lib-int-met-fun_var_extract)
 
 ```@docs
+EMRP.get_var_inst
 EMRP.get_var_schedule
 EMRP.get_var_pen_up
 EMRP.get_var_pen_down

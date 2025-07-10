@@ -296,6 +296,32 @@ capacity_max(n::AbstractBattery, t_inv, modeltype::EnergyModel) =
     capacity(level(n), t_inv) * cycles(n)
 
 """
+    get_var_inst(m, n::HydroReservoir, 𝒯::TimeStructure, data::ScheduleConstraint)
+    get_var_inst(m, n::HydroGate, 𝒯::TimeStructure, data::ScheduleConstraint)
+    get_var_inst(m, n::HydroUnit, 𝒯::TimeStructure, data::ScheduleConstraint)
+
+Extracts the installed capacity variable used in scheduling constraints. The variables are
+
+* `n::HydroReservoir` - `:stor_level_inst[n, :]`,
+* `n::HydroGate` - `:cap_inst[n, :]`, and
+* `n::HydroUnit` - `:cap_inst[n, :]` multiplied by the value for the node of the function
+  [`max_normalized_flow`](@ref) or [`max_normalized_power`](@ref).
+"""
+get_var_inst(m, n::HydroReservoir, 𝒯::TimeStructure, data::ScheduleConstraint) =
+    m[:stor_level_inst][n, :]
+get_var_inst(m, n::HydroGate, 𝒯::TimeStructure, data::ScheduleConstraint) =
+    m[:cap_inst][n, :]
+function get_var_inst(m, n::HydroUnit, 𝒯::TimeStructure, data::ScheduleConstraint)
+    p = resource(data)
+    if p == electricity_resource(n)
+        mult = max_normalized_power(n)
+    elseif p == water_resource(n)
+        mult = max_normalized_flow(n)
+    end
+    return @expression(m, [t ∈ 𝒯], m[:cap_inst][n, t] * mult)
+end
+
+"""
     get_var_schedule(m, n::HydroReservoir, 𝒯::TimeStructure, data::ScheduleConstraint)
     get_var_schedule(m, n::HydroGate, 𝒯::TimeStructure, data::ScheduleConstraint)
     get_var_schedule(m, n::HydroPump, 𝒯::TimeStructure, data::ScheduleConstraint)

@@ -465,39 +465,44 @@ function build_hydro_reservoir_vol_constraints(m, n::HydroReservoir, c::Schedule
     # Extract the variables
     var_schedule = get_var_schedule(m, n, 𝒯, c)
     var_pen_up = get_var_pen_up(m, n, 𝒯, c)
+    var_inst = get_var_inst(m, n, 𝒯, c)
 
     # Add the constraints for the scheduling variable
     @constraint(m, [t ∈ 𝒯; is_active(c, t) & has_penalty(c, t)],
-        var_schedule[t] + var_pen_up[t] ≥ EMB.capacity(EMB.level(n), t) * value(c, t))
+        var_schedule[t] + var_pen_up[t] ≥ var_inst[t] * value(c, t)
+    )
     @constraint(m, [t ∈ 𝒯; is_active(c, t) & !has_penalty(c, t)],
-        var_schedule[t] ≥ EMB.capacity(EMB.level(n), t) * value(c, t))
+        var_schedule[t] ≥ var_inst[t] * value(c, t)
+    )
 end
 function build_hydro_reservoir_vol_constraints(m, n::HydroReservoir, c::ScheduleConstraint{MaxSchedule}, 𝒯)
     # Extract the variables
     var_schedule = get_var_schedule(m, n, 𝒯, c)
     var_pen_down = get_var_pen_down(m, n, 𝒯, c)
+    var_inst = get_var_inst(m, n, 𝒯, c)
 
     # Add the constraints for the scheduling variable
     @constraint(m, [t ∈ 𝒯; is_active(c, t) & has_penalty(c, t)],
-        var_schedule[t] - var_pen_down[t] ≤ EMB.capacity(EMB.level(n), t) * value(c, t))
+        var_schedule[t] - var_pen_down[t] ≤ var_inst[t] * value(c, t)
+    )
     @constraint(m, [t ∈ 𝒯; is_active(c, t) & !has_penalty(c, t)],
-        var_schedule[t] ≤ EMB.capacity(EMB.level(n), t) * value(c, t))
+        var_schedule[t] ≤ var_inst[t] * value(c, t)
+    )
 end
 function build_hydro_reservoir_vol_constraints(m, n::HydroReservoir, c::ScheduleConstraint{EqualSchedule}, 𝒯)
     # Extract the variables
     var_schedule = get_var_schedule(m, n, 𝒯, c)
     var_pen_up = get_var_pen_up(m, n, 𝒯, c)
     var_pen_down = get_var_pen_down(m, n, 𝒯, c)
+    var_inst = get_var_inst(m, n, 𝒯, c)
 
     # Add the constraints for the scheduling variable
     @constraint(m, [t ∈ 𝒯; is_active(c, t) & has_penalty(c, t)],
-        var_schedule[t] +var_pen_up[t] - var_pen_down[t] ==
-        EMB.capacity(EMB.level(n), t) * value(c, t))
-    for t ∈ 𝒯
-        if is_active(c, t) & !has_penalty(c, t)
-            JuMP.fix(var_schedule[t], EMB.capacity(EMB.level(n), t) * value(c, t); force=true)
-        end
-    end
+        var_schedule[t] + var_pen_up[t] - var_pen_down[t] == var_inst[t] * value(c, t)
+    )
+    @constraint(m, [t ∈ 𝒯; is_active(c, t) & !has_penalty(c, t)],
+        var_schedule[t] == var_inst[t] * value(c, t)
+    )
 end
 
 """
@@ -681,13 +686,14 @@ function build_schedule_constraint(
     # Extract the variables
     var_schedule = get_var_schedule(m, n, 𝒯, c)
     var_pen_up = get_var_pen_up(m, n, 𝒯, c)
+    var_inst = get_var_inst(m, n, 𝒯, c)
 
     # Add the constraints for the scheduling variable
     @constraint(m, [t ∈ 𝒯; is_active(c, t) & has_penalty(c, t)],
-        var_schedule[t] + var_pen_up[t] ≥ EMB.capacity(n, t, p) * value(c, t)
+        var_schedule[t] + var_pen_up[t] ≥ var_inst[t] * value(c, t)
     )
     @constraint(m, [t ∈ 𝒯; is_active(c, t) & !has_penalty(c, t)],
-        var_schedule[t] ≥ EMB.capacity(n, t, p) * value(c, t)
+        var_schedule[t] ≥ var_inst[t] * value(c, t)
     )
 end
 function build_schedule_constraint(
@@ -702,13 +708,14 @@ function build_schedule_constraint(
     # Extract the variables
     var_schedule = get_var_schedule(m, n, 𝒯, c)
     var_pen_down = get_var_pen_down(m, n, 𝒯, c)
+    var_inst = get_var_inst(m, n, 𝒯, c)
 
     # Add the constraints for the scheduling variable
     @constraint(m, [t ∈ 𝒯; is_active(c, t) & has_penalty(c, t)],
-        var_schedule[t] - var_pen_down[t] ≤ EMB.capacity(n, t, p) * value(c, t)
+        var_schedule[t] - var_pen_down[t] ≤ var_inst[t] * value(c, t)
     )
     @constraint(m, [t ∈ 𝒯; is_active(c, t) & !has_penalty(c, t)],
-        var_schedule[t] ≤ EMB.capacity(n, t, p) * value(c, t)
+        var_schedule[t] ≤ var_inst[t] * value(c, t)
     )
 end
 function build_schedule_constraint(m,
@@ -723,17 +730,15 @@ function build_schedule_constraint(m,
     var_schedule = get_var_schedule(m, n, 𝒯, c)
     var_pen_up = get_var_pen_up(m, n, 𝒯, c)
     var_pen_down = get_var_pen_down(m, n, 𝒯, c)
+    var_inst = get_var_inst(m, n, 𝒯, c)
 
     # Add the constraints for the scheduling variable
     @constraint(m, [t ∈ 𝒯; is_active(c, t) & has_penalty(c, t)],
-        var_schedule[t] + var_pen_up[t] - var_pen_down[t] ==
-            EMB.capacity(n, t, p) * value(c, t)
+        var_schedule[t] + var_pen_up[t] - var_pen_down[t] == var_inst[t] * value(c, t)
     )
-    for t ∈ 𝒯
-        if is_active(c, t) & !has_penalty(c, t)
-            JuMP.fix(var_schedule[t], EMB.capacity(n, t, p) * value(c, t); force=true)
-        end
-    end
+    @constraint(m, [t ∈ 𝒯; is_active(c, t) & !has_penalty(c, t)],
+        var_schedule[t] == var_inst[t] * value(c, t)
+    )
 end
 
 """
@@ -793,7 +798,7 @@ function build_pq_constaints(m, n::HydroUnit, pq::PqPoints, 𝒯::TimeStructure)
     # Range of discharge segments
     @constraint(m, [t ∈ 𝒯, q ∈ Q],
         m[:discharge_segment][n, t, q] ≤
-            capacity(n, t) * (discharge_level(pq, q+1).- discharge_level(pq, q))
+            m[:cap_inst][n, t] * (discharge_level(pq, q+1).- discharge_level(pq, q))
     )
 
     @constraint(m, [t ∈ 𝒯],

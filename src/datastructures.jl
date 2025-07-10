@@ -848,30 +848,6 @@ function max_normalized_flow(n::HydroUnit)
 end
 
 """
-    capacity(n::HydroUnit, t, p::Resource)
-    capacity(n::HydroGate, t, p::Resource)
-
-Returns the capacity of HydroUnit `n` in operational period `t` for a given resource `p`.
-In the case of a `HydroGate`, this function reverts to `capacity(n, t)` to allow its
-application in multiple methods.
-
-!!! warning
-    The resource `p` **must** be either the `electricity_resource` or `water_resource`.
-    Otherwise, an error is raised.
-"""
-function EMB.capacity(n::HydroUnit, t, p::Resource)
-    if p == electricity_resource(n)
-        return capacity(n, t) * max_normalized_power(n)
-    elseif p == water_resource(n)
-        return capacity(n, t) * max_normalized_flow(n)
-    end
-    throw(
-        "The Resource `p` the function capacity(n, t, p) must be either the water or " *
-        "electricity resource of HydroUnit `n`.")
-end
-EMB.capacity(n::HydroGate, t, p::Resource) = EMB.capacity(n, t)
-
-"""
     AbstractBatteryLife
 
 Abstract supertype for the modelling of the battery lifetime of an [`AbstractBattery`](@ref).

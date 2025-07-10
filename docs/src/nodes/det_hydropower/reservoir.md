@@ -122,9 +122,10 @@ The mathematical formulation of the constraints are:
 
    ```math
    \begin{aligned}
-      \texttt{stor\_level}[n, t] \geq & capacity(level(n), t) \times value(c, t) \qquad & \forall c \in C^{min} \\
+      \texttt{stor\_level}[n, t] \geq & \\ &
+        \texttt{stor\_levl\_inst}[n, t] \times value(c, t) \qquad & \forall c \in C^{min} \\
       \texttt{stor\_level}[n, t] + & \texttt{rsv\_vol\_penalty\_up}[n, t] \geq \\ &
-      capacity(level(n), t) * value(c, t) \qquad & \forall c \in C^{min}
+        \texttt{stor\_levl\_inst}[n, t] * value(c, t) \qquad & \forall c \in C^{min}
    \end{aligned}
    ```
 
@@ -132,9 +133,10 @@ The mathematical formulation of the constraints are:
 
    ```math
    \begin{aligned}
-    \texttt{stor\_level}[n, t] \leq & capacity(level(n), t) \times value(c, t) \qquad & \forall c \in C^{max} \\
+    \texttt{stor\_level}[n, t] \leq & \\ &
+      \texttt{stor\_levl\_inst}[n, t] \times value(c, t) \qquad & \forall c \in C^{max} \\
     \texttt{stor\_level}[n, t] - & \texttt{rsv\_vol\_penalty\_down}[n, t] \leq \\ &
-    capacity(level(n), t) \times value(c, t) \qquad & \forall c \in C^{max}
+      \texttt{stor\_levl\_inst}[n, t] \times value(c, t) \qquad & \forall c \in C^{max}
    \end{aligned}
    ```
 
@@ -142,13 +144,14 @@ The mathematical formulation of the constraints are:
 
    ```math
    \begin{aligned}
-    \texttt{stor\_level}[n, t] = & capacity(level(n), t) \times value(c, t) \quad & \forall c \in C^{sch} \\
+    \texttt{stor\_level}[n, t] = & \\ &
+      \texttt{stor\_levl\_inst}[n, t] \times value(c, t) \quad & \forall c \in C^{sch} \\
     \texttt{stor\_level}[n, t] + & \texttt{rsv\_vol\_penalty\_up}[n, t] - \texttt{rsv\_vol\_penalty\_down}[n, t] = \\ &
-    capacity(level(n), t) \times value(c, t) \quad & \forall c \in C^{sch} \\
+      \texttt{stor\_levl\_inst}[n, t] \times value(c, t) \quad & \forall c \in C^{sch} \\
    \end{aligned}
    ```
 
-where ``value(c,t)`` returns the relative limit of constraint `c` and  ``capacity(n,t)`` returns the installed capacity of node `n`.
+where ``value(c,t)`` returns the relative limit of scheduling constraint `c`.
 The sets ``C^{min}``,``C^{max}`` and ``C^{sch}`` contain additional minimum, maximum, and scheduling constraints, repectively.
 
 #### [Additional constraints](@id nodes-det_hydro_power-reservoir-math-con-add)

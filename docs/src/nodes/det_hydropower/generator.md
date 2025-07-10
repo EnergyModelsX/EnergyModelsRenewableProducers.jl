@@ -112,7 +112,9 @@ The function `constraints_capacity` rquires a new method to account for the incl
 \end{aligned}
 ```
 
-Where `capacity(n, t)` is the installed capacity of node `n` in operational period `t` and ``P_{norm}^{max}`` is the maximum normalized power capacity identified through the function [`max_normalized_power`](@ref EnergyModelsRenewableProducers.max_normalized_power). If the capacity refers to power, the `PqPoints` `power_levels` ranges between 0 and 1 and ``P_{norm}^{max}`` will also be 1. If the capacity refers to flow, the `discharge_levels` ranges between 0 and 1, while `power_levels` may take other values and ``P_{norm}^{max}`` represents the last element of the `power_levels` vector.
+where ``P_{norm}^{max}`` is the maximum normalized power capacity identified through the function [`max_normalized_power`](@ref EnergyModelsRenewableProducers.max_normalized_power).
+If the capacity refers to power, the `PqPoints` `power_levels` ranges between 0 and 1 and ``P_{norm}^{max}`` will also be 1.
+If the capacity refers to flow, the `discharge_levels` ranges between 0 and 1, while `power_levels` may take other values and ``P_{norm}^{max}`` represents the last element of the `power_levels` vector.
 
 The function `constraints_opex_var` requires a new method as we have to include the penalty variables for violating the constraints if required:
 
@@ -164,12 +166,10 @@ Furthermore, we provide new methods for the flow constraints for `HydroGenerator
 
   ```math
   \begin{aligned}
-      \texttt{discharge\_segment}[n, t, q] \leq & capacity(n, t) \times (discharge\_levels[q+1] \\ &
+      \texttt{discharge\_segment}[n, t, q] \leq & \texttt{cap\_inst}[n, t] \times (discharge\_levels[q+1] \\ &
       - discharge\_levels[q]) \qquad \forall q \in [1,Q] \\
   \end{aligned}
   ```
-
-  The `capacity(n, t)` returns the installed capacity and is used to scale the relative values of the  [`PqPoints`](@ref) to absolute values.
 
 !!! note "Energy equivalent"
     If a single energy equivalent is used, two points (zero and max) are created to describe a single discharge segment with the slope of the energy equivalent and the capacity of node `n`.
@@ -179,13 +179,26 @@ Furthermore, the method for `constraints_flow_out` adds *[discharge and power ca
 Soft constraints, *i.e.*, constraints with a penalty, are used if the constraints have non-infinite penalty values.
 For `HydroGenerator` nodes, the constraints can be defined for both the `electricity_resource` and `water_resource`. The mathematical formualtion of the constraints are:
 
+To this end, we declare an internal expression given by:
+
+```math
+\texttt{cap\_inst\_var}[n, p, t] =
+\begin{cases}
+     \texttt{cap\_inst}[n, t] \times max\_normalized\_power(n), & \text{if } p == electricity\_resource(n) \\
+     \texttt{cap\_inst}[n, t] \times max\_normalized\_flow(n), & \text{if } p == water\_resource(n)
+\end{cases}
+```
+
+The expression is subsequently used in the calculations for providing the constraints:
+
 1. Minimum constraints for discharge or power generation:
 
    ```math
    \begin{aligned}
-     \texttt{flow\_out}[n, t, p] \geq & capacity(n, t, p) \times value(c, t) \qquad & \forall c \in C^{min}\\
-     \texttt{flow\_out}[n, t, p] + \& \texttt{gen\_penalty\_up}[n, t, p] \geq \\ &
-        capacity(n, t, p) \times value(c, t) \qquad & \forall c \in C^{min} \\
+     \texttt{flow\_out}[n, t, p] \geq & \\ &
+       \texttt{cap\_inst\_var}[n, p, t] \times value(c, t) \qquad & \forall c \in C^{min}\\
+     \texttt{flow\_out}[n, t, p] + & \texttt{gen\_penalty\_up}[n, t, p] \geq \\ &
+       \texttt{cap\_inst\_var}[n, p, t] \times value(c, t) \qquad & \forall c \in C^{min} \\
    \end{aligned}
    ```
 
@@ -194,9 +207,10 @@ For `HydroGenerator` nodes, the constraints can be defined for both the `electri
    ```math
    \begin{aligned}
 
-     \texttt{flow\_out}[n, t, p] \leq & capacity(n, t, p) \times value(c, t) \qquad & \forall c \in C^{max}\\
+     \texttt{flow\_out}[n, t, p] \leq & \\ &
+       \texttt{cap\_inst\_var}[n, p, t] \times value(c, t) \qquad & \forall c \in C^{max}\\
      \texttt{flow\_out}[n, t, p] - & \texttt{gen\_penalty\_down}[n, t, p] \leq \\ &
-        capacity(n, t, p) \times value(c, t) \qquad & \forall c \in C^{max} \\
+       \texttt{cap\_inst\_var}[n, p, t] \times value(c, t) \qquad & \forall c \in C^{max} \\
 
    \end{aligned}
    ```
@@ -205,11 +219,12 @@ For `HydroGenerator` nodes, the constraints can be defined for both the `electri
 
    ```math
    \begin{aligned}
-     \texttt{flow\_out}[n, t, p] = & capacity(n, t, p) \times value(c, t) \qquad & \forall c \in C^{sch}\\
+     \texttt{flow\_out}[n, t, p] = & \\ &
+       \texttt{cap\_inst\_var}[n, p, t] \times value(c, t) \qquad & \forall c \in C^{sch} \\
      \texttt{flow\_out}[n, t, p] + & \texttt{gen\_penalty\_up}[n, t, p] - \texttt{gen\_penalty\_down}[n, t] = \\ &
-     capacity(n, t, p) \times value(c, t) \qquad & \forall c \in C^{sch} \\
+       \texttt{cap\_inst\_var}[n, p, t] \times value(c, t) \qquad & \forall c \in C^{sch} \\
    \end{aligned}
    ```
 
-where ``value(c,t)`` returns the relative limit of constraint `c` and  ``capacity(n,t, p)`` returns the installed capacity of node `n` for resource `p`.
+where ``value(c, t)`` returns the relative limit of scheduling constraint `c`.
 The sets ``C^{min}``,``C^{max}``, and ``C^{sch}`` contain additional minimum, maximum and scheduling constraints, repectively.

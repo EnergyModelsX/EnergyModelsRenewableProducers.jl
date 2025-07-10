@@ -119,7 +119,6 @@ end
         @test outputs(res, water) == 1
         @test node_data(res) == res_data
         @test capacity(gate) == FixedProfile(100)
-        @test all(capacity(gate, t, water) == capacity(gate, t) for t ∈ 𝒯)
         @test all(capacity(gate, t) == 100 for t ∈ 𝒯)
         @test opex_var(gate) == FixedProfile(0)
         @test all(opex_var(gate, t) == 0 for t ∈ 𝒯)
@@ -294,14 +293,13 @@ end
         @test isempty(m[:rsv_penalty_up])
         @test isempty(m[:rsv_penalty_down])
 
-        # Test that there are no violations and the storage level variables are fixed
+        # Test that there are no violations
         # - build_hydro_reservoir_vol_constraints(m, n::HydroReservoir, c::ScheduleConstraint{EqualSchedule}, 𝒯)
         @test all(
             value.(m[:stor_level][res, t]) ≈ sched_profile[t] * capacity(level(res), t)
         for t ∈ 𝒯)
         prof = OperationalProfile([15, 0, 0, 5])
         @test all(value.(m[:sink_deficit][sink, t]) ≈ prof[t] for t ∈ 𝒯)
-        @test all(is_fixed(m[:stor_level][res, t]) for t ∈ 𝒯)
     end
 
     @testset "Hydro reservoir - Soft EqualSchedule" begin
@@ -393,10 +391,9 @@ end
         @test isempty(m[:gate_penalty_up])
         @test isempty(m[:gate_penalty_down])
 
-        # Test that there are no violations and the otflow variables are fixed
+        # Test that there are no violations
         # - build_schedule_constraint(m, n::Union{HydroGate, HydroUnit}, c::ScheduleConstraint{EqualSchedule}, 𝒯::TimeStructure, p::ResourceCarrier)
         @test all(gate_flow[t] ≈ schedule_profile[t] * capacity(gate, t) for t ∈ 𝒯)
-        @test all(is_fixed(m[:flow_out][gate, t, water]) for t ∈ 𝒯)
     end
 
     @testset "Gate - Soft EqualSchedule, varying flags" begin
@@ -630,8 +627,6 @@ end
         # Test the EMB utility functions
         @test capacity(gen) == FixedProfile(20)
         @test all(capacity(gen, t) == 20 for t ∈ 𝒯)
-        @test all(capacity(gen, t, power) == capacity(gen, t) for t ∈ 𝒯)
-        @test all(capacity(gen, t, water) == capacity(gen, t) * 1.1 for t ∈ 𝒯)
         @test opex_var(gen) == FixedProfile(0)
         @test all(opex_var(gen, t) == 0 for t ∈ 𝒯)
         @test opex_fixed(gen) == FixedProfile(0)
@@ -749,10 +744,9 @@ end
         @test !isempty(m[:discharge_segment][gen, :, :])
         @test all(length(m[:discharge_segment][gen, t, :]) == 2  for t ∈ 𝒯)
 
-        # Test that there are no violations and the outflow variables are fixed when required
+        # Test that there are no violations
         # - build_schedule_constraint(m, n::Union{HydroGate, HydroUnit}, c::ScheduleConstraint{EqualSchedule}, 𝒯::TimeStructure, p::ResourceCarrier)
         @test all(gen_out[t, power] ≈ schedule_profile[t] * capacity(gen, t) for t ∈ 𝒯 if schedule_flag[t])
-        @test all(is_fixed(m[:flow_out][gen, t, power]) for t ∈ 𝒯 if schedule_flag[t])
     end
 
     @testset "Soft EqualSchedule for power" begin
@@ -831,7 +825,7 @@ end
 
         # Test that outflow is constrained due to the large penalty
         # - build_schedule_constraint(m, n::Union{HydroGate, HydroUnit}, c::ScheduleConstraint{EqualSchedule}, 𝒯::TimeStructure, p::ResourceCarrier)
-        @test all(gen_out[t, water] ≈ schedule_profile[t] * capacity(gen, t, water) for t ∈ 𝒯)
+        @test all(gen_out[t, water] ≈ schedule_profile[t] * capacity(gen, t) * 1.1 for t ∈ 𝒯)
     end
 end
 
@@ -977,8 +971,6 @@ end
         # Test the EMB utility functions
         @test capacity(pump) == FixedProfile(30)
         @test all(capacity(pump, t) == 30 for t ∈ 𝒯)
-        @test all(capacity(pump, t, power) == capacity(pump, t) for t ∈ 𝒯)
-        @test all(capacity(pump, t, water) == capacity(pump, t) * 2/3 for t ∈ 𝒯)
         @test opex_var(pump) == FixedProfile(0)
         @test all(opex_var(pump, t) == 0 for t ∈ 𝒯)
         @test opex_fixed(pump) == FixedProfile(0)
@@ -1103,8 +1095,8 @@ end
 
         # Test that there are no violations on the scheduling constraints
         # - build_schedule_constraint(m, n::Union{HydroGate, HydroUnit}, c::ScheduleConstraint{EqualSchedule}, 𝒯::TimeStructure, p::ResourceCarrier)
-        @test all(gen_out[t, water] ≥ 0.6 * capacity(gen, t, water) for t ∈ 𝒯 if gen_flag[t])
-        @test all(pump_out[t, water] ≥ 0.4 * capacity(pump, t, water) for t ∈ 𝒯 if pump_flag[t])
+        @test all(gen_out[t, water] ≥ 0.6 * capacity(gen, t) for t ∈ 𝒯 if gen_flag[t])
+        @test all(pump_out[t, water] ≥ 0.4 * capacity(pump, t)*2/3 for t ∈ 𝒯 if pump_flag[t])
     end
     @testset "Soft MinSchedule for water" begin
         # Modify the input data
@@ -1152,7 +1144,7 @@ end
 
         # Test that there are no violations on the scheduling constraints
         # - build_schedule_constraint(m, n::Union{HydroGate, HydroUnit}, c::ScheduleConstraint{EqualSchedule}, 𝒯::TimeStructure, p::ResourceCarrier)
-        @test all(gen_out[t, water] ≥ 0.6 * capacity(gen, t, water) for t ∈ 𝒯 if gen_flag[t])
-        @test all(pump_out[t, water] ≥ 0.4 * capacity(pump, t, water) for t ∈ 𝒯 if pump_flag[t])
+        @test all(gen_out[t, water] ≥ 0.6 * capacity(gen, t) * 2/3 for t ∈ 𝒯 if gen_flag[t])
+        @test all(pump_out[t, water] ≥ 0.4 * capacity(pump, t) * 2/3 for t ∈ 𝒯 if pump_flag[t])
     end
 end

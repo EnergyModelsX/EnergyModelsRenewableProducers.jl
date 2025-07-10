@@ -103,7 +103,7 @@ The majority of these constraints are hence ommitted in the following descriptio
 
 The new methods for the functions `constraints_capacity` and `constraints_opex_var` are explained in the *[section for `HydroGenerator`](@ref nodes-det_hydro_power-generator-math-con-stand)*.
 
-Furthermore, we dispatche on the flow constraints for `HydroPump` nodes.
+Furthermore, we dispatch on the flow constraints for `HydroPump` nodes.
 The mathematical description is the same as for the `HydroGenerator` nodes, except that electricity flows into the node (is consumed) rather than out of the node:
 
 - `constraints_flow_in`:\
@@ -136,12 +136,10 @@ The mathematical description is the same as for the `HydroGenerator` nodes, exce
 
   ```math
   \begin{aligned}
-      \texttt{discharge\_segment}[n, t, q] \leq & capacity(n, t) \times (discharge\_levels[q+1] \\ &
+      \texttt{discharge\_segment}[n, t, q] \leq & \texttt{cap\_inst}[n, t] \times (discharge\_levels[q+1] \\ &
       - discharge\_levels[q]) \qquad \forall q \in [1,Q] \\
   \end{aligned}
   ```
-
-  The `capacity(n, t)` returns the installed capacity and is used to scale the relative values of the  [`PqPoints`](@ref) to absolute values.
 
 !!! note "Energy equivalent"
     If a single energy eqivalent is used, two points (zero and max) are created to describe a single discharge segment with the slope of the energy equivalent and the capacity of node `n`.
@@ -152,13 +150,26 @@ The constraints are optional and only added to the problem if given as input in 
 Soft constraints, *i.e.*, constraints with a penalty, are used if the constraints have non-infinite penalty values.
 For [`HydroPump`](@ref) nodes, the constraints can be defined for the `electricity_resource` and `water_resource`, limiting the flow into of the node.
 
+To this end, we declare an internal expression given by:
+
+```math
+\texttt{cap\_inst\_var}[n, p, t] =
+\begin{cases}
+     \texttt{cap\_inst}[n, t] \times max\_normalized\_power(n), & \text{if } p == electricity\_resource(n) \\
+     \texttt{cap\_inst}[n, t] \times max\_normalized\_flow(n), & \text{if } p == water\_resource(n)
+\end{cases}
+```
+
+The expression is subsequently used in the calculations for providing the constraints:
+
 1. Minimum constraints for pumping:
 
    ```math
    \begin{aligned}
-     \texttt{flow\_out}[n, t, p] \geq & capacity(n, t, p) \times value(c, t) \qquad & \forall c \in C^{min}\\
-     \texttt{flow\_out}[n, t, p] + \& \texttt{gen\_penalty\_up}[n, t, p] \geq \\ &
-        capacity(n, t, p) \times value(c, t) \qquad & \forall c \in C^{min} \\
+     \texttt{flow\_in}[n, t, p] \geq & \\ &
+       \texttt{cap\_inst\_var}[n, p, t] \times value(c, t) \qquad & \forall c \in C^{min}\\
+     \texttt{flow\_in}[n, t, p] + & \texttt{gen\_penalty\_up}[n, t, p] \geq \\ &
+       \texttt{cap\_inst\_var}[n, p, t] \times value(c, t) \qquad & \forall c \in C^{min} \\
    \end{aligned}
    ```
 
@@ -167,22 +178,24 @@ For [`HydroPump`](@ref) nodes, the constraints can be defined for the `electrici
    ```math
    \begin{aligned}
 
-     \texttt{flow\_out}[n, t, p] \leq & capacity(n, t, p) \times value(c, t) \qquad & \forall c \in C^{max}\\
-     \texttt{flow\_out}[n, t, p] - & \texttt{gen\_penalty\_down}[n, t, p] \leq \\ &
-        capacity(n, t, p) \times value(c, t) \qquad & \forall c \in C^{max} \\
+     \texttt{flow\_in}[n, t, p] \leq & \\ &
+       \texttt{cap\_inst\_var}[n, p, t] \times value(c, t) \qquad & \forall c \in C^{max}\\
+     \texttt{flow\_in}[n, t, p] - & \texttt{gen\_penalty\_down}[n, t, p] \leq \\ &
+       \texttt{cap\_inst\_var}[n, p, t] \times value(c, t) \qquad & \forall c \in C^{max} \\
 
    \end{aligned}
    ```
 
-3. Scheduling constraints for v:
+3. Scheduling constraints for pump:
 
    ```math
    \begin{aligned}
-     \texttt{flow\_out}[n, t, p] = & capacity(n, t, p) \times value(c, t) \qquad & \forall c \in C^{sch}\\
-     \texttt{flow\_out}[n, t, p] + & \texttt{gen\_penalty\_up}[n, t, p] - \texttt{gen\_penalty\_down}[n, t] = \\ &
-     capacity(n, t, p) \times value(c, t) \qquad & \forall c \in C^{sch} \\
+     \texttt{flow\_in}[n, t, p] = & \\ &
+       \texttt{cap\_inst\_var}[n, p, t] \times value(c, t) \qquad & \forall c \in C^{sch} \\
+     \texttt{flow\_in}[n, t, p] + & \texttt{gen\_penalty\_up}[n, t, p] - \texttt{gen\_penalty\_down}[n, t] = \\ &
+       \texttt{cap\_inst\_var}[n, p, t] \times value(c, t) \qquad & \forall c \in C^{sch} \\
    \end{aligned}
    ```
 
-where ``value(c,t)`` returns the relative limit of constraint `c` and  ``capacity(n,t, p)`` returns the installed capacity of node `n` for resource `p`.
+where ``value(c, t)`` returns the relative limit of scheduling constraint `c`.
 The sets ``C^{min}``,``C^{max}``, and ``C^{sch}`` contain additional minimum, maximum and scheduling constraints, repectively.
