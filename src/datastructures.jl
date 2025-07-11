@@ -848,6 +848,13 @@ function max_normalized_flow(n::HydroUnit)
 end
 
 """
+    HydroNode
+
+Union type for [`HydroUnit`](@ref), [`HydroReservoir`](@ref), and [`HydroGate`](@ref).
+"""
+HydroNode = Union{HydroUnit, HydroReservoir, HydroGate}
+
+"""
     AbstractBatteryLife
 
 Abstract supertype for the modelling of the battery lifetime of an [`AbstractBattery`](@ref).

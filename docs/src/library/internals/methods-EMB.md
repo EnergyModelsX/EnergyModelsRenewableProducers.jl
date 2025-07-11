@@ -23,6 +23,7 @@ EMB.constraints_flow_out
 EMB.constraints_level_aux
 EMB.constraints_opex_var
 EMB.constraints_opex_fixed
+EMB.constraints_ext_data
 ```
 
 ## [Check methods](@id lib-int-met_emb-check)

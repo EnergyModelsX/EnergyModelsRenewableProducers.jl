@@ -9,9 +9,7 @@ Pages = ["methods-EMRP.md"]
 ## [Constraint functions](@id lib-int-met-con)
 
 ```@docs
-EMRP.build_hydro_reservoir_vol_constraints
 EMRP.build_pq_constaints
-EMRP.build_schedule_constraint
 EMRP.constraints_usage
 EMRP.constraints_usage_iterate
 EMRP.constraints_usage_sp

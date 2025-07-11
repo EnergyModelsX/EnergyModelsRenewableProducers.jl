@@ -294,7 +294,7 @@ end
         @test isempty(m[:rsv_penalty_down])
 
         # Test that there are no violations
-        # - build_hydro_reservoir_vol_constraints(m, n::HydroReservoir, c::ScheduleConstraint{EqualSchedule}, 𝒯)
+        # - EMB.constraints_ext_data(m, n::HydroNode, 𝒯, 𝒫, modeltype::EnergyModel, data::ScheduleConstraint{EqualSchedule})
         @test all(
             value.(m[:stor_level][res, t]) ≈ sched_profile[t] * capacity(level(res), t)
         for t ∈ 𝒯)
@@ -337,7 +337,7 @@ end
         @test !isempty(m[:rsv_penalty_down])
 
         # Test that the violations are correctly calculated
-        # - build_hydro_reservoir_vol_constraints(m, n::HydroReservoir, c::ScheduleConstraint{EqualSchedule}, 𝒯)
+        # - EMB.constraints_ext_data(m, n::HydroNode, 𝒯, 𝒫, modeltype::EnergyModel, data::ScheduleConstraint{EqualSchedule})
         @test all(
             value.(m[:stor_level][res, t] - m[:rsv_penalty_down][res, t, water]) ≤
                 sched_profile[t] * capacity(level(res), t)
@@ -392,7 +392,7 @@ end
         @test isempty(m[:gate_penalty_down])
 
         # Test that there are no violations
-        # - build_schedule_constraint(m, n::Union{HydroGate, HydroUnit}, c::ScheduleConstraint{EqualSchedule}, 𝒯::TimeStructure, p::ResourceCarrier)
+        # - EMB.constraints_ext_data(m, n::HydroNode, 𝒯, 𝒫, modeltype::EnergyModel, data::ScheduleConstraint{EqualSchedule})
         @test all(gate_flow[t] ≈ schedule_profile[t] * capacity(gate, t) for t ∈ 𝒯)
     end
 
@@ -441,7 +441,7 @@ end
         @test all(iszero(value.(m[:gate_penalty_down][gate, t, water])) for t ∈ 𝒯 if flags[t])
 
         # Test that the schedule values are used, when the flag is set
-        # - build_schedule_constraint(m, n::Union{HydroGate, HydroUnit}, c::ScheduleConstraint{EqualSchedule}, 𝒯::TimeStructure, p::ResourceCarrier)
+        # - EMB.constraints_ext_data(m, n::HydroNode, 𝒯, 𝒫, modeltype::EnergyModel, data::ScheduleConstraint{EqualSchedule})
         @test all(gate_flow[t] ≈ schedule_profile[t]*capacity(gate, t) for t ∈ 𝒯 if flags[t])
     end
 
@@ -745,7 +745,7 @@ end
         @test all(length(m[:discharge_segment][gen, t, :]) == 2  for t ∈ 𝒯)
 
         # Test that there are no violations
-        # - build_schedule_constraint(m, n::Union{HydroGate, HydroUnit}, c::ScheduleConstraint{EqualSchedule}, 𝒯::TimeStructure, p::ResourceCarrier)
+        # - EMB.constraints_ext_data(m, n::HydroNode, 𝒯, 𝒫, modeltype::EnergyModel, data::ScheduleConstraint{EqualSchedule})
         @test all(gen_out[t, power] ≈ schedule_profile[t] * capacity(gen, t) for t ∈ 𝒯 if schedule_flag[t])
     end
 
@@ -789,7 +789,7 @@ end
         @test EMRP.get_var_schedule(m, gen, 𝒯, data[1]) == m[:flow_out][gen, :, power]
 
         # Test that there are no violations and the outflow variables are not fixed
-        # - build_schedule_constraint(m, n::Union{HydroGate, HydroUnit}, c::ScheduleConstraint{EqualSchedule}, 𝒯::TimeStructure, p::ResourceCarrier)
+        # - EMB.constraints_ext_data(m, n::HydroNode, 𝒯, 𝒫, modeltype::EnergyModel, data::ScheduleConstraint{EqualSchedule})
         @test all(gen_out[t, power] ≈ schedule_profile[t] * capacity(gen, t) for t ∈ 𝒯 if schedule_flag[t])
         @test all(!is_fixed(m[:flow_out][gen, t, power]) for t ∈ 𝒯)
     end
@@ -824,7 +824,7 @@ end
         @test !isempty(m[:gen_penalty_down])
 
         # Test that outflow is constrained due to the large penalty
-        # - build_schedule_constraint(m, n::Union{HydroGate, HydroUnit}, c::ScheduleConstraint{EqualSchedule}, 𝒯::TimeStructure, p::ResourceCarrier)
+        # - EMB.constraints_ext_data(m, n::HydroNode, 𝒯, 𝒫, modeltype::EnergyModel, data::ScheduleConstraint{EqualSchedule})
         @test all(gen_out[t, water] ≈ schedule_profile[t] * capacity(gen, t) * 1.1 for t ∈ 𝒯)
     end
 end
@@ -1094,7 +1094,7 @@ end
         @test all(length(m[:discharge_segment][pump, t, :]) == 2  for t ∈ 𝒯)
 
         # Test that there are no violations on the scheduling constraints
-        # - build_schedule_constraint(m, n::Union{HydroGate, HydroUnit}, c::ScheduleConstraint{EqualSchedule}, 𝒯::TimeStructure, p::ResourceCarrier)
+        # - EMB.constraints_ext_data(m, n::HydroNode, 𝒯, 𝒫, modeltype::EnergyModel, data::ScheduleConstraint{EqualSchedule})
         @test all(gen_out[t, water] ≥ 0.6 * capacity(gen, t) for t ∈ 𝒯 if gen_flag[t])
         @test all(pump_out[t, water] ≥ 0.4 * capacity(pump, t)*2/3 for t ∈ 𝒯 if pump_flag[t])
     end
@@ -1143,7 +1143,7 @@ end
         @test EMRP.get_var_schedule(m, pump, 𝒯, pump_data[1]) == m[:flow_in][pump, :, water]
 
         # Test that there are no violations on the scheduling constraints
-        # - build_schedule_constraint(m, n::Union{HydroGate, HydroUnit}, c::ScheduleConstraint{EqualSchedule}, 𝒯::TimeStructure, p::ResourceCarrier)
+        # - EMB.constraints_ext_data(m, n::HydroNode, 𝒯, 𝒫, modeltype::EnergyModel, data::ScheduleConstraint{EqualSchedule})
         @test all(gen_out[t, water] ≥ 0.6 * capacity(gen, t) * 2/3 for t ∈ 𝒯 if gen_flag[t])
         @test all(pump_out[t, water] ≥ 0.4 * capacity(pump, t) * 2/3 for t ∈ 𝒯 if pump_flag[t])
     end

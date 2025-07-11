@@ -66,7 +66,6 @@ end
 # Test that the fields of a `HydroStorage` are correctly checked
 # - EMB.check_node(n::HydroStorage, 𝒯, modeltype::EnergyModel, check_timeprofiles::Bool)
 @testset "HydroStor and PumpedHydroStor" begin
-
     # Function for setting up the system for testing an `PumpedHydroStorage` node
     function check_graph(;
         type = PumpedHydroStor,

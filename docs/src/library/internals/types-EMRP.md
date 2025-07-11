@@ -10,6 +10,7 @@ Pages = ["types-EMRP.md"]
 
 ```@docs
 EMRP.HydroUnit
+EMRP.HydroNode
 ```
 
 ## [Parameter supertypes](@id lib-int-types-para)
