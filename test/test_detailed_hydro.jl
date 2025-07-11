@@ -213,6 +213,7 @@ end
                 value.(m[:sink_deficit][sink, t]) * deficit_penalty(sink, t) * duration(t) +
                 value.(m[:rsv_penalty_up][res, t, water]) * 10 * duration(t)
         for t ∈ 𝒯)
+        @test objective_value(m) ≈-100
     end
 
     @testset "Hydro reservoir - Hard MinSchedule and soft MaxSchedule" begin
@@ -265,6 +266,7 @@ end
                 sum(value.(m[:rsv_penalty_down][res, t, water]) * penalty_cost * duration(t) for t ∈ t_inv)
         for t_inv ∈ 𝒯ⁱⁿᵛ)
         @test objective_value(m) ≈ -sum(value.(m[:opex_var][res, t_inv]) for t_inv ∈ 𝒯ⁱⁿᵛ)
+        @test objective_value(m) ≈ -1140
     end
 
     @testset "Hydro reservoir - Hard EqualSchedule" begin
@@ -359,6 +361,7 @@ end
                 penalty_cost * duration(t) for t ∈ t_inv)
         for t_inv ∈ 𝒯ⁱⁿᵛ)
         @test objective_value(m) ≈ -sum(value.(m[:opex_var][res, t_inv]) for t_inv ∈ 𝒯ⁱⁿᵛ)
+        @test objective_value(m) ≈ -400
     end
 
     @testset "Gate - Hard EqualSchedule" begin
@@ -492,6 +495,7 @@ end
                     scale_op_sp(t_inv, t) * penalty_cost[t] * value.(m[:gate_penalty_down][gate, t, water])
                 for t ∈ t_inv)
         for t_inv ∈ 𝒯ⁱⁿᵛ)
+        @test all(value.(m[:opex_var][gate, t_inv]) ≈ 60 for t_inv ∈ 𝒯ⁱⁿᵛ)
     end
 
     @testset "Gate - Soft MinSchedule and hard MaxSchedule, varying penalty" begin
@@ -541,6 +545,7 @@ end
                     scale_op_sp(t_inv, t) * penalty_cost[t] * value.(m[:gate_penalty_up][gate, t, water])
                 for t ∈ t_inv)
         for t_inv ∈ 𝒯ⁱⁿᵛ)
+        @test all(value.(m[:opex_var][gate, t_inv]) ≈ 36 for t_inv ∈ 𝒯ⁱⁿᵛ)
     end
 end
 

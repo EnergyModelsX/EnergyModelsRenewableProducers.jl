@@ -43,6 +43,8 @@ EMRP.multiplication_variables
 EMRP.previous_usage
 EMRP.capacity_reduction
 EMRP.replace_disjunct
+EMRP.get_opex_pen_up
+EMRP.get_opex_pen_down
 ```
 
 ## [Variable extraction functions](@id lib-int-met-fun_var_extract)

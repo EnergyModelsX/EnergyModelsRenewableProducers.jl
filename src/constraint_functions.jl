@@ -477,39 +477,26 @@ end
     EMB.constraints_opex_var(m, n::HydroUnit, 𝒯ᴵⁿᵛ, modeltype::EnergyModel)
 
 Method for creating the constraint on the variable OPEX.
+
 The individual methods extend the functions of `EnergyModelsBase` through incorporating the
 penalty term for constraint violation.
 """
-function EMB.constraints_opex_var(m, n::HydroGate, 𝒯ᴵⁿᵛ, modeltype::EnergyModel)
+function EMB.constraints_opex_var(m, n::Union{HydroGate, HydroUnit}, 𝒯ᴵⁿᵛ, modeltype::EnergyModel)
+    # Identification of the individual schedule
+    schedule = constraint_data(n)
+    schedule_up = filter(has_penalty_up, schedule)
+    schedule_down = filter(has_penalty_down, schedule)
 
-    # Identification of the individual constraints
-    constraints = constraint_data(n)
-    constraints_up = filter(has_penalty_up, constraints)
-    constraints_down = filter(has_penalty_down, constraints)
-
-    opex_var = @expression(m, [t_inv ∈ 𝒯ᴵⁿᵛ], sum(m[:cap_use][n, t] * EMB.opex_var(n, t) *
-        scale_op_sp(t_inv, t) for t ∈ t_inv))
-
-    p = first(inputs(n))
-    if length(constraints_up) > 0
-        c_up = first(constraints_up)
-        penalty_up_var = @expression(m, [t_inv ∈ 𝒯ᴵⁿᵛ], sum(m[:gate_penalty_up][n, t, p] *
-            penalty(c_up, t) * scale_op_sp(t_inv, t) for t ∈ t_inv if has_penalty(c_up, t)))
-    else
-        penalty_up_var = @expression(m, [t_inv ∈ 𝒯ᴵⁿᵛ], 0)
-    end
-
-    if length(constraints_down) > 0
-        c_down = first(constraints_down)
-        penalty_down_var = @expression(m, [t_inv ∈ 𝒯ᴵⁿᵛ], sum(m[:gate_penalty_down][n, t, p] *
-            penalty(c_down, t) * scale_op_sp(t_inv, t) for t ∈ t_inv if has_penalty(c_down, t)))
-    else
-        penalty_down_var = @expression(m, [t_inv ∈ 𝒯ᴵⁿᵛ], 0)
-    end
+    # Calculation of the contributions
+    opex_var = @expression(m, [t_inv ∈ 𝒯ᴵⁿᵛ],
+        sum(m[:cap_use][n, t] * EMB.opex_var(n, t) * scale_op_sp(t_inv, t) for t ∈ t_inv)
+    )
+    opex_var_pen_up = get_opex_pen_up(m, n, schedule_up, 𝒯ᴵⁿᵛ, modeltype)
+    opex_var_pen_down = get_opex_pen_down(m, n, schedule_down, 𝒯ᴵⁿᵛ, modeltype)
 
     @constraint(m, [t_inv ∈ 𝒯ᴵⁿᵛ],
-        m[:opex_var][n, t_inv] == opex_var[t_inv] + penalty_up_var[t_inv] +
-            penalty_down_var[t_inv]
+        m[:opex_var][n, t_inv] ==
+            opex_var[t_inv] + opex_var_pen_up[t_inv] + opex_var_pen_down[t_inv]
     )
 end
 function EMB.constraints_opex_var(m, n::HydroReservoir, 𝒯ᴵⁿᵛ, modeltype::EnergyModel)
@@ -547,63 +534,20 @@ function EMB.constraints_opex_var(m, n::HydroReservoir, 𝒯ᴵⁿᵛ, modeltype
         opex_var_discharge = @expression(m, [t_inv ∈ 𝒯ᴵⁿᵛ], 0)
     end
 
-    # Create the constraint penalty constraint
-    constraints = constraint_data(n)
-    constraints_up = filter(has_penalty_up, constraints) # Max and schedule
-    constraints_down = filter(has_penalty_down, constraints) # Min and schedule
+    # Identification of the individual scheduling
+    schedule = constraint_data(n)
+    schedule_up = filter(has_penalty_up, schedule)      # Max and schedule
+    schedule_down = filter(has_penalty_down, schedule)  # Min and schedule
 
-    p = storage_resource(n)
-    if length(constraints_up) > 0
-        c_up = first(constraints_up)
-        penalty_up_var = @expression(m, [t_inv ∈ 𝒯ᴵⁿᵛ], sum(m[:rsv_penalty_up][n, t, p] *
-            penalty(c_up, t) * scale_op_sp(t_inv, t) for t ∈ t_inv if has_penalty(c_up, t)))
-    else
-        penalty_up_var = @expression(m, [t_inv ∈ 𝒯ᴵⁿᵛ], 0)
-    end
-
-    if length(constraints_down) > 0
-        c_down = first(constraints_down)
-        penalty_down_var = @expression(m, [t_inv ∈ 𝒯ᴵⁿᵛ], sum(m[:rsv_penalty_down][n, t, p] *
-            penalty(c_down, t) * scale_op_sp(t_inv, t) for t ∈ t_inv if has_penalty(c_down, t)))
-    else
-        penalty_down_var = @expression(m, [t_inv ∈ 𝒯ᴵⁿᵛ], 0)
-    end
+    # Calculation of the contributions
+    opex_var_pen_up = get_opex_pen_up(m, n, schedule_up, 𝒯ᴵⁿᵛ, modeltype)
+    opex_var_pen_down = get_opex_pen_down(m, n, schedule_down, 𝒯ᴵⁿᵛ, modeltype)
 
     # Create the overall constraint
     @constraint(m, [t_inv ∈ 𝒯ᴵⁿᵛ],
-        m[:opex_var][n, t_inv] == opex_var_level[t_inv] + opex_var_charge[t_inv] +
-            opex_var_discharge[t_inv] + penalty_up_var[t_inv] + penalty_down_var[t_inv]
-    )
-end
-function EMB.constraints_opex_var(m, n::HydroUnit, 𝒯ᴵⁿᵛ, modeltype::EnergyModel)
-    constraints = constraint_data(n)
-
-    opex_var = @expression(m, [t_inv ∈ 𝒯ᴵⁿᵛ], sum(m[:cap_use][n, t] * EMB.opex_var(n, t) *
-        scale_op_sp(t_inv, t) for t ∈ t_inv))
-
-    penalty_up_var = Dict(t_inv => AffExpr(0) for t_inv ∈ 𝒯ᴵⁿᵛ)
-    penalty_down_var = Dict(t_inv => AffExpr(0) for t_inv ∈ 𝒯ᴵⁿᵛ)
-
-    penalty_up_var = @expression(m, [t_inv ∈ 𝒯ᴵⁿᵛ],
-        sum(penalty(c, t) * scale_op_sp(t_inv, t) * m[:gen_penalty_up][n, t, p]
-            for t ∈ t_inv
-            for p ∈ [water_resource(n), electricity_resource(n)]
-            for c ∈ constraints
-            if has_penalty_up(c, t, p)
-        )
-    )
-    penalty_down_var = @expression(m, [t_inv ∈ 𝒯ᴵⁿᵛ],
-        sum(penalty(c, t) * scale_op_sp(t_inv, t) * m[:gen_penalty_down][n, t, p]
-            for t ∈ t_inv
-            for p ∈ [water_resource(n), electricity_resource(n)]
-            for c ∈ constraints
-            if has_penalty_down(c, t, p)
-        )
-    )
-
-    @constraint(m, [t_inv ∈ 𝒯ᴵⁿᵛ],
-        m[:opex_var][n, t_inv] == opex_var[t_inv] + penalty_up_var[t_inv] +
-            penalty_down_var[t_inv]
+        m[:opex_var][n, t_inv] ==
+            opex_var_level[t_inv] + opex_var_charge[t_inv] + opex_var_discharge[t_inv] +
+            opex_var_pen_up[t_inv] + opex_var_pen_down[t_inv]
     )
 end
 
