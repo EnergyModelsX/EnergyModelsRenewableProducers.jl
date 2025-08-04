@@ -3,7 +3,12 @@
 ## Unversioned
 
 * Minor updates to the documentation.
-* Rework of the tests for detailed hydropower modelling to prepare for a rework of the scheduling constraints
+
+### Rework of the scheduling constraints
+
+* Rework of the testset for the scheduling constraints.
+* Reduced number of lines through introduction of variable extraction functions to unify scheduling constraints.
+* Moved scheduling constraint calculations to extension data.
 
 ### Bugfixes
 
