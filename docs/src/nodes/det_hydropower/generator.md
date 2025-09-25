@@ -177,7 +177,7 @@ Furthermore, we provide new methods for the flow constraints for `HydroGenerator
 
 Furthermore, the method for `constraints_flow_out` adds *[discharge and power capacity constraints](@ref nodes-det_hydro_power-phil-con)* if additional constraints are provided in the `Data` field.
 Soft constraints, *i.e.*, constraints with a penalty, are used if the constraints have non-infinite penalty values.
-For `HydroGenerator` nodes, the constraints can be defined for both the `electricity_resource` and `water_resource`. The mathematical formualtion of the constraints are:
+For `HydroGenerator` nodes, the constraints can be defined for both the `electricity_resource` and `water_resource`. The mathematical formulation of the constraints are:
 
 To this end, we declare an internal expression given by:
 

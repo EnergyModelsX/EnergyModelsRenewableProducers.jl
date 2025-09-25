@@ -123,9 +123,9 @@ The mathematical formulation of the constraints are:
    ```math
    \begin{aligned}
       \texttt{stor\_level}[n, t] \geq & \\ &
-        \texttt{stor\_levl\_inst}[n, t] \times value(c, t) \qquad & \forall c \in C^{min} \\
+        \texttt{stor\_level\_inst}[n, t] \times value(c, t) \qquad & \forall c \in C^{min} \\
       \texttt{stor\_level}[n, t] + & \texttt{rsv\_vol\_penalty\_up}[n, t] \geq \\ &
-        \texttt{stor\_levl\_inst}[n, t] * value(c, t) \qquad & \forall c \in C^{min}
+        \texttt{stor\_level\_inst}[n, t] * value(c, t) \qquad & \forall c \in C^{min}
    \end{aligned}
    ```
 
@@ -134,9 +134,9 @@ The mathematical formulation of the constraints are:
    ```math
    \begin{aligned}
     \texttt{stor\_level}[n, t] \leq & \\ &
-      \texttt{stor\_levl\_inst}[n, t] \times value(c, t) \qquad & \forall c \in C^{max} \\
+      \texttt{stor\_level\_inst}[n, t] \times value(c, t) \qquad & \forall c \in C^{max} \\
     \texttt{stor\_level}[n, t] - & \texttt{rsv\_vol\_penalty\_down}[n, t] \leq \\ &
-      \texttt{stor\_levl\_inst}[n, t] \times value(c, t) \qquad & \forall c \in C^{max}
+      \texttt{stor\_level\_inst}[n, t] \times value(c, t) \qquad & \forall c \in C^{max}
    \end{aligned}
    ```
 
@@ -145,9 +145,9 @@ The mathematical formulation of the constraints are:
    ```math
    \begin{aligned}
     \texttt{stor\_level}[n, t] = & \\ &
-      \texttt{stor\_levl\_inst}[n, t] \times value(c, t) \quad & \forall c \in C^{sch} \\
+      \texttt{stor\_level\_inst}[n, t] \times value(c, t) \quad & \forall c \in C^{sch} \\
     \texttt{stor\_level}[n, t] + & \texttt{rsv\_vol\_penalty\_up}[n, t] - \texttt{rsv\_vol\_penalty\_down}[n, t] = \\ &
-      \texttt{stor\_levl\_inst}[n, t] \times value(c, t) \quad & \forall c \in C^{sch} \\
+      \texttt{stor\_level\_inst}[n, t] \times value(c, t) \quad & \forall c \in C^{sch} \\
    \end{aligned}
    ```
 
