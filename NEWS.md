@@ -1,6 +1,6 @@
 # Release notes
 
-## Unversioned
+## Version 0.6.6 (2025-09-25)
 
 * Minor updates to the documentation.
 
@@ -9,6 +9,7 @@
 * Rework of the testset for the scheduling constraints.
 * Reduced number of lines through introduction of variable extraction functions to unify scheduling constraints.
 * Moved scheduling constraint calculations to extension data.
+* Allow for investments in the detailed hydropower nodes.
 
 ### Bugfixes
 

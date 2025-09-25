@@ -96,7 +96,9 @@ where ``penalty()`` returns the penalty value for violation in the upward and do
     The function [``scale\_op\_sp(t_{inv}, t)``](@extref EnergyModelsBase.scale_op_sp) calculates the scaling factor between operational and strategic periods.
     It also takes into account potential operational scenarios and their probability as well as representative periods.
 
-The method for `constraints_flow_out` adds *[discharge constraints](@ref nodes-det_hydro_power-phil-con)* if additional constraints are provided in the `Data` field. Soft constraints, *i.e.*, constraints with a penalty, are used if the constraints have non-infinite penalty values. The mathematical formualtion of the constraints are:
+The method for `constraints_flow_out` adds *[discharge constraints](@ref nodes-det_hydro_power-phil-con)* if additional constraints are provided in the `Data` field.
+Soft constraints, *i.e.*, constraints with a penalty, are used if the constraints have non-infinite penalty values.
+The mathematical formulation of the constraints are (the first equation corresponds to hard constraints, the second equation to soft constraints):
 
 1. Minimum constraints for the discharge:
 

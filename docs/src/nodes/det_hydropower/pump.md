@@ -160,7 +160,7 @@ To this end, we declare an internal expression given by:
 \end{cases}
 ```
 
-The expression is subsequently used in the calculations for providing the constraints:
+The expression is subsequently used in the calculations for providing the constraints (the first equation corresponds to hard constraints, the second equation to soft constraints):
 
 1. Minimum constraints for pumping:
 

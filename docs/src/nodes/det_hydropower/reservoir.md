@@ -116,7 +116,7 @@ The energy balance in `constraints_level_aux` is altered to include the inflow t
 
 The new method adds furthermore *[additional constraints](@ref nodes-det_hydro_power-phil-con)*, if the corresponding types are provided in the `Data` field.
 Soft constraints, *i.e.*, constraints with a penalty, are used if the constraints have non-infinite penalty values.
-The mathematical formulation of the constraints are:
+The mathematical formulation of the constraints are (the first equation corresponds to hard constraints, the second equation to soft constraints):
 
 1. Minumum constraints for the reservoir level:
 
