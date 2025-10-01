@@ -96,15 +96,18 @@ where ``penalty()`` returns the penalty value for violation in the upward and do
     The function [``scale\_op\_sp(t_{inv}, t)``](@extref EnergyModelsBase.scale_op_sp) calculates the scaling factor between operational and strategic periods.
     It also takes into account potential operational scenarios and their probability as well as representative periods.
 
-The method for `constraints_flow_out` adds *[discharge constraints](@ref nodes-det_hydro_power-phil-con)* if additional constraints are provided in the `Data` field. Soft constraints, *i.e.*, constraints with a penalty, are used if the constraints have non-infinite penalty values. The mathematical formualtion of the constraints are:
+The method for `constraints_flow_out` adds *[discharge constraints](@ref nodes-det_hydro_power-phil-con)* if additional constraints are provided in the `Data` field.
+Soft constraints, *i.e.*, constraints with a penalty, are used if the constraints have non-infinite penalty values.
+The mathematical formulation of the constraints are (the first equation corresponds to hard constraints, the second equation to soft constraints):
 
 1. Minimum constraints for the discharge:
 
    ```math
    \begin{aligned}
-     \texttt{flow\_out}[n, t, p] \geq & capacity(n, t) \times value(c, t) \qquad & \forall c \in C^{min}\\
+     \texttt{flow\_out}[n, t, p] \geq & \\ &
+       \texttt{cap\_inst}[n, t] \times value(c, t) \qquad & \forall c \in C^{min}\\
      \texttt{flow\_out}[n, t, p] + & \texttt{gate\_penalty\_up}[n, t] \geq \\ &
-      capacity(n, t) \times value(c, t) \qquad & \forall c \in C^{min}
+       \texttt{cap\_inst}[n, t] \times value(c, t) \qquad & \forall c \in C^{min}
    \end{aligned}
    ```
 
@@ -112,9 +115,10 @@ The method for `constraints_flow_out` adds *[discharge constraints](@ref nodes-d
 
    ```math
    \begin{aligned}
-     \texttt{flow\_out}[n, t, p] \leq & capacity(n, t) \times value(c, t) \qquad & \forall c \in C^{max}\\
+     \texttt{flow\_out}[n, t, p] \leq & \\ &
+       \texttt{cap\_inst}[n, t] \times value(c, t) \qquad & \forall c \in C^{max}\\
      \texttt{flow\_out}[n, t, p] - & \texttt{gate\_penalty\_down}[n, t] \leq \\ &
-      capacity(n, t) \times value(c, t) \qquad & \forall c \in C^{max}
+       \texttt{cap\_inst}[n, t] \times value(c, t) \qquad & \forall c \in C^{max}
    \end{aligned}
    ```
 
@@ -122,13 +126,14 @@ The method for `constraints_flow_out` adds *[discharge constraints](@ref nodes-d
 
    ```math
    \begin{aligned}
-     \texttt{flow\_out}[n, t, p] = & capacity(n, t) \times value(c, t) \qquad & \forall c \in C^{sch}\\
+     \texttt{flow\_out}[n, t, p] = & \\ &
+       \texttt{cap\_inst}[n, t] \times value(c, t) \qquad & \forall c \in C^{sch}\\
      \texttt{flow\_out}[n, t, p] + & \texttt{gate\_penalty\_up}[n, t] - \texttt{gate\_penalty\_down}[n, t] =  \\ &
-     capacity(n, t) \times value(c, t) \quad & \forall c \in C^{sch}
+       \texttt{cap\_inst}[n, t] \times value(c, t) \quad & \forall c \in C^{sch}
    \end{aligned}
    ```
 
-where ``value(c,t)`` returns the relative limit of constraint `c` and  ``capacity(n,t)`` returns the installed capacity of node `n`.
+where ``value(c,t)`` returns the relative limit of scheduling constraint `c`.
 The sets ``C^{min}``,``C^{max}`` and ``C^{sch}`` contain additional minimum, maximum, and scheduling constraints, repectively.
 
 #### [Additional constraints](@id nodes-gate-math-con-add)

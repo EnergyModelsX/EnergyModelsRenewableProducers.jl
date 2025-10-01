@@ -294,3 +294,169 @@ replaced.
 """
 capacity_max(n::AbstractBattery, t_inv, modeltype::EnergyModel) =
     capacity(level(n), t_inv) * cycles(n)
+
+"""
+    get_var_inst(m, n::HydroReservoir, 𝒯::TimeStructure, data::ScheduleConstraint)
+    get_var_inst(m, n::HydroGate, 𝒯::TimeStructure, data::ScheduleConstraint)
+    get_var_inst(m, n::HydroUnit, 𝒯::TimeStructure, data::ScheduleConstraint)
+
+Extracts the installed capacity variable used in scheduling constraints. The variables are
+
+* `n::HydroReservoir` - `:stor_level_inst[n, :]`,
+* `n::HydroGate` - `:cap_inst[n, :]`, and
+* `n::HydroUnit` - `:cap_inst[n, :]` multiplied by the value for the node of the function
+  [`max_normalized_flow`](@ref) or [`max_normalized_power`](@ref).
+"""
+get_var_inst(m, n::HydroReservoir, 𝒯::TimeStructure, data::ScheduleConstraint) =
+    m[:stor_level_inst][n, :]
+get_var_inst(m, n::HydroGate, 𝒯::TimeStructure, data::ScheduleConstraint) =
+    m[:cap_inst][n, :]
+function get_var_inst(m, n::HydroUnit, 𝒯::TimeStructure, data::ScheduleConstraint)
+    p = resource(data)
+    if p == electricity_resource(n)
+        mult = max_normalized_power(n)
+    elseif p == water_resource(n)
+        mult = max_normalized_flow(n)
+    end
+    return @expression(m, [t ∈ 𝒯], m[:cap_inst][n, t] * mult)
+end
+
+"""
+    get_var_schedule(m, n::HydroReservoir, 𝒯::TimeStructure, data::ScheduleConstraint)
+    get_var_schedule(m, n::HydroGate, 𝒯::TimeStructure, data::ScheduleConstraint)
+    get_var_schedule(m, n::HydroPump, 𝒯::TimeStructure, data::ScheduleConstraint)
+    get_var_schedule(m, n::HydroGenerator, 𝒯::TimeStructure, data::ScheduleConstraint)
+
+Extracts the variable for which scheduling constraints are included. The variables are
+
+* `n::HydroReservoir` - `:stor_level[n, :]`,
+* `n::HydroGate` - `:flow_out[n, :, n.resource]`,
+* `n::HydroPump` - `:flow_in[n, :, resource(data)]`, and
+* `n::HydroGenerator` - `:flow_out[n, :, resource(data)]`.
+"""
+get_var_schedule(m, n::HydroReservoir, 𝒯::TimeStructure, data::ScheduleConstraint) =
+    m[:stor_level][n, :]
+get_var_schedule(m, n::HydroGate, 𝒯::TimeStructure, data::ScheduleConstraint) =
+    m[:flow_out][n, :, n.resource]
+get_var_schedule(m, n::HydroPump, 𝒯::TimeStructure, data::ScheduleConstraint) =
+    m[:flow_in][n, :, resource(data)]
+get_var_schedule(m, n::HydroGenerator, 𝒯::TimeStructure, data::ScheduleConstraint) =
+    m[:flow_out][n, :, resource(data)]
+
+"""
+    get_var_pen_up(m, n::HydroReservoir, 𝒯::TimeStructure, data::ScheduleConstraint)
+    get_var_pen_up(m, n::HydroGate, 𝒯::TimeStructure, data::ScheduleConstraint)
+    get_var_pen_up(m, n::HydroUnit, 𝒯::TimeStructure, data::ScheduleConstraint)
+    get_var_pen_up(m, n::HydroReservoir, t::TS.TimePeriod, data::ScheduleConstraint)
+    get_var_pen_up(m, n::HydroGate, t::TS.TimePeriod, data::ScheduleConstraint)
+    get_var_pen_up(m, n::HydroUnit, t::TS.TimePeriod, data::ScheduleConstraint)
+
+Extracts the variable for which scheduling constraints are included indexed over the
+`TimeStructure` or in operational period `t`. The variables are
+
+* `n::HydroReservoir` - `:rsv_penalty_up[n, :, storage_resource(n)]`,
+* `n::HydroGate` - `:gate_penalty_up[n, :, n.resource]`, and
+* `n::HydroUnit` - `:gen_penalty_up[n, :, resource(data)]`.
+"""
+get_var_pen_up(m, n::HydroReservoir, 𝒯::TimeStructure, data::ScheduleConstraint) =
+    m[:rsv_penalty_up][n, :, storage_resource(n)]
+get_var_pen_up(m, n::HydroGate, 𝒯::TimeStructure, data::ScheduleConstraint) =
+    m[:gate_penalty_up][n, :, n.resource]
+get_var_pen_up(m, n::HydroUnit, 𝒯::TimeStructure, data::ScheduleConstraint) =
+    m[:gen_penalty_up][n, :, resource(data)]
+get_var_pen_up(m, n::HydroReservoir, t::TS.TimePeriod, data::ScheduleConstraint) =
+    m[:rsv_penalty_up][n, t, storage_resource(n)]
+get_var_pen_up(m, n::HydroGate, t::TS.TimePeriod, data::ScheduleConstraint) =
+    m[:gate_penalty_up][n, t, n.resource]
+get_var_pen_up(m, n::HydroUnit, t::TS.TimePeriod, data::ScheduleConstraint) =
+    m[:gen_penalty_up][n, t, resource(data)]
+
+"""
+    get_var_pen_down(m, n::HydroReservoir, 𝒯::TimeStructure, data::ScheduleConstraint)
+    get_var_pen_down(m, n::HydroGate, 𝒯::TimeStructure, data::ScheduleConstraint)
+    get_var_pen_down(m, n::HydroUnit, 𝒯::TimeStructure, data::ScheduleConstraint)
+    get_var_pen_down(m, n::HydroReservoir, t::TS.TimePeriod, data::ScheduleConstraint)
+    get_var_pen_down(m, n::HydroGate, t::TS.TimePeriod, data::ScheduleConstraint)
+    get_var_pen_down(m, n::HydroUnit, t::TS.TimePeriod, data::ScheduleConstraint)
+
+Extracts the variable for which scheduling constraints are included indexed over the
+`TimeStructure` or in operational period `t`. The variables are
+
+* `n::HydroReservoir` - `:rsv_penalty_down[n, :, storage_resource(n)]`,
+* `n::HydroGate` - `:gate_penalty_down[n, :, n.resource]`, and
+* `n::HydroUnit` - `:gen_penalty_down[n, :, resource(data)]`.
+"""
+get_var_pen_down(m, n::HydroReservoir, 𝒯::TimeStructure, data::ScheduleConstraint) =
+    m[:rsv_penalty_down][n, :, storage_resource(n)]
+get_var_pen_down(m, n::HydroGate, 𝒯::TimeStructure, data::ScheduleConstraint) =
+    m[:gate_penalty_down][n, :, n.resource]
+get_var_pen_down(m, n::HydroUnit, 𝒯::TimeStructure, data::ScheduleConstraint) =
+    m[:gen_penalty_down][n, :, resource(data)]
+get_var_pen_down(m, n::HydroReservoir, t::TS.TimePeriod, data::ScheduleConstraint) =
+    m[:rsv_penalty_down][n, t, storage_resource(n)]
+get_var_pen_down(m, n::HydroGate, t::TS.TimePeriod, data::ScheduleConstraint) =
+    m[:gate_penalty_down][n, t, n.resource]
+get_var_pen_down(m, n::HydroUnit, t::TS.TimePeriod, data::ScheduleConstraint) =
+    m[:gen_penalty_down][n, t, resource(data)]
+
+"""
+    get_opex_pen_up(m, n::HydroNode, sched_data::Vector{<:ScheduleConstraint}, 𝒯ᴵⁿᵛ, modeltype::EnergyModel)
+    get_opex_pen_up(m, n::HydroNode, sched_data::Vector{ExtensionData}, 𝒯ᴵⁿᵛ, modeltype::EnergyModel)
+
+Returns the contribution of [`HydroNode`](@ref) `n` for the minimum or equality penalty
+violation to the variable OPEX.
+"""
+function get_opex_pen_up(
+    m,
+    n::HydroNode,
+    sched_data::Vector{<:ScheduleConstraint},
+    𝒯ᴵⁿᵛ,
+    modeltype::EnergyModel,
+)
+    return @expression(m, [t_inv ∈ 𝒯ᴵⁿᵛ],
+        sum(
+            get_var_pen_up(m, n, t, pen_active) * penalty(pen_active, t) *
+            scale_op_sp(t_inv, t)
+        for t ∈ t_inv for pen_active ∈ sched_data if has_penalty(pen_active, t))
+    )
+end
+function get_opex_pen_up(
+    m,
+    n::HydroNode,
+    sched_data::Vector{ExtensionData},
+    𝒯ᴵⁿᵛ,
+    modeltype::EnergyModel,
+)
+    return @expression(m, [t_inv ∈ 𝒯ᴵⁿᵛ], 0)
+end
+
+"""
+    get_opex_pen_down(m, n::HydroNode, sched_data::Vector{<:ScheduleConstraint}, 𝒯ᴵⁿᵛ, modeltype::EnergyModel)
+    get_opex_pen_down(m, n::HydroNode, sched_data::Vector{ExtensionData}, 𝒯ᴵⁿᵛ, modeltype::EnergyModel)
+
+Returns the contribution of [`HydroNode`](@ref) `n` for the maximum or equality penalty
+violation to the variable OPEX for each investment period `t_inv`.
+"""
+function get_opex_pen_down(
+    m,
+    n::HydroNode,
+    sched_data::Vector{<:ScheduleConstraint},
+    𝒯ᴵⁿᵛ,
+    modeltype::EnergyModel,
+)
+    return @expression(m, [t_inv ∈ 𝒯ᴵⁿᵛ],
+        sum(
+            get_var_pen_down(m, n, t, pen_active) * penalty(pen_active, t) *
+            scale_op_sp(t_inv, t)
+        for t ∈ t_inv for pen_active ∈ sched_data if has_penalty(pen_active, t))
+    )
+end
+function get_opex_pen_down(
+    m,
+    n::HydroNode,
+    sched_data::Vector{ExtensionData},
+    𝒯ᴵⁿᵛ,
+    modeltype::EnergyModel,
+)
+    return @expression(m, [t_inv ∈ 𝒯ᴵⁿᵛ], 0)
+end

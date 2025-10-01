@@ -6,6 +6,7 @@ using EnergyModelsBase
 using EnergyModelsRenewableProducers
 
 const EMB = EnergyModelsBase
+const EMRP = EnergyModelsRenewableProducers
 
 DocMeta.setdocmeta!(
     EnergyModelsRenewableProducers,

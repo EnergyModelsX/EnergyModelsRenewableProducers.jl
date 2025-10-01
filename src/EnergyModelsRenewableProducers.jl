@@ -31,6 +31,7 @@ include("model.jl")
 include("checks.jl")
 include("utils.jl")
 include("constraint_functions.jl")
+include("data_functions.jl")
 
 # Legacy constructors for node types
 include("legacy_constructor.jl")

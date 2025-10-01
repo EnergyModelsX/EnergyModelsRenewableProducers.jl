@@ -66,7 +66,6 @@ end
 # Test that the fields of a `HydroStorage` are correctly checked
 # - EMB.check_node(n::HydroStorage, 𝒯, modeltype::EnergyModel, check_timeprofiles::Bool)
 @testset "HydroStor and PumpedHydroStor" begin
-
     # Function for setting up the system for testing an `PumpedHydroStorage` node
     function check_graph(;
         type = PumpedHydroStor,
@@ -239,16 +238,6 @@ end
     # Test that a wrong inflow is caught by the checks
     @test_throws AssertionError check_graph(; level_inflow=FixedProfile(-5))
 
-    # Test that providing investment data is caught by the checks
-    data = [StorageInvData(
-        level = NoStartInvData(
-            FixedProfile(600),
-            FixedProfile(40),
-            SemiContinuousInvestment(FixedProfile(5), FixedProfile(40)),
-        )
-    )]
-    @test_throws AssertionError check_graph(; data)
-
     # Test that providing wrong ScheduleConstraint is caught by the test
     data = [ScheduleConstraint{EqualSchedule}(
         Water, FixedProfile(10), FixedProfile(true), FixedProfile(2)
@@ -312,14 +301,6 @@ end
     @test_throws AssertionError check_graph(; opex_fixed=FixedProfile(-5))
     @test_throws AssertionError check_graph(; opex_fixed=OperationalProfile([10]))
 
-    # Test that providing investment data is caught by the checks
-    data = Data[SingleInvData(
-            FixedProfile(600),
-            FixedProfile(40),
-            SemiContinuousInvestment(FixedProfile(5), FixedProfile(40)),
-    )]
-    @test_throws AssertionError check_graph(; data)
-
     # Test that providing wrong ScheduleConstraint is caught by the test
     data = [ScheduleConstraint{EqualSchedule}(
         Water, FixedProfile(10), FixedProfile(true), FixedProfile(2)
@@ -377,14 +358,6 @@ end
     # Test that a wrong fixed OPEX is caught by the checks
     @test_throws AssertionError check_graph(; opex_fixed=FixedProfile(-5))
     @test_throws AssertionError check_graph(; opex_fixed=OperationalProfile([10]))
-
-    # Test that providing investment data is caught by the checks
-    data = Data[SingleInvData(
-            FixedProfile(600),
-            FixedProfile(40),
-            SemiContinuousInvestment(FixedProfile(5), FixedProfile(40)),
-    )]
-    @test_throws AssertionError check_graph(; data)
 
     # Test that providing wrong ScheduleConstraint is caught by the test
     data = [ScheduleConstraint{EqualSchedule}(

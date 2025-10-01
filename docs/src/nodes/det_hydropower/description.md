@@ -35,12 +35,8 @@ The nodes should be connected by [`links`](@extref lib-pub-links) to represent t
     The ocean, or similar final destination, should be represented as a [`RefSink`](@extref EnergyModelsBase.RefSink) with the water resource as input an no surplus penalty.
     This way, it can accept any amount of water.
 
-!!! warning "Detailed hydropower nodes and investment models"
-    The current implementation of nodes described below does not allow their usage in capacity expansion models.
-    This is checked through the function `EMB.check_node_data` in the `EnergyModelsInvestments` extension.
-
-Some of the node types has similar functionality and use some of the same code.
-The following, describes some general functionality before a more detailed description of the nodes are provided.
+Some of the node types have similar functionality, and hence, use the same code for certain functionality.
+The following describes some general functionality before more detailed descriptions of the nodes are provided in the respective subsections.
 
 The illustration below shows a typical hydropower system where the dotted lines illustrate the links between the nodes.
 
@@ -56,12 +52,13 @@ For a [`HydroPump`](@ref) node, the PQ-points describes how much electric energy
 The PQ-points are provided as input through the `pq_curve` field of the  [`HydroGenerator`](@ref) and [`HydroPump`](@ref) nodes.
 
 !!! note "Relative `PqPoints`"
-     The  [`PqPoints`](@ref) are relative to the installed capacity. This approach makes if possible to freely chose the capacity of the node (provided in the field `cap::TimeProfile`) to refer to the electricity resource (power capacity) or the water resource (discharge/pump capacity) of the node, depending on the input used when setting up det hydropower system.
+     The  [`PqPoints`](@ref) are relative to the installed capacity.
+     This approach makes if possible to freely chose the capacity of the node to refer to the electricity resource (power capacity) or the water resource (discharge/pump capacity) of the node, depending on the input used when setting up det hydropower system.
 
 !!! note "Energy equivalent"
     Alternatively, a single value representing the energy equivalent can be provided as input in the field `pq_curve`.
-    By the use of a constuctor, a [`PqPoints`](@ref) struct consisting of a minimum and maximum point is then created based on the energy equvalent.
-    If a single energy equivalent is given as input, the installed capacity (provided in the field `cap::TimeProfile`) must refer to the power capacity of the [`HydroGenerator`](@ref) or [`HydroPump`](@ref) nodes.
+    By the use of a constuctor, a [`PqPoints`](@ref) composite type consisting of a minimum and maximum point is then created based on the energy equvalent.
+    If a single energy equivalent is given as input, the installed capacity must refer to the power capacity of the [`HydroGenerator`](@ref) or [`HydroPump`](@ref) nodes.
 
 ## [Additional constraints](@id nodes-det_hydro_power-phil-con)
 
