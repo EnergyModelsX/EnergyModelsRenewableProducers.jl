@@ -459,20 +459,20 @@ It can only be used in conjunction with [`HydroGenerator`](@ref) nodes.
 """
 struct HydroReservoir{T} <: EMB.Storage{T}
     id::Any
-    vol::EMB.UnionCapacity
+    level::EMB.UnionCapacity
     vol_inflow::TimeProfile
     stor_res::ResourceCarrier # Water
     data::Vector{<:Data}
 end
 function HydroReservoir{T}(
     id::Any,
-    vol::EMB.UnionCapacity,
+    level::EMB.UnionCapacity,
     vol_inflow::TimeProfile,
     stor_res::ResourceCarrier
     ) where {T<:EMB.StorageBehavior}
     return HydroReservoir{T}(
         id,
-        vol,
+        level,
         vol_inflow,
         stor_res,
         Data[],
@@ -508,7 +508,7 @@ EMB.outputs(n::HydroReservoir, p::Resource) = 1
 
 Returns the `vol` parameter field of the HydroReservoir `n`.
 """
-EMB.level(n::HydroReservoir) = n.vol
+EMB.level(n::HydroReservoir) = n.level
 
 """
     vol_inflow(n::HydroReservoir)
