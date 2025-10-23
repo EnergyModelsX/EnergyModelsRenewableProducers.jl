@@ -1,5 +1,9 @@
 # Release notes
 
+## Version 0.6.7 (2025-10-23)
+
+* Fixed a bug in the internal functions `get_opex_pen_up` and `get_opex_pen_down`, such that they now work with InvestmentData.
+
 ## Version 0.6.6 (2025-09-25)
 
 * Minor updates to the documentation.
