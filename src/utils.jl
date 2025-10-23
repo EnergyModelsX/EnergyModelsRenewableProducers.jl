@@ -423,7 +423,7 @@ end
 function get_opex_pen_up(
     m,
     n::HydroNode,
-    sched_data::Vector{ExtensionData},
+    sched_data::Vector{<:ExtensionData},
     𝒯ᴵⁿᵛ,
     modeltype::EnergyModel,
 )
@@ -454,7 +454,7 @@ end
 function get_opex_pen_down(
     m,
     n::HydroNode,
-    sched_data::Vector{ExtensionData},
+    sched_data::Vector{<:ExtensionData},
     𝒯ᴵⁿᵛ,
     modeltype::EnergyModel,
 )
