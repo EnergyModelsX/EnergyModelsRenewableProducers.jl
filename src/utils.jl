@@ -401,7 +401,7 @@ get_var_pen_down(m, n::HydroUnit, t::TS.TimePeriod, data::ScheduleConstraint) =
 
 """
     get_opex_pen_up(m, n::HydroNode, sched_data::Vector{<:ScheduleConstraint}, 𝒯ᴵⁿᵛ, modeltype::EnergyModel)
-    get_opex_pen_up(m, n::HydroNode, sched_data::Vector{ExtensionData}, 𝒯ᴵⁿᵛ, modeltype::EnergyModel)
+    get_opex_pen_up(m, n::HydroNode, sched_data::Vector{<:ExtensionData}, 𝒯ᴵⁿᵛ, modeltype::EnergyModel)
 
 Returns the contribution of [`HydroNode`](@ref) `n` for the minimum or equality penalty
 violation to the variable OPEX.
@@ -432,7 +432,7 @@ end
 
 """
     get_opex_pen_down(m, n::HydroNode, sched_data::Vector{<:ScheduleConstraint}, 𝒯ᴵⁿᵛ, modeltype::EnergyModel)
-    get_opex_pen_down(m, n::HydroNode, sched_data::Vector{ExtensionData}, 𝒯ᴵⁿᵛ, modeltype::EnergyModel)
+    get_opex_pen_down(m, n::HydroNode, sched_data::Vector{<:ExtensionData}, 𝒯ᴵⁿᵛ, modeltype::EnergyModel)
 
 Returns the contribution of [`HydroNode`](@ref) `n` for the maximum or equality penalty
 violation to the variable OPEX for each investment period `t_inv`.
