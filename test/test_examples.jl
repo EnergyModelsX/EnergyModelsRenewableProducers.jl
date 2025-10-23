@@ -1,4 +1,4 @@
-@testitem "Examples" begin
+@testset "Examples" begin
     using Logging
     # Get the global logger and set the loglevel to Warn
     logger_org = global_logger()
