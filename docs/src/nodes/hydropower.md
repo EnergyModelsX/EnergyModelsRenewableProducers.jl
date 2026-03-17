@@ -69,6 +69,10 @@ These fields are given as:
   It can be provided as `OperationalProfile`.
   In practice, it is however sufficient to provide it as `StrategicProfile` as only a single value is used.\
   The initial levels have to be non-negative and less than the maximum storage capacity.
+  !!! warning "Using `EnergyModelsRecedingHorizon`"
+      This value is not relevant when you use the package [`EnergyModelsRecedingHorizon`](https://github.com/EnergyModelsX/EnergyModelsRecedingHorizon.jl).
+      In this case, it is not utilized to avoid problems with the initial data type ([`InitData`](https://energymodelsx.github.io/EnergyModelsRecedingHorizon.jl/stable/library/public/#EnergyModelsRecedingHorizon.InitData)) which is reset in each horizon.
+      It must however be specified within the bounds outlined above.
 - **`level_inflow::TimeProfile`**:\
   The inflow is representing the potential *electricity* flowing into the reservoir in each operational period.
   It is depending on rivers flowing into the reservoir or rainfall.

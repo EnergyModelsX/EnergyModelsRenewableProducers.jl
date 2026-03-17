@@ -1,5 +1,15 @@
 # Release notes
 
+## Version 0.6.8 (2026-03-18)
+
+### Bugfix
+
+Fixed a bug when using `EnergyModelsRecedingHorizon` and `HydroStorage` nodes due to the initialization.
+
+* The value of the field `level_init` was contradicting `InitData`.
+* A quick fix was through providing a new method for `constraints_level_aux` when the modeltype is a `RecHorEnergyModel`.
+* The change should not lead to method ambiguities.
+
 ## Version 0.6.7 (2025-10-23)
 
 * Fixed a bug in the internal functions `get_opex_pen_up` and `get_opex_pen_down`, such that they now work with InvestmentData.
