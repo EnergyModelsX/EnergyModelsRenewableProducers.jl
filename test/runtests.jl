@@ -1,5 +1,6 @@
 using EnergyModelsBase
 using EnergyModelsRenewableProducers
+using EnergyModelsRecedingHorizon
 using HiGHS
 using JuMP
 using Test
