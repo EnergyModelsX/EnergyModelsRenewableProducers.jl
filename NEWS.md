@@ -1,5 +1,14 @@
 # Release notes
 
+## Version 0.7.0 (2026-04-16)
+
+### Breaking changes
+
+* Adjusted to the changes introduced in [`EnergyModelsInvestments` 0.9](https://github.com/EnergyModelsX/EnergyModelsInvestments.jl/releases/tag/v0.9.0) and [`EnergyModelsBase` 0.10](https://github.com/EnergyModelsX/EnergyModelsBase.jl/releases/tag/v0.10.0):
+  * Breaking change required as early retirement is now allowed.
+  * Early retirement changes the model behavior.
+  * Test set was required to be adjusted, highlighting the potential impact of the changes
+
 ## Version 0.6.8 (2026-03-18)
 
 ### Bugfix
