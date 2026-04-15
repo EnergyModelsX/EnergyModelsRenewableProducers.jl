@@ -32,7 +32,7 @@ The standard fields are given as:
   If the node should contain investments through the application of [`EnergyModelsInvestments`](https://energymodelsx.github.io/EnergyModelsInvestments.jl/stable/), it is important to note that you can only use `FixedProfile` or `StrategicProfile` for the capacity, but not `RepresentativeProfile` or `OperationalProfile`.
   In addition, all values have to be non-negative.
 - **`opex_var::TimeProfile`**:\
-  The variable operational expenses are based on the capacity utilization through the variable [`:cap_use`](@extref EnergyModelsBase man-opt_var-cap).
+  The variable operating expenses are based on the capacity utilization through the variable [`:cap_use`](@extref EnergyModelsBase man-opt_var-cap).
   Hence, it is directly related to the specified `output` ratios.
   The variable operating expenses can be provided as `OperationalProfile` as well.
 - **`opex_fixed::TimeProfile`**:\
@@ -71,7 +71,7 @@ with square brackets, while functions are represented as
 
 ``func\_example(index_1, index_2)``
 
-with paranthesis.
+with parantheses.
 
 ### [Variables](@id nodes-nondisres-math-var)
 
@@ -97,8 +97,8 @@ The variables include:
 [`NonDisRES`](@ref) nodes should keep track on the curtailment of the electricity, that is the unused capacity in each operational time period.
 Hence, a single additional variable is declared through dispatching on the method [`EnergyModelsBase.variables_node()`](@ref):
 
-- ``\texttt{curtailment}[n, t]``: Curtailed capacity of source ``n`` in operational period ``t`` with a typical unit of MW.\
-  The curtailed electricity specifies the unused generation capacity of the non-dispatchable energy source.
+- ``\texttt{curtailment}[n, t]``: Curtailed energy of source ``n`` in operational period ``t`` with a typical unit of MW.\
+  The curtailed electricity specifies the unused generated energy as rate of the non-dispatchable energy source.
   It is currently only used in the calculation, but not with a cost.
   This can be added by the user, if desired.
 
