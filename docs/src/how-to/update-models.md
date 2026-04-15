@@ -5,7 +5,7 @@ Hence, there are frequently breaking changes occuring, although we plan to keep 
 This document is designed to provide users with information regarding how they have to adjust their models to keep compatibility to the latest changes.
 We will as well implement information regarding the adjustment of extension packages, although this is more difficult due to the vast majority of potential changes.
 
-## Adjustments from 0.4.2
+## Adjustments from 0.5.x
 
 ### Key changes for nodal descriptions
 
@@ -94,7 +94,7 @@ PumpedHydroStor{CyclicStrategic}(
 )
 ```
 
-## Adjustments from 0.4.0 to 0.6.x
+## Adjustments from 0.4.x to 0.6.x
 
 ### Key changes for nodal descriptions
 

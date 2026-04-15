@@ -30,12 +30,6 @@ HydroPump
 HydroGate
 ```
 
-### [Legacy constructors](@id lib-pub-node-legacy)
-
-```@docs
-RegHydroStor
-```
-
 ## [Additional types](@id lib-pub-add)
 
 ### [Providing a battery lifetime](@id lib-pub-add-bat_life)
