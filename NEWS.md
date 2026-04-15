@@ -9,6 +9,10 @@
   * Early retirement changes the model behavior.
   * Test set was required to be adjusted, highlighting the potential impact of the changes
 
+### Minor updates
+
+* Improved the documentation and unified the docstrings.
+
 ## Version 0.6.8 (2026-03-18)
 
 ### Bugfix
