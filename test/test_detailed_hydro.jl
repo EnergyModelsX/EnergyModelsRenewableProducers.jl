@@ -4,11 +4,11 @@ power = ResourceCarrier("Power", 0.0)
 water = ResourceCarrier("Water", 0.0)
 
 """
-    gate_res_test_case(;data_res=Data[], data_gate=Data[])
+    test_case_gate_res(;data_res=Data[], data_gate=Data[])
 
 Simple test case for testing the hydro gate and hydro reservoirs.
 """
-function gate_res_test_case(;res_data=Data[], gate_data=Data[])
+function test_case_gate_res(;res_data=Data[], gate_data=Data[])
     # Declare the used resources
     𝒫 = [co2, power, water]
 
@@ -91,7 +91,7 @@ end
             gate_flag,          # flag
             FixedProfile(57),   # penalty
         )]
-        case, _ = gate_res_test_case(;res_data, gate_data)
+        case, _ = test_case_gate_res(;res_data, gate_data)
         𝒯 = get_time_struct(case)
         res, gate = get_nodes(case)[[1, 2]]
 
@@ -138,7 +138,7 @@ end
 
     @testset "Without schedule constraints" begin
         # Create and solve the model
-        case, modeltype = gate_res_test_case()
+        case, modeltype = test_case_gate_res()
         m = EMB.run_model(case, modeltype, OPTIMIZER)
 
         # Extract the data
@@ -172,7 +172,7 @@ end
         ]
 
         # Create and solve the model
-        case, modeltype = gate_res_test_case(;res_data)
+        case, modeltype = test_case_gate_res(;res_data)
         m = EMB.run_model(case, modeltype, OPTIMIZER)
 
         # Extract the data
@@ -237,7 +237,7 @@ end
         ]
 
         # Create and solve the model
-        case, modeltype = gate_res_test_case(;res_data)
+        case, modeltype = test_case_gate_res(;res_data)
         m = EMB.run_model(case, modeltype, OPTIMIZER)
 
         # Extract the data
@@ -282,7 +282,7 @@ end
         ]
 
         # Create and solve the model
-        case, modeltype = gate_res_test_case(;res_data)
+        case, modeltype = test_case_gate_res(;res_data)
         m = EMB.run_model(case, modeltype, OPTIMIZER)
 
         # Extract the data
@@ -318,7 +318,7 @@ end
         ]
 
         # Create and solve the model
-        case, modeltype = gate_res_test_case(;res_data)
+        case, modeltype = test_case_gate_res(;res_data)
         m = EMB.run_model(case, modeltype, OPTIMIZER)
 
         # Extract the data
@@ -378,7 +378,7 @@ end
         ]
 
         # Create and solve the model
-        case, modeltype = gate_res_test_case(;gate_data)
+        case, modeltype = test_case_gate_res(;gate_data)
         m = EMB.run_model(case, modeltype, OPTIMIZER)
 
         # Extract the data
@@ -414,7 +414,7 @@ end
         ]
 
         # Create and solve the model
-        case, modeltype = gate_res_test_case(;gate_data)
+        case, modeltype = test_case_gate_res(;gate_data)
         m = EMB.run_model(case, modeltype, OPTIMIZER)
 
         # Extract the data
@@ -469,7 +469,7 @@ end
         ]
 
         # Create and solve the model
-        case, modeltype = gate_res_test_case(;gate_data)
+        case, modeltype = test_case_gate_res(;gate_data)
         m = EMB.run_model(case, modeltype, OPTIMIZER)
 
         # Extract the data
@@ -519,7 +519,7 @@ end
         ]
 
         # Create and solve the model
-        case, modeltype = gate_res_test_case(;gate_data)
+        case, modeltype = test_case_gate_res(;gate_data)
         m = EMB.run_model(case, modeltype, OPTIMIZER)
 
         # Extract the data
@@ -551,16 +551,16 @@ end
 
 @testset "HydroGenerator" begin
     """
-        gen_test_case(data=Data[], profit=OperationalProfile(-[10, 11, 12, 13]))
+        test_case_gen(data=Data[], profit=OperationalProfile(-[10, 11, 12, 13]))
 
     Simple test case for testing the hydro generator, including the PQ curve implementation and
     the `ScheduleConstraint`s.
     """
-    function gen_test_case(;
+    function test_case_gen(;
         data=Data[],
         profit=OperationalProfile(-[10, 11, 12, 13]),
     )
-        case, modeltype = gate_res_test_case()
+        case, modeltype = test_case_gate_res()
         power, water = get_products(case)[[2, 3]]
         hydro_gen_cap = 20
         gen = HydroGenerator(
@@ -611,7 +611,7 @@ end
             flag,               # flag
             FixedProfile(57),   # penalty
         )]
-        case, _ = gen_test_case(;data)
+        case, _ = test_case_gen(;data)
         𝒯 = get_time_struct(case)
         gen = get_nodes(case)[4]
 
@@ -657,7 +657,7 @@ end
 
     @testset "Plant production and PQ relation" begin
         # Create and solve the model
-        case, modeltype = gen_test_case()
+        case, modeltype = test_case_gen()
         m = EMB.run_model(case, modeltype, OPTIMIZER)
 
         # Extract the data
@@ -732,7 +732,7 @@ end
         profit = OperationalProfile(-[50, 50, 10, 10])
 
         # Create and solve the model
-        case, modeltype = gen_test_case(; data, profit)
+        case, modeltype = test_case_gen(; data, profit)
         m = EMB.run_model(case, modeltype, OPTIMIZER)
 
         # Extract the data
@@ -769,7 +769,7 @@ end
         profit = OperationalProfile(-[50, 50, 10, 10])
 
         # Create and solve the model
-        case, modeltype = gen_test_case(; data, profit)
+        case, modeltype = test_case_gen(; data, profit)
         m = EMB.run_model(case, modeltype, OPTIMIZER)
 
         # Extract the data
@@ -813,7 +813,7 @@ end
         ]
 
         # Create and solve the model
-        case, modeltype = gen_test_case(; data)
+        case, modeltype = test_case_gen(; data)
         m = EMB.run_model(case, modeltype, OPTIMIZER)
 
         # Extract the data
@@ -836,12 +836,12 @@ end
 
 @testset "HydroPump" begin
     """
-        pump_test_case(; pump_data=Data[], gen_data=Data[])
+        test_case_pump(; pump_data=Data[], gen_data=Data[])
 
     Simple test case for testing the hydro pump, including the PQ curve implementation and
     the `ScheduleConstraint`s.
     """
-    function pump_test_case(; pump_data=Data[], gen_data=Data[])
+    function test_case_pump(; pump_data=Data[], gen_data=Data[])
         # Declare the used resources
         𝒫 = [co2, power, water]
 
@@ -955,7 +955,7 @@ end
             pump_flag,              # flag
             FixedProfile(Inf),      # penalty
         )]
-        case, _ = pump_test_case(;pump_data)
+        case, _ = test_case_pump(;pump_data)
         𝒯 = get_time_struct(case)
         pump = get_nodes(case)[4]
 
@@ -995,7 +995,7 @@ end
 
     @testset "No production constraints" begin
         # Create and solve the model
-        case, modeltype = pump_test_case()
+        case, modeltype = test_case_pump()
         m = EMB.run_model(case, modeltype, OPTIMIZER)
 
         # Extract the pump_data
@@ -1079,7 +1079,7 @@ end
         )]
 
         # Create and solve the model
-        case, modeltype = pump_test_case(; gen_data, pump_data)
+        case, modeltype = test_case_pump(; gen_data, pump_data)
         m = EMB.run_model(case, modeltype, OPTIMIZER)
 
         # Extract the pump_data
@@ -1121,7 +1121,7 @@ end
         )]
 
         # Create and solve the model
-        case, modeltype = pump_test_case(; gen_data, pump_data)
+        case, modeltype = test_case_pump(; gen_data, pump_data)
         m = EMB.run_model(case, modeltype, OPTIMIZER)
 
         # Extract the pump_data
