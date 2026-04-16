@@ -1,4 +1,4 @@
-function general_node_tests(m, case, n::EMRP.HydroStorage)
+function gen_tests_hydro(m, case, n::EMRP.HydroStorage)
 
     # Extract time structure and storage node
     𝒯 = get_time_struct(case)
@@ -262,7 +262,7 @@ end
 
         # Run of the general and node tests
         general_tests(m)
-        general_node_tests(m, case, hydro)
+        gen_tests_hydro(m, case, hydro)
 
         # Check that the input flow is fixed to 0 for Power
         @test all(is_fixed(m[:flow_in][hydro, t, Power]) for t ∈ 𝒯)
@@ -303,7 +303,7 @@ end
 
         # Run of the general and node tests
         general_tests(m)
-        general_node_tests(m, case, hydro1)
+        gen_tests_hydro(m, case, hydro1)
 
         # Test the objective value
         @test objective_value(m) ≈ -116160.0
@@ -429,7 +429,7 @@ end
 
     # Run of the general and node tests
     general_tests(m)
-    general_node_tests(m, case, hydro)
+    gen_tests_hydro(m, case, hydro)
 
     # Test the objective value
     # -25 in v0.6 compared to 0.5 as opex_var now via stor_discharge_use instead of flow_out

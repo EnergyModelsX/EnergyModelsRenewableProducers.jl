@@ -115,7 +115,7 @@ with square brackets, while functions are represented as
 
 ``func\_example(index_1, index_2)``
 
-with paranthesis.
+with parantheses.
 
 ### [Variables](@id nodes-battery-math-var)
 
@@ -187,7 +187,7 @@ These standard constraints are:
   \begin{aligned}
   \texttt{stor\_level\_inst}[n, t] & = capacity(level(n), t) \\
   \texttt{stor\_charge\_inst}[n, t] & = capacity(charge(n), t) \\
-  \texttt{stor\_discharge\_inst}[n, t] & = capacity(charge(n), t)
+  \texttt{stor\_discharge\_inst}[n, t] & = capacity(discharge(n), t)
   \end{aligned}
   ```
 

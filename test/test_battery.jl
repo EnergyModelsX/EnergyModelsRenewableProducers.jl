@@ -1,4 +1,4 @@
-function general_battery_tests(m, case)
+function gen_tests_battery(m, case)
     # Extract the data
     𝒯 = get_time_struct(case)
     stor = get_nodes(case)[2]
@@ -32,7 +32,7 @@ end
 @testset "Battery" begin
 
     using EnergyModelsInvestments
-    function small_graph(
+    function test_case_battery(
         supply_price,
         el_demand;
         ops = SimpleTimes(10, [6, 3, 6, 3, 6, 6, 3, 6, 3, 6]),
@@ -180,7 +180,7 @@ end
     supply_price = OperationalProfile([30; 80; 60; 80; 40; 30; 80; 60; 80; 40])
 
     @testset "SimpleTimes - No cycle limit" begin
-        m, case, modeltype = small_graph(supply_price, el_demand)
+        m, case, modeltype = test_case_battery(supply_price, el_demand)
 
         # Extract the data
         𝒯 = get_time_struct(case)
@@ -188,7 +188,7 @@ end
         stor = get_nodes(case)[2]
 
         # Run the standard tests
-        general_battery_tests(m, case)
+        gen_tests_battery(m, case)
         battery_prev_usage_tests(m, case)
 
         # Test that the level balance is correct in the first operational periods of each
@@ -202,7 +202,7 @@ end
     end
     @testset "SimpleTimes - Cycle limit" begin
         bat_life = CycleLife(900, 0.2, FixedProfile(2e4))
-        m, case, modeltype = small_graph(supply_price, el_demand; bat_life)
+        m, case, modeltype = test_case_battery(supply_price, el_demand; bat_life)
 
         # Extract the data
         𝒯 = get_time_struct(case)
@@ -210,14 +210,14 @@ end
         stor, sink = get_nodes(case)[[2, 3]]
 
         # Run the standard tests
-        general_battery_tests(m, case)
+        gen_tests_battery(m, case)
         battery_prev_usage_tests(m, case)
         battery_degradation_tests(m, case)
     end
 
     @testset "SimpleTimes - Cycle limit, reinvest" begin
         bat_life = CycleLife(900, 0.2, StrategicProfile([2e5, 1e5, 2e4, 2e4]))
-        m, case, modeltype = small_graph(supply_price, el_demand; bat_life, n_sp=4)
+        m, case, modeltype = test_case_battery(supply_price, el_demand; bat_life, n_sp=4)
 
         # Extract the data
         𝒯 = get_time_struct(case)
@@ -225,7 +225,7 @@ end
         stor, sink = get_nodes(case)[[2, 3]]
 
         # Run the standard tests
-        general_battery_tests(m, case)
+        gen_tests_battery(m, case)
         battery_prev_usage_tests(m, case)
 
         # Test that the capacity limit is correctly enforced in the individual operational
@@ -251,7 +251,7 @@ end
     @testset "SimpleTimes - Cycle limit, investments, but not data" begin
         bat_life = CycleLife(900, 0.2, StrategicProfile([2e5, 1e5, 2e4, 2e4]))
         n_sp = 4
-        m, case, modeltype = small_graph(
+        m, case, modeltype = test_case_battery(
             supply_price, el_demand;
             bat_life, n_sp, investment=true,
         )
@@ -262,7 +262,7 @@ end
         stor, sink = get_nodes(case)[[2, 3]]
 
         # Run the standard tests
-        general_battery_tests(m, case)
+        gen_tests_battery(m, case)
         battery_prev_usage_tests(m, case)
 
         # Test that the capacity limit is correctly enforced in the individual operational
@@ -298,7 +298,7 @@ end
                 ContinuousInvestment(FixedProfile(0), StrategicProfile(sp_val)),
             )
         )]
-        m, case, modeltype = small_graph(
+        m, case, modeltype = test_case_battery(
             supply_price, el_demand;
             bat_life, n_sp, investment=true, data
         )
@@ -309,7 +309,7 @@ end
         stor, sink = get_nodes(case)[[2, 3]]
 
         # Run the standard tests
-        general_battery_tests(m, case)
+        gen_tests_battery(m, case)
         battery_prev_usage_tests(m, case)
 
         # Test that the capacity limit is correctly enforced in the individual operational
@@ -350,7 +350,7 @@ end
     supply_price = OperationalProfile([30; 80; 60; 80; 40])
 
     @testset "RepresentativePeriods - No cycle limit" begin
-        m, case, modeltype = small_graph(supply_price, el_demand; ops)
+        m, case, modeltype = test_case_battery(supply_price, el_demand; ops)
 
         # Extract the data
         𝒯 = get_time_struct(case)
@@ -358,7 +358,7 @@ end
         stor = get_nodes(case)[2]
 
         # Run the standard tests
-        general_battery_tests(m, case)
+        gen_tests_battery(m, case)
         battery_prev_usage_tests(m, case)
 
         # Test that the previous usage is correctly calculated in the first operational
@@ -376,7 +376,7 @@ end
 
     @testset "RepresentativePeriods - Cycle limit" begin
         bat_life = CycleLife(900, 0.2, FixedProfile(5e4))
-        m, case, modeltype = small_graph(supply_price, el_demand; ops, bat_life)
+        m, case, modeltype = test_case_battery(supply_price, el_demand; ops, bat_life)
 
         # Extract the data
         𝒯 = get_time_struct(case)
@@ -384,7 +384,7 @@ end
         stor, sink = get_nodes(case)[[2, 3]]
 
         # Run the standard tests
-        general_battery_tests(m, case)
+        gen_tests_battery(m, case)
         battery_prev_usage_tests(m, case)
 
         # Test that the capacity limit is correctly enforced in the complete horizon
@@ -411,7 +411,7 @@ end
     reserve_down = ResourceCarrier("Reserve Down", 0.0)
     reserve_up = ResourceCarrier("Reserve Up", 0.0)
 
-    function small_graph(
+    function test_case_resbattery(
         supply_price,
         el_demand;
         res_down_demand = FixedProfile(10),
@@ -491,7 +491,7 @@ end
     # Modelling of two days with typical demand and price profiles
     el_demand = OperationalProfile([16; 28; 20; 25; 18; 15; 25; 20; 28; 18])
     supply_price = OperationalProfile([30; 80; 60; 80; 40; 30; 80; 60; 80; 40])
-    m, case, modeltype = small_graph(supply_price, el_demand)
+    m, case, modeltype = test_case_resbattery(supply_price, el_demand)
 
     # Extract the data
     𝒯 = get_time_struct(case)
@@ -499,7 +499,7 @@ end
     stor = get_nodes(case)[2]
 
     # Run the standard tests
-    general_battery_tests(m, case)
+    gen_tests_battery(m, case)
 
     # Test that the reserve equals the flow out
     # - EMB.constraints_flow_out(m, n::ReserveBattery, 𝒯::TimeStructure, modeltype::EnergyModel)

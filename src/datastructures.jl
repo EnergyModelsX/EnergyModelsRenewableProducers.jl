@@ -6,7 +6,7 @@ implemented version of the [`NonDisRES`](@ref) are dispatching on this supertype
 """
 abstract type AbstractNonDisRES <: EMB.Source end
 """
-    NonDisRES <: AbstractNonDisRES
+    struct NonDisRES <: AbstractNonDisRES
 
 A non-dispatchable renewable energy source. It extends the existing `RefSource` node through
 including a profile that corresponds to the production. The profile can have variations on
@@ -53,11 +53,15 @@ operational period `t`.
 profile(n::AbstractNonDisRES) = n.profile
 profile(n::AbstractNonDisRES, t) = n.profile[t]
 
-""" An abstract type for hydro storage nodes, with or without pumping. """
+"""
+    abstract type HydroStorage{T} <: EMB.Storage{T}
+
+Abstract type for simple hydro storage nodes.
+"""
 abstract type HydroStorage{T} <: EMB.Storage{T} end
 
 """
-    HydroStor{T} <: HydroStorage{T}
+    struct HydroStor{T} <: HydroStorage{T}
 
 A regulated hydropower storage, modelled as a `Storage` node. A regulated hydro storage node
 requires a capacity for the `discharge` and does not have a required inflow from the model,
@@ -174,7 +178,7 @@ function HydroStor{T}(
 end
 
 """
-    PumpedHydroStor{T} <: HydroStorage{T}
+    struct PumpedHydroStor{T} <: HydroStorage{T}
 
 A pumped hydropower storage, modelled as a `Storage` node. A pumped hydro storage node
 allows for storing energy through pumping water into the reservoir. The current
@@ -315,7 +319,7 @@ Abstract type used to define a `ScheduleConstraint` as a schedule constraint.
 abstract type EqualSchedule <: AbstractScheduleType end
 
 """
-    ScheduleConstraint{T} <: Data where {T<:AbstractScheduleType}
+    structScheduleConstraint{T} <: Data where {T<:AbstractScheduleType}
 
 A constraint that can be added as `Data`. `T <: AbstractScheduleType` denotes the constraint type.
 
@@ -438,7 +442,7 @@ has_penalty_down(data::ScheduleConstraint, t, p::Resource) =
     has_penalty_down(data, t) & (resource(data) == p)
 
 """
-    HydroReservoir{T} <: EMB.Storage{T}
+    structHydroReservoir{T} <: EMB.Storage{T}
 
 A regulated hydropower reservoir, modelled as a `Storage` node.
 
@@ -521,7 +525,7 @@ vol_inflow(n::HydroReservoir) = n.vol_inflow
 vol_inflow(n::HydroReservoir, t) = n.vol_inflow[t]
 
 """
-    HydroGate <: EMB.NetworkNode
+    structHydroGate <: EMB.NetworkNode
 
 A hydro gate, modelled as a `NetworkNode` node.
 
@@ -677,7 +681,7 @@ discharge_level(pq::PqPoints) = pq.discharge_levels
 discharge_level(pq::PqPoints, i) = pq.discharge_levels[i]
 
 """
-    HydroGenerator <: HydroUnit
+    struct HydroGenerator <: HydroUnit
 
 A hydropower generator, modelled as a `HydroUnit` node.
 
@@ -748,7 +752,7 @@ EMB.outputs(n::HydroGenerator) = [water_resource(n), electricity_resource(n)]
 EMB.outputs(n::HydroGenerator, p::Resource) = 1
 
 """
-    HydroPump <: HydroUnit
+    struct HydroPump <: HydroUnit
 
 A hydropower pump, modelled as a `HydroUnit` node.
 
@@ -855,7 +859,7 @@ Union type for [`HydroUnit`](@ref), [`HydroReservoir`](@ref), and [`HydroGate`](
 HydroNode = Union{HydroUnit, HydroReservoir, HydroGate}
 
 """
-    AbstractBatteryLife
+    abstract type AbstractBatteryLife
 
 Abstract supertype for the modelling of the battery lifetime of an [`AbstractBattery`](@ref).
 It allows to differentiate between different degradation approaches for the storage node.
@@ -864,7 +868,7 @@ abstract type AbstractBatteryLife  end
 
 
 """
-    InfLife <: AbstractBatteryLife
+    struct InfLife <: AbstractBatteryLife
 
 A life type corresponding to an infinite number of cycles without any battery degradation.
 The charge utilization is still calculated.
@@ -873,7 +877,7 @@ struct InfLife <: AbstractBatteryLife
 end
 
 """
-    CycleLife <: AbstractBatteryLife
+    struct CycleLife <: AbstractBatteryLife
 
 A life type corresponding to a linear degradation of the battery lifetime up to a given
 number of cycles.
@@ -892,14 +896,14 @@ struct CycleLife <: AbstractBatteryLife
 end
 
 """
-    AbstractBattery{T} <: EMB.Storage{T}
+    abstract type AbstractBattery{T} <: EMB.Storage{T}
 
 Abstract supertype for the different battery storage models.
 """
 abstract type AbstractBattery{T} <: EMB.Storage{T} end
 
 """
-    Battery{T} <: AbstractBattery{T}
+    struct Battery{T} <: AbstractBattery{T}
 
 A battery storage, modelled as a `Storage` node. A battery storage nodes differs from a
 [`RefStorage`](@extref EnergyModelsBase.RefStorage) node through:
@@ -970,7 +974,7 @@ function Battery{T}(
 end
 
 """
-    ReserveBattery{T} <: AbstractBattery{T}
+    struct ReserveBattery{T} <: AbstractBattery{T}
 
 A reserve battery storage, modelled as a `Storage` node. A battery storage nodes differs
 from a [`Battery`](@ref) node through allowing for the introduction of both upwards and

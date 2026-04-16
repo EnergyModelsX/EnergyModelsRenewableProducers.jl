@@ -2,8 +2,8 @@
 """
     EMB.variables_node(m, 𝒩ⁿᵈʳ::Vector{<:AbstractNonDisRES}, 𝒯, modeltype::EnergyModel)
 
-Create the optimization variable `:curtailment` for every [`AbstractNonDisRES`](@ref) node.
-This method is called from `EnergyModelsBase.jl`.
+Creates the following additional variables for **ALL** [`AbstractNonDisRES`](@ref) nodes:
+- `:curtailment[n, t]` is the unused energy within operational period t.
 """
 function EMB.variables_node(m, 𝒩ⁿᵈʳ::Vector{<:AbstractNonDisRES}, 𝒯, modeltype::EnergyModel)
     @variable(m, curtailment[𝒩ⁿᵈʳ, 𝒯] ≥ 0)
@@ -12,10 +12,10 @@ end
 """
     EMB.variables_node(m, 𝒩::Vector{<:HydroStorage}, 𝒯, modeltype::EnergyModel)
 
-Create the optimization variable `:hydro_spill` for every HydroStorage node. This variable
-enables hydro storage nodes to spill water from the reservoir without producing energy.
-Wihtout this slack variable, parameters with too much inflow would else lead to an
-infeasible model. """
+Creates the following additional variables for **ALL** [`HydroStorage`](@ref) nodes:
+- `:hydro_spill[n, t]` is the spilled energy from node `n` in operational period `t` without
+  pproducing energy. It is included to avoid infeasible models.
+"""
 function EMB.variables_node(m, 𝒩::Vector{<:HydroStorage}, 𝒯, modeltype::EnergyModel)
     @variable(m, hydro_spill[𝒩, 𝒯] ≥ 0)
 end
@@ -24,6 +24,19 @@ end
     EMB.create_node(m, n::HydroStorage, 𝒯, 𝒫, modeltype::EnergyModel)
 
 Sets all constraints for the regulated hydro storage node.
+
+It differs from the function for a standard [`RefStorage`](@extref EnergyModelsBase.RefStorage)
+node through not calling the function
+[`constraints_flow_out`](@extref EnergyModelsBase.constraints_flow_out) but incorporating
+the outflow constraints directly.
+
+# Called constraint functions
+- [`constraints_level`](@extref EnergyModelsBase.constraints_level),
+- [`constraints_data`](@extref EnergyModelsBase.constraints_data) for all `node_data(n)`,
+- [`constraints_flow_in`](@extref EnergyModelsBase.constraints_flow_in),
+- [`constraints_capacity`](@extref EnergyModelsBase.constraints_capacity),
+- [`constraints_opex_fixed`](@extref EnergyModelsBase.constraints_opex_fixed), and
+- [`constraints_opex_var`](@extref EnergyModelsBase.constraints_opex_var).
 """
 function EMB.create_node(m, n::HydroStorage, 𝒯, 𝒫, modeltype::EnergyModel)
 
@@ -33,6 +46,11 @@ function EMB.create_node(m, n::HydroStorage, 𝒯, 𝒫, modeltype::EnergyModel)
 
     # Energy balance constraints for stored electricity.
     constraints_level(m, n, 𝒯, 𝒫, modeltype)
+
+    # Iterate through all data and set up the constraints corresponding to the data
+    for data ∈ node_data(n)
+        constraints_data(m, n, 𝒯, 𝒫, modeltype, data)
+    end
 
     # Call of the function for the inlet flow to the `HydroStorage` node
     constraints_flow_in(m, n, 𝒯, modeltype)
@@ -46,11 +64,6 @@ function EMB.create_node(m, n::HydroStorage, 𝒯, 𝒫, modeltype::EnergyModel)
 
     # Can not produce more energy than what is availbable in the reservoir.
     @constraint(m, [t ∈ 𝒯], m[:stor_discharge_use][n, t] ≤ m[:stor_level][n, t])
-
-    # Iterate through all data and set up the constraints corresponding to the data
-    for data ∈ node_data(n)
-        constraints_data(m, n, 𝒯, 𝒫, modeltype, data)
-    end
 
     # Call of the function for limiting the capacity to the maximum installed capacity
     constraints_capacity(m, n, 𝒯, modeltype)
@@ -168,9 +181,7 @@ end
 """
     EMB.variables_node(m, 𝒩::Vector{<:AbstractBattery}, 𝒯, modeltype::EnergyModel)
 
-Declaration of reserve variables for all [`AbstractBattery`](@ref) nodes.
-The following reserve variables are declared:
-
+Creates the following additional variables for **ALL** [`AbstractBattery`](@ref) nodes
 - `bat_prev_use[n, t]` is the accumulated charge effect of an `AbstractBattery` up
   to operational period `t`.
 - `bat_prev_use_sp[n, t_inv]` is the accumulated charge effect of an `AbstractBattery` up
@@ -204,9 +215,7 @@ end
 """
     EMB.variables_node(m, 𝒩::Vector{<:ReserveBattery}, 𝒯, modeltype::EnergyModel)
 
-Declaration of reserve variables for [`ReserveBattery`](@ref) nodes.
-The following reserve variables are declared:
-
+Creates the following additional variables for **ALL** [`ReserveBattery`](@ref) nodes
 - `bat_res_up[n, t]` is the upwards reserve of battery storage `n` in operational period `t`.
 - `bat_res_down[n, t]` is the upwards reserve of battery of storage `n` in operational
   period `t`.

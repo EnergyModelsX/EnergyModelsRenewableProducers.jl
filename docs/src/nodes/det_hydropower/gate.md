@@ -20,7 +20,7 @@ The [`HydroGate`](@ref) nodes build on the [NetworkNode](@extref EnergyModelsBas
   In the case of a `HydroGate`, this value corresponds to the maximum possible discharge without any generator.
   In practice, this value has to be sufficiently large to avoid an unfeasible system.
 - **`opex_var::TimeProfile`**:\
-  The variable operational expenses are based on the capacity utilization through the variable [`cap_use`](@extref EnergyModelsBase man-opt_var-cap).
+  The variable operating expenses are based on the capacity utilization through the variable [`cap_use`](@extref EnergyModelsBase man-opt_var-cap).
   Hence, it is directly related to the specified `output` ratios.
   The variable operating expenses can be provided as `OperationalProfile` as well.
 - **`opex_fixed::TimeProfile`**:\
