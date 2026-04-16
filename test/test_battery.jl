@@ -286,7 +286,7 @@ end
     end
 
     @testset "SimpleTimes - Cycle limit, investments and reinvest" begin
-        bat_life = CycleLife(900, 0.2, StrategicProfile([2e5, 1e5, 2e4, 2e4]))
+        bat_life = CycleLife(900, 0.2, StrategicProfile([2e5, 1e5, 5e4, 5e4]))
         n_sp = 4
         sp_val = zeros(n_sp)
         sp_val[1] = 50
@@ -317,7 +317,7 @@ end
         # - capacity_reduction and constraints_capacity:
         #   - The value of 50 corresponds to the installed storage capacity of the battery
         #   - The value of 0.8 corresponds to 1-the final degradation percentage
-        #   - The value of 900 correspondsd to the cycle numbers
+        #   - The value of 900 corresponds to the cycle numbers
         @test all(
             value.(m[:stor_level][stor, t]) ≤
                 50 - 0.2 * value.(m[:bat_prev_use][stor, t]) / 900 + TEST_ATOL
@@ -329,7 +329,7 @@ end
         #   - 50 is the capacity
         #   - 2e4 is the cost for replacement
         #   - /2 to account for the duration of a strategic period
-        @test sum(value.(m[:opex_fixed][stor, t_inv]) for t_inv ∈ 𝒯ᴵⁿᵛ) ≈ 50 * 2e4 / 2
+        @test sum(value.(m[:opex_fixed][stor, t_inv]) for t_inv ∈ 𝒯ᴵⁿᵛ) ≈ 50 * 5e4 / 2
     end
 
     # Modelling of two days as one representative period each with typical demand and price

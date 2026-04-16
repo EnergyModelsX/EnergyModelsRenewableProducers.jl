@@ -1,7 +1,7 @@
 name = "EnergyModelsRenewableProducers"
 uuid = "b007c34f-ba52-4995-ba37-fffe79fbde35"
 authors = ["Sigmund Eggen Holm, Julian Straus, Per Aaslid, Linn Emelie Schäffer"]
-version = "0.6.8"
+version = "0.7.0"
 
 [deps]
 EnergyModelsBase = "5d7e687e-f956-46f3-9045-6f5a5fd49f50"
@@ -17,9 +17,9 @@ EMIExt = "EnergyModelsInvestments"
 EMRHExt = "EnergyModelsRecedingHorizon"
 
 [compat]
-EnergyModelsBase = "0.9.0"
-EnergyModelsInvestments = "0.8"
-EnergyModelsRecedingHorizon = "0.1"
+EnergyModelsBase = "0.10"
+EnergyModelsInvestments = "0.9"
+EnergyModelsRecedingHorizon = "0.2"
 JuMP = "1.5"
 TimeStruct = "0.9"
 julia = "1.10"

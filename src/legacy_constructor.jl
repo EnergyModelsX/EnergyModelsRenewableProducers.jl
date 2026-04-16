@@ -32,7 +32,7 @@ for further information regarding how you can translate your existing model to t
 - **`level_inflow::TimeProfile`** is the inflow of power per operational period.
 - **`level_min::TimeProfile`** is the minimum fraction of the reservoir capacity that
   has to remain in the `HydroStorage` node.
-- **`opex_var::TimeProfile`** are the variable operational expenses per GWh produced.
+- **`opex_var::TimeProfile`** are the variable operating expenses per GWh produced.
 - **`opex_fixed::TimeProfile`** are the fixed operational costs of the storage caacity.
 - **`stor_res::ResourceCarrier`** is the stored `Resource`.
 - **`input::Dict{Resource, Real}`** are the stored and used resources. The values in the Dict
@@ -100,7 +100,7 @@ for further information regarding how you can translate your existing model to t
 - **`level_inflow::TimeProfile`** is the inflow of power per operational period.
 - **`level_min::TimeProfile`** is the minimum fraction of the reservoir capacity that
   has to remain in the `HydroStorage` node.
-- **`opex_var::TimeProfile`** are the variable operational expenses per GWh produced.
+- **`opex_var::TimeProfile`** are the variable operating expenses per GWh produced.
 - **`opex_fixed::TimeProfile`** are the fixed operational costs of the storage caacity.
 - **`stor_res::ResourceCarrier`** is the stored `Resource`.
 - **`input::Dict{Resource, Real}`** are the stored and used resources. The values in the Dict
@@ -230,8 +230,8 @@ for further information regarding how you can translate your existing model to t
 - **`level_inflow::TimeProfile`** is the inflow of power per operational period.
 - **`level_min::TimeProfile`** is the minimum fraction of the reservoir capacity that
   has to remain in the `HydroStorage` node.
-- **`opex_var::TimeProfile`** are the variable operational expenses per GWh produced.
-- **`opex_var_pump::TimeProfile`** are the variable operational expenses per GWh pumped
+- **`opex_var::TimeProfile`** are the variable operating expenses per GWh produced.
+- **`opex_var_pump::TimeProfile`** are the variable operating expenses per GWh pumped
   into the storage.
 - **`opex_fixed::TimeProfile`** are the fixed operational costs of the storage caacity.
 - **`stor_res::ResourceCarrier`** is the stored `Resource`.
