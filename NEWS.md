@@ -12,6 +12,7 @@
 ### Minor updates
 
 * Improved the documentation and unified the docstrings.
+* Removed error when `RegHydroStor` was still used as legacy constructor.
 
 ## Version 0.6.8 (2026-03-18)
 

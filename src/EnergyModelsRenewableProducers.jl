@@ -40,7 +40,7 @@ include("legacy_constructor.jl")
 export AbstractNonDisRES, NonDisRES
 
 # Simple hydro power types
-export HydroStorage, RegHydroStor, HydroStor, PumpedHydroStor
+export HydroStorage, HydroStor, PumpedHydroStor
 
 # Detailed hydro power types
 export HydroReservoir, HydroGenerator, HydroPump, HydroGate
