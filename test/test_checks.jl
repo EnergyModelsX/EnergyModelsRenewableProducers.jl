@@ -398,6 +398,7 @@ end
         cycles = 900,
         degradation = 0.2,
         stack_cost = FixedProfile(100),
+        T = TwoLevel(2, 2, SimpleTimes(10,1); op_per_strat=8760.0),
     )
 
         products = [Power, CO2]
@@ -437,9 +438,7 @@ end
             Direct("bat-sink", nodes[2], nodes[3])
         ]
 
-        # Creation of the time structure and the used global data
-        op_per_strat = 8760.0
-        T = TwoLevel(2, 2, SimpleTimes(10,1); op_per_strat)
+        # Creation of the used global data
         modeltype = OperationalModel(
             Dict(CO2 => FixedProfile(10)),
             Dict(CO2 => FixedProfile(0)),
@@ -476,8 +475,19 @@ end
     @test_throws AssertionError check_battery(; degradation=10)
     @test_throws AssertionError check_battery(; degradation=-10)
     @test_throws AssertionError check_battery(; stack_cost=FixedProfile(-5))
-    @test_throws AssertionError check_battery(; stack_cost=OperationalProfile([10]))
-
+    T = TwoLevelTree(2, [2], SimpleTimes(10, 1); op_per_strat=8760.0)
+    oprofile = OperationalProfile(ones(4))
+    profiles = [
+        oprofile,
+        StrategicProfile([4]),
+        StrategicProfile([oprofile, oprofile, oprofile, oprofile]),
+    ]
+    for tp ∈ profiles
+        @test_throws AssertionError check_battery(; stack_cost=tp)
+        @test_throws AssertionError check_battery(; stack_cost=tp, T)
+    end
+    tp  =StrategicStochasticProfile([[4]])
+    @test_throws AssertionError check_battery(; stack_cost=tp, T)
 end
 
 # Test that the fields of a `ReserveBattery` are correctly checked

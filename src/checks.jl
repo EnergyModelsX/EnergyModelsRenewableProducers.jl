@@ -403,17 +403,15 @@ function check_battery_life(
         "The value of the field `degradation` in the `CycleLife` must be smaller or equal to 1."
     )
 
-    if isa(stack_cost(bat_life), StrategicProfile) && check_timeprofiles
-        @assert_or_log(
-            length(stack_cost(bat_life).vals) == length(𝒯ᴵⁿᵛ),
-            "The timeprofile provided for the field `stack_cost` does not match the " *
-            "strategic structure."
-        )
+    sc_prof = stack_cost(bat_life)
+    if (isa(sc_prof, StrategicProfile) || isa(sc_prof, StrategicStochasticProfile)) &&
+        check_timeprofiles
+        EMB.check_profile(`stack_cost`, sc_prof, 𝒯; bool=false)
     end
 
     # Check for potential indexing problems
     message = "are not allowed for the field `stack_cost`."
-    bool_sp = EMB.check_strategic_profile(stack_cost(n), message)
+    bool_sp = EMB.check_strategic_profile(sc_prof, message)
 
     # Check that the value is positive in all cases
     if bool_sp
