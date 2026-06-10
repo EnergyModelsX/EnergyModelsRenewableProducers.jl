@@ -1,10 +1,10 @@
 # Release notes
 
-## Version 0.7.1 (2026-04-16)
+## Version 0.7.1 (2026-06-10)
 
 ### Bug fixes
 
-* Fixed addition bugs with `StrategicProfile` and `TwoLevelTree` in the checks for the stack costs of `CycleLife` in the battery nodes.
+* Fixed a bug in the checks when using `StrategicProfile` for the stack costs of `CycleLife` in a `AbstractBattery` node and `TwoLevelTree` as time structure.
 
 ## Version 0.7.0 (2026-04-16)
 
