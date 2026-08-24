@@ -235,6 +235,16 @@ function constraints_usage(m, n::AbstractBattery, 𝒯, modeltype::EnergyModel)
                 for t ∈ t_inv)
         )
 
+        # Constraint for the total charging of the battery given te cycle lifetime
+        if !isnothing(cycles(n))
+            t = last(t_inv)
+            @constraint(m,
+                cycles(n) * m[:stor_level_inst][n, t] ≥
+                    m[:bat_prev_use_sp][n, t_inv] +
+                    m[:bat_use_sp][n, t_inv] * duration_strat(t_inv)
+            )
+        end
+
         # Constraint for calculating the charging utilization before the current strategic
         # period
         constraints_usage_sp(m, n, prev_pers, t_inv, modeltype)
@@ -373,21 +383,6 @@ function constraints_usage_iterate(
 )
     # Declaration of the required subsets
     p_stor = storage_resource(n)
-
-    # Constraint for the total charging of the battery including the current time step.
-    # This ensures that the last repetition of the strategic period is appropriately
-    # constrained.
-    # The conditional statement activates this constraint only for the last representative
-    # period, if representative periods are present as battery stack replacement is only
-    # feasible once per strategic period
-    if last_per(cyclic_pers) == current_per(cyclic_pers) && !isnothing(cycles(n))
-        t = last(per)
-        @constraint(m,
-            cycles(n) * m[:stor_level_inst][n, t] ≥
-                m[:bat_prev_use][n, t] +
-                m[:bat_use_sp][n, t_inv] * duration_strat(t_inv)
-        )
-    end
 
     # Iterate through the operational structure
     for (t_prev, t) ∈ withprev(per)

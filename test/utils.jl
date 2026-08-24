@@ -6,6 +6,9 @@ TEST_ATOL = 1e-6
 ROUND_DIGITS = 8
 OPTIMIZER = optimizer_with_attributes(HiGHS.Optimizer, MOI.Silent() => true)
 
+⪆(x, y) = x > y || isapprox(x, y; atol = TEST_ATOL)
+⪅(x, y) = x < y || isapprox(x, y; atol = TEST_ATOL)
+
 function small_graph(; source = nothing, sink = nothing, ops = SimpleTimes(24, 2))
 
     products = [Power, CO2]
