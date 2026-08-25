@@ -330,12 +330,21 @@ The calculation of the previous battery use requires the definition of new const
 The overall approach is similar to the calculation of the level constraints in `EnergyModelsBase`.
 The core function is [`constraints_usage`](@ref EnergyModelsRenewableProducers.constraints_usage) from which the individual iteration is achieved.
 
-Within this function, we first calculate ``\forall t_{inv} \in T^{Inv}`` the use of a battery within each investment period:
+Within this function, we first calculate ``\forall t_{inv} \in T^{Inv}`` the use of a battery within each investment period
 
 ```math
 \begin{aligned}
 \texttt{bat\_use\_sp}[n, t_{inv}] = \sum_{t \in t_{inv}} & \texttt{stor\_charge\_use}[n, t] \times \\ &
   inputs(n, p_{stor}) \times scale\_op\_sp(t_{inv}, t) \\
+\end{aligned}
+```
+
+and enforce in the case of [`CycleLife`](@ref) the upper bound on the number of cycles of the battery as:
+
+```math
+\begin{aligned}
+cycles(n) \times & \texttt{stor\_level\_inst}[n, t] \geq \\ &
+  \texttt{bat\_prev\_use\_sp}[n, t_{inv}] + \texttt{bat\_use\_sp}[n, t_{inv}] \times duration\_strat(t_{inv, prev}) \\
 \end{aligned}
 ```
 
@@ -386,15 +395,6 @@ If the `TimeStructure` includes representative periods, then the use in each rep
 \begin{aligned}
 \texttt{bat\_use\_rp}[n, t_{rp}] = \sum_{t \in t_{rp}} & \texttt{stor\_charge\_use}[n, t] \times \\ &
   inputs(n, p_{stor}) \times scale\_op\_sp(t_{rp}, t) \\
-\end{aligned}
-```
-
-Once we reach the lowest time structure, *i.e.*, `SimpleTimes`, we enforce in the case of [`CycleLife`](@ref) the upper bound on the number of cycles of the battery for the last operational period ``t`` (in the last representative period for each operational scenario, if used) of an investment period as:
-
-```math
-\begin{aligned}
-cycles(n) \times & \texttt{stor\_level\_inst}[n, t] \geq \\ &
-  \texttt{bat\_prev\_use}[n, t] + \texttt{bat\_use\_sp}[n, t_{inv}] \times duration\_strat(t_{inv, prev}) \\
 \end{aligned}
 ```
 

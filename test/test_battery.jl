@@ -156,7 +156,7 @@ end
         #   - Division by 50 to account for the installed storage capacity of the battery
         #   - Multiplication with 2 to account for the duration of the strategic period
         #   - The value of 900 correspondsd to the cycle numbers
-        @test sum(value.(m[:bat_use_sp])) / 50 * 2 ≤ 900
+        @test sum(value.(m[:bat_use_sp])) / 50 * 2 ⪅ 900
 
         # Test that the capacity limit is correctly enforced in the individual operational
         # periods
@@ -165,7 +165,7 @@ end
         #   - The value of 0.8 corresponds to 1-the final degradation percentage
         #   - The value of 900 correspondsd to the cycle numbers
         @test all(
-            value.(m[:stor_level][stor, t]) ≤
+            value.(m[:stor_level][stor, t]) ⪅
                 50 - 0.2 * value.(m[:bat_prev_use][stor, t]) / 900
         for t ∈ 𝒯)
 
@@ -235,7 +235,7 @@ end
         #   - The value of 0.8 corresponds to 1-the final degradation percentage
         #   - The value of 900 correspondsd to the cycle numbers
         @test all(
-            value.(m[:stor_level][stor, t]) ≤
+            value.(m[:stor_level][stor, t]) ⪅
                 50 - 0.2 * value.(m[:bat_prev_use][stor, t]) / 900
         for t ∈ 𝒯)
 
@@ -272,7 +272,7 @@ end
         #   - The value of 0.8 corresponds to 1-the final degradation percentage
         #   - The value of 900 correspondsd to the cycle numbers
         @test all(
-            value.(m[:stor_level][stor, t]) ≤
+            value.(m[:stor_level][stor, t]) ⪅
                 50 - 0.2 * value.(m[:bat_prev_use][stor, t]) / 900 + TEST_ATOL
         for t ∈ 𝒯)
 
@@ -319,7 +319,7 @@ end
         #   - The value of 0.8 corresponds to 1-the final degradation percentage
         #   - The value of 900 corresponds to the cycle numbers
         @test all(
-            value.(m[:stor_level][stor, t]) ≤
+            value.(m[:stor_level][stor, t]) ⪅
                 50 - 0.2 * value.(m[:bat_prev_use][stor, t]) / 900 + TEST_ATOL
         for t ∈ 𝒯)
 
@@ -392,7 +392,7 @@ end
         #   - Division by 50 to account for the installed storage capacity of the battery
         #   - Multiplication with 2 to account for the duration of the strategic period
         #   - The value of 900 correspondsd to the cycle numbers
-        @test sum(value.(m[:bat_use_sp])) / 50 * 2 ≤ 900
+        @test sum(value.(m[:bat_use_sp])) / 50 * 2 ⪅ 900
 
         # Test that the capacity limit is correctly enforced in the individual operational
         # periods
@@ -401,7 +401,7 @@ end
         #   - The value of 0.8 corresponds to 1-the final degradation percentage
         #   - The value of 900 correspondsd to the cycle numbers
         @test all(
-            value.(m[:stor_level][stor, t]) ≤
+            value.(m[:stor_level][stor, t]) ⪅
                 50 - 0.2 * value.(m[:bat_prev_use][stor, t]) / 900
         for t ∈ 𝒯)
     end
@@ -516,19 +516,19 @@ end
     # capacity and the level capacity
     # - EMB.constraints_capacity(m, n::ReserveBattery, 𝒯::TimeStructure, modeltype::EnergyModel)
     @test all(
-        value.(m[:bat_res_down][stor, t]) ≤
+        value.(m[:bat_res_down][stor, t]) ⪅
             capacity(level(stor), t) - value.(m[:stor_level][stor, t]) + TEST_ATOL
     for t ∈ 𝒯)
     @test all(
-        value.(m[:bat_res_down][stor, t]) ≤
+        value.(m[:bat_res_down][stor, t]) ⪅
             value.(m[:stor_discharge_use][stor, t]) - value.(m[:stor_charge_use][stor, t]) +
             capacity(charge(stor), t) + TEST_ATOL
     for t ∈ 𝒯)
     @test all(
-        value.(m[:bat_res_up][stor, t]) ≤ value.(m[:stor_level][stor, t]) + TEST_ATOL
+        value.(m[:bat_res_up][stor, t]) ⪅ value.(m[:stor_level][stor, t]) + TEST_ATOL
     for t ∈ 𝒯)
     @test all(
-        value.(m[:bat_res_up][stor, t]) ≤
+        value.(m[:bat_res_up][stor, t]) ⪅
             value.(m[:stor_charge_use][stor, t]) - value.(m[:stor_discharge_use][stor, t]) +
             capacity(discharge(stor), t) + TEST_ATOL
     for t ∈ 𝒯)
