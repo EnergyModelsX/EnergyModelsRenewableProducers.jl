@@ -201,7 +201,7 @@ end
         )
     end
     @testset "SimpleTimes - Cycle limit" begin
-        bat_life = CycleLife(300, 0.2, FixedProfile(2e4))
+        bat_life = CycleLife(900, 0.2, FixedProfile(2e4))
         m, case, modeltype = test_case_battery(supply_price, el_demand; bat_life)
 
         # Extract the data
