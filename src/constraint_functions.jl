@@ -225,7 +225,7 @@ function constraints_usage(m, n::AbstractBattery, 𝒯, modeltype::EnergyModel)
         # dispatching on it.
         prev_pers = PreviousPeriods(t_inv_prev, nothing, nothing);
         cyclic_pers = CyclicPeriods(t_inv, t_inv)
-        ts = t_inv.operational
+        ts = operational_type(t_inv)
 
         # Constraint for the total usage in a given strategic period
         @constraint(m,
@@ -300,7 +300,7 @@ end
         cyclic_pers::CyclicPeriods,
         t_inv::TS.AbstractStrategicPeriod,
         per,
-        ts::RepresentativePeriods,
+        ::Type{<:TimeStructure},
         modeltype::EnergyModel,
     )
 
@@ -317,7 +317,7 @@ function constraints_usage_iterate(
     cyclic_pers::CyclicPeriods,
     t_inv::TS.AbstractStrategicPeriod,
     per,
-    _::RepresentativePeriods,
+    ::Type{<:RepresentativePeriods},
     modeltype::EnergyModel,
 )
     # Declaration of the required subsets
@@ -337,7 +337,7 @@ function constraints_usage_iterate(
     for (t_rp_prev, t_rp) ∈ withprev(𝒯ʳᵖ)
         prev_pers = PreviousPeriods(EMB.strat_per(prev_pers), t_rp_prev, EMB.op_per(prev_pers));
         cyclic_pers = CyclicPeriods(last_rp, t_rp)
-        ts = t_rp.operational.operational
+        ts = operational_type(t_rp)
         constraints_usage_iterate(m, n, prev_pers, cyclic_pers, t_inv, t_rp, ts, modeltype)
     end
 end
@@ -352,7 +352,7 @@ function constraints_usage_iterate(
     cyclic_pers::CyclicPeriods,
     t_inv::TS.AbstractStrategicPeriod,
     per,
-    _::OperationalScenarios,
+    ::Type{<:OperationalScenarios},
     modeltype::EnergyModel,
 )
     # Declaration of the required subsets
@@ -360,7 +360,7 @@ function constraints_usage_iterate(
 
     # Iterate through the operational structure
     for t_scp ∈ 𝒯ˢᶜ
-        ts = t_scp.operational.operational
+        ts = operational_type(t_scp)
         constraints_usage_iterate(m, n, prev_pers, cyclic_pers, t_inv, t_scp, ts, modeltype)
     end
 end
@@ -378,7 +378,7 @@ function constraints_usage_iterate(
     cyclic_pers::CyclicPeriods,
     t_inv::TS.AbstractStrategicPeriod,
     per,
-    _::SimpleTimes,
+    ::Type{<:SimpleTimes},
     modeltype::EnergyModel,
 )
     # Declaration of the required subsets
