@@ -3,6 +3,7 @@ module EMRHExt
 using EnergyModelsBase
 using EnergyModelsRenewableProducers
 using EnergyModelsRecedingHorizon
+using EnergyModelsRecedingHorizon: Accessors
 using JuMP
 using TimeStruct
 
@@ -12,5 +13,6 @@ const EMRH = EnergyModelsRecedingHorizon
 const TS = TimeStruct
 
 include("constraint_functions.jl")
+include("utils.jl")
 
 end

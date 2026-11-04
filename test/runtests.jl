@@ -9,6 +9,7 @@ import Interpolations
 
 const EMB = EnergyModelsBase
 const EMRP = EnergyModelsRenewableProducers
+const EMRH = EnergyModelsRecedingHorizon
 
 @testset "RenewableProducers" begin
     include("utils.jl")
