@@ -20,7 +20,7 @@ the strategic level.
 - **`opex_var::TimeProfile`** is the variable operating expense per energy unit produced.
 - **`opex_fixed::TimeProfile`** is the fixed operating expense.
 - **`output::Dict{Resource, Real}`** are the generated `Resource`s, normally Power.
-- **`data::Vector{ExtensionData}`** is the additional data (*e.g.*, for investments). The
+- **`data::Vector{<:ExtensionData}`** is the additional data (*e.g.*, for investments). The
   field `data` is conditional through usage of a constructor.
 """
 struct NonDisRES <: AbstractNonDisRES
@@ -30,7 +30,7 @@ struct NonDisRES <: AbstractNonDisRES
     opex_var::TimeProfile
     opex_fixed::TimeProfile
     output::Dict{<:Resource, <:Real}
-    data::Vector{ExtensionData}
+    data::Vector{<:ExtensionData}
 end
 function NonDisRES(
         id::Any,
@@ -82,7 +82,7 @@ except for water inflow from outside the model, although it requires a field `in
 - **`input::Dict{Resource, Real}`** are the input `Resource`s. In the case of a `HydroStor`,
   this field can be left out.
 - **`output::Dict{Resource, Real}`** can only contain one entry, the stored resource.
-- **`data::Vector{ExtensionData}`** additional data (*e.g.*, for investments). The field
+- **`data::Vector{<:ExtensionData}`** additional data (*e.g.*, for investments). The field
   `data` is conditional through usage of a constructor.
 """
 struct HydroStor{T} <: HydroStorage{T}
@@ -97,7 +97,7 @@ struct HydroStor{T} <: HydroStorage{T}
     stor_res::ResourceCarrier
     input::Dict{<:Resource, <:Real}
     output::Dict{<:Resource, <:Real}
-    data::Vector{ExtensionData}
+    data::Vector{<:ExtensionData}
 end
 function HydroStor{T}(
         id::Any,
@@ -110,7 +110,7 @@ function HydroStor{T}(
 
         stor_res::ResourceCarrier,
         output::Dict{<:Resource, <:Real},
-        data::Vector{ExtensionData},
+        data::Vector{<:ExtensionData},
     ) where {T<:EMB.StorageBehavior}
     return HydroStor{T}(
         id,
@@ -205,7 +205,7 @@ account for the potential to store energy in the form of potential energy.
 - **`stor_res::ResourceCarrier`** is the stored `Resource`.
 - **`input::Dict{Resource, Real}`** are the input `Resource`s.
 - **`output::Dict{Resource, Real}`** can only contain one entry, the stored resource.
-- **`data::Vector{ExtensionData}`** additional data (*e.g.*, for investments). The field
+- **`data::Vector{<:ExtensionData}`** additional data (*e.g.*, for investments). The field
   `data` is conditional through usage of a constructor.
 """
 struct PumpedHydroStor{T} <: HydroStorage{T}
@@ -221,7 +221,7 @@ struct PumpedHydroStor{T} <: HydroStorage{T}
     stor_res::ResourceCarrier
     input::Dict{<:Resource, <:Real}
     output::Dict{<:Resource, <:Real}
-    data::Vector{ExtensionData}
+    data::Vector{<:ExtensionData}
 end
 function PumpedHydroStor{T}(
         id::Any,
@@ -937,7 +937,7 @@ A battery storage, modelled as a `Storage` node. A battery storage nodes differs
   efficiency value.
 - **`battery_life::AbstractBatteryLife`** is used for calculating the maximum battery
   lifetime and corresponding degradation of the Battery.
-- **`data::Vector{ExtensionData}`** additional data (*e.g.*, for investments). The field
+- **`data::Vector{<:ExtensionData}`** additional data (*e.g.*, for investments). The field
   `data` is conditional through usage of a constructor.
 """
 struct Battery{T} <: AbstractBattery{T}
@@ -1012,7 +1012,7 @@ downwards reserves.
   providing energy to the system.
 - **`reserve_down::Vector{ResourceCarrier}`** are the `Resource`s used as reserve for
   removing energy from the system.
-- **`data::Vector{ExtensionData}`** additional data (*e.g.*, for investments). The field
+- **`data::Vector{<:ExtensionData}`** additional data (*e.g.*, for investments). The field
   `data` is conditional through usage of a constructor.
 """
 struct ReserveBattery{T} <: AbstractBattery{T}
