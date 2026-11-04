@@ -547,6 +547,61 @@ end
         for t_inv ∈ 𝒯ⁱⁿᵛ)
         @test all(value.(m[:opex_var][gate, t_inv]) ≈ 36 for t_inv ∈ 𝒯ⁱⁿᵛ)
     end
+
+    @testset "Soft schedules with additional ExtensionData" begin
+        # Schedules of the soft MaxSchedule tests above, combined with `EmptyData`
+        res_data = [
+            EmptyData(),
+            ScheduleConstraint{MinSchedule}(
+                nothing,
+                OperationalProfile([1, 0, 0, 0]),   # value
+                FixedProfile(true),                 # flag
+                FixedProfile(Inf),                  # penalty
+            ),
+            ScheduleConstraint{MaxSchedule}(
+                nothing,
+                OperationalProfile([1, 0, 0.8, 1]), # value
+                FixedProfile(true),                 # flag
+                FixedProfile(57),                   # penalty
+            ),
+        ]
+        gate_data = [
+            EmptyData(),
+            ScheduleConstraint{MinSchedule}(
+                nothing,
+                FixedProfile(0.1),                      # value
+                FixedProfile(true),                     # flag
+                FixedProfile(Inf),                      # penalty
+            ),
+            ScheduleConstraint{MaxSchedule}(
+                nothing,
+                FixedProfile(0.15),                     # value
+                FixedProfile(true),                     # flag
+                OperationalProfile([12, 23, 57, 44]),   # penalty
+            ),
+        ]
+
+        # Test that only the `ScheduleConstraint`s are extracted with the correct type
+        # - constraint_data(n::EMB.Node)
+        case, modeltype = test_case_gate_res(;res_data, gate_data)
+        res, gate, sink = get_nodes(case)[[1, 2, 3]]
+        @test isa(EMRP.constraint_data(res), Vector{ScheduleConstraint})
+        @test isa(EMRP.constraint_data(gate), Vector{ScheduleConstraint})
+        @test length(EMRP.constraint_data(res)) == 2
+
+        # Test that the penalties are included in the OPEX
+        # - EMB.constraints_opex_var(m, n::HydroReservoir, 𝒯ᴵⁿᵛ, modeltype::EnergyModel)
+        case, modeltype = test_case_gate_res(;res_data)
+        m = EMB.run_model(case, modeltype, OPTIMIZER)
+        @test objective_value(m) ≈ -1140
+
+        # - EMB.constraints_opex_var(m, n::HydroGate, 𝒯ᴵⁿᵛ, modeltype::EnergyModel)
+        case, modeltype = test_case_gate_res(;gate_data)
+        m = EMB.run_model(case, modeltype, OPTIMIZER)
+        𝒯ⁱⁿᵛ = strategic_periods(get_time_struct(case))
+        gate = get_nodes(case)[2]
+        @test all(value.(m[:opex_var][gate, t_inv]) ≈ 60 for t_inv ∈ 𝒯ⁱⁿᵛ)
+    end
 end
 
 @testset "HydroGenerator" begin

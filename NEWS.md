@@ -10,6 +10,10 @@
 * Use `has_repr_periods` from `TimeStruct` for declaring representative period variables.
 * Use `operational_type` from `TimeStruct` for dispatching on the operational time structure.
 
+### Bug fixes
+
+* Fixed `constraint_data` so that soft `ScheduleConstraint` penalties are included in the OPEX when a node has other `ExtensionData`.
+
 ## Version 0.7.1 (2026-06-10)
 
 ### Bug fixes

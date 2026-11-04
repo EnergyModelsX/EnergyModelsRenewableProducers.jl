@@ -357,9 +357,11 @@ is_constraint_data(data::ScheduleConstraint) = true
 """
     constraint_data(n::EMB.Node)
 
-Returns vector of `Data` that are of type `ScheduleConstraint`.
+Returns a `Vector{ScheduleConstraint}` with the `Data` of node `n` that are of type
+`ScheduleConstraint`.
 """
-constraint_data(n::EMB.Node) = filter(is_constraint_data, node_data(n))
+constraint_data(n::EMB.Node) =
+    convert(Vector{ScheduleConstraint}, filter(is_constraint_data, node_data(n)))
 
 """
     is_constraint_resource(data::ScheduleConstraint, p::Resource)
