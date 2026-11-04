@@ -7,6 +7,8 @@
 * Rewrote the  cycle life constraint for `CycleLife` of an `AbstractBattery`:
   * New constraint introduced on higher level.
   * Behavior of the battery not changed.
+* Use `has_repr_periods` from `TimeStruct` for declaring representative period variables.
+* Use `operational_type` from `TimeStruct` for dispatching on the operational time structure.
 
 ## Version 0.7.1 (2026-06-10)
 

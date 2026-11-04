@@ -205,7 +205,7 @@ function EMB.variables_node(m, 𝒩::Vector{<:AbstractBattery}, 𝒯, modeltype:
     @variable(m, bat_prev_use[𝒩, 𝒯] ≥ 0)
     @variable(m, bat_prev_use_sp[𝒩, 𝒯ᴵⁿᵛ] ≥ 0)
     @variable(m, bat_use_sp[𝒩, 𝒯ᴵⁿᵛ] ≥ 0)
-    if 𝒯 isa TwoLevel{S,T,U} where {S,T,U<:RepresentativePeriods}
+    if has_repr_periods(𝒯)
         𝒯ʳᵖ = repr_periods(𝒯)
         @variable(m, bat_use_rp[𝒩, 𝒯ʳᵖ])
     end
