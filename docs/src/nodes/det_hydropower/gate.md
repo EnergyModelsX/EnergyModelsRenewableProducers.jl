@@ -27,7 +27,7 @@ The [`HydroGate`](@ref) nodes build on the [NetworkNode](@extref EnergyModelsBas
   The fixed operating expenses are relative to the installed capacity (through the field `cap`) and the chosen duration of a strategic period as outlined on *[Utilize `TimeStruct`](@extref EnergyModelsBase how_to-utilize_TS)*.\
   It is important to note that you can only use `FixedProfile` or `StrategicProfile` for the fixed OPEX, but not `RepresentativeProfile` or `OperationalProfile`.
   In addition, all values have to be non-negative.
-- **`data::Vector{Data}`**:\
+- **`data::Vector{ExtensionData}`**:\
   An entry for providing additional data to the model.
   !!! note "Additional constraints"
       The `data` field can be used to add minimum, maximum, and schedule constraints on the discharge using the general *[constraints types](@ref nodes-det_hydro_power-phil-con)*.
@@ -96,7 +96,7 @@ where ``penalty()`` returns the penalty value for violation in the upward and do
     The function [``scale\_op\_sp(t_{inv}, t)``](@extref EnergyModelsBase.scale_op_sp) calculates the scaling factor between operational and strategic periods.
     It also takes into account potential operational scenarios and their probability as well as representative periods.
 
-The method for `constraints_flow_out` adds *[discharge constraints](@ref nodes-det_hydro_power-phil-con)* if additional constraints are provided in the `Data` field.
+The method for `constraints_flow_out` adds *[discharge constraints](@ref nodes-det_hydro_power-phil-con)* if additional constraints are provided in the `ExtensionData` field.
 Soft constraints, *i.e.*, constraints with a penalty, are used if the constraints have non-infinite penalty values.
 The mathematical formulation of the constraints are (the first equation corresponds to hard constraints, the second equation to soft constraints):
 

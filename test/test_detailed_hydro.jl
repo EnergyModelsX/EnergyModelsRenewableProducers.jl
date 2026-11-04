@@ -4,11 +4,11 @@ power = ResourceCarrier("Power", 0.0)
 water = ResourceCarrier("Water", 0.0)
 
 """
-    test_case_gate_res(;data_res=Data[], data_gate=Data[])
+    test_case_gate_res(;data_res=ExtensionData[], data_gate=ExtensionData[])
 
 Simple test case for testing the hydro gate and hydro reservoirs.
 """
-function test_case_gate_res(;res_data=Data[], gate_data=Data[])
+function test_case_gate_res(;res_data=ExtensionData[], gate_data=ExtensionData[])
     # Declare the used resources
     𝒫 = [co2, power, water]
 
@@ -606,13 +606,13 @@ end
 
 @testset "HydroGenerator" begin
     """
-        test_case_gen(data=Data[], profit=OperationalProfile(-[10, 11, 12, 13]))
+        test_case_gen(data=ExtensionData[], profit=OperationalProfile(-[10, 11, 12, 13]))
 
     Simple test case for testing the hydro generator, including the PQ curve implementation and
     the `ScheduleConstraint`s.
     """
     function test_case_gen(;
-        data=Data[],
+        data=ExtensionData[],
         profit=OperationalProfile(-[10, 11, 12, 13]),
     )
         case, modeltype = test_case_gate_res()
@@ -640,7 +640,7 @@ end
                 :deficit => FixedProfile(1000)
             ),
             Dict(power => 1.0),
-            Data[]
+            ExtensionData[]
         )
 
         res, water_sink = get_nodes(case)[[1, 3]]
@@ -891,12 +891,12 @@ end
 
 @testset "HydroPump" begin
     """
-        test_case_pump(; pump_data=Data[], gen_data=Data[])
+        test_case_pump(; pump_data=ExtensionData[], gen_data=ExtensionData[])
 
     Simple test case for testing the hydro pump, including the PQ curve implementation and
     the `ScheduleConstraint`s.
     """
-    function test_case_pump(; pump_data=Data[], gen_data=Data[])
+    function test_case_pump(; pump_data=ExtensionData[], gen_data=ExtensionData[])
         # Declare the used resources
         𝒫 = [co2, power, water]
 

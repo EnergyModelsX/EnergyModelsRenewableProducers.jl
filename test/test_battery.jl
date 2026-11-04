@@ -39,7 +39,7 @@ end
         bat_life = InfLife(),
         n_sp = 2,
         investment = false,
-        data = Data[],
+        data = ExtensionData[],
     )
 
         # Creation of the modeltype and investment data, if provided

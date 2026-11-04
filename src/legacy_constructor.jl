@@ -11,7 +11,7 @@
         stor_res::ResourceCarrier,
         input,
         output,
-        Data,
+        ExtensionData,
     )
 
 Legacy constructor for a regulated hydropower plant without pumping capabilities.
@@ -39,8 +39,8 @@ for further information regarding how you can translate your existing model to t
 - **`input::Dict{Resource, Real}`** are the stored and used resources. The values in the Dict
   are ratios describing the energy loss when using the pumps.
 - **`output::Dict{Resource, Real}`** can only contain one entry, the stored resource.
-- **`data::Array{Data}`** additional data (e.g. for investments). This value is conditional
-  through the application of a constructor.
+- **`data::Array{ExtensionData}`** additional data (e.g. for investments). This value is
+  conditional through the application of a constructor.
 """
 function HydroStor(
     id,
@@ -81,7 +81,7 @@ function HydroStor(
         stor_res,
         input,
         output,
-        Data[],
+        ExtensionData[],
     )
 end
 function HydroStor(
@@ -98,7 +98,7 @@ function HydroStor(
     stor_res::ResourceCarrier,
     input::Dict{<:Resource, <:Real},
     output::Dict{<:Resource, <:Real},
-    data::Vector{Data},
+    data::Vector{ExtensionData},
 )
     @warn(
         "The used implementation of a `HydroStor` will be discontinued in the near " *
@@ -141,7 +141,7 @@ end
         stor_res::ResourceCarrier,
         input,
         output,
-        Data,
+        ExtensionData,
     )
 
 Legacy constructor for a regulated  pumped hydropower storage plant.
@@ -171,8 +171,8 @@ for further information regarding how you can translate your existing model to t
 - **`input::Dict{Resource, Real}`** are the stored and used resources. The values in the Dict
   are ratios describing the energy loss when using the pumps.
 - **`output::Dict{Resource, Real}`** can only contain one entry, the stored resource.
-- **`data::Array{Data}`** additional data (e.g. for investments). This value is conditional
-  through the application of a constructor.
+- **`data::Array{ExtensionData}`** additional data (e.g. for investments). This value is
+  conditional through the application of a constructor.
 """
 function PumpedHydroStor(
     id,
@@ -216,7 +216,7 @@ function PumpedHydroStor(
         stor_res,
         input,
         output,
-        Data[],
+        ExtensionData[],
     )
 end
 function PumpedHydroStor(
@@ -234,7 +234,7 @@ function PumpedHydroStor(
     stor_res::ResourceCarrier,
     input::Dict{<:Resource, <:Real},
     output::Dict{<:Resource, <:Real},
-    data::Vector{Data},
+    data::Vector{ExtensionData},
 )
     @warn(
         "The used implementation of a `PumpedHydroStor` will be discontinued in the near " *

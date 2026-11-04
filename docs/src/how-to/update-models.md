@@ -35,7 +35,7 @@ HydroStor(
     stor_res::ResourceCarrier,
     input::Dict{<:Resource, <:Real},
     output::Dict{<:Resource, <:Real},
-    data::Vector{Data},
+    data::Vector{ExtensionData},
 )
 
 # This translates to the following new version
@@ -75,7 +75,7 @@ PumpedHydroStor(
     stor_res::ResourceCarrier,
     input::Dict{<:Resource, <:Real},
     output::Dict{<:Resource, <:Real},
-    data::Vector{Data},
+    data::Vector{ExtensionData},
 )
 
 # This translates to the following new version
@@ -117,7 +117,7 @@ RegHydroStor(
     stor_res::ResourceCarrier,
     input,
     output,
-    Data,
+    ExtensionData,
 )
 
 # This translates to the following new version if has_pump == true
@@ -132,7 +132,7 @@ PumpedHydroStor(
     stor_res,
     input,
     output,
-    Data,
+    ExtensionData,
 )
 # and the following version if has_pump == false
 HydroStor(
@@ -145,6 +145,6 @@ HydroStor(
     stor_res,
     input,
     output,
-    Data,
+    ExtensionData,
 )
 ```
