@@ -66,7 +66,7 @@ In addition to the constraints describing the physical system, hydropower system
 Examples for these constraints are to preserve ecological conditions, facilitate multiple use of water (such as for agriculture or recreation), or ensure safe operation before/during maintanance or in the high season for recreational acitivities in the water courses.
 Often, such constraints can be translated into a schedule, a minimum, or maximum constraint.
 A general functionality has been implemented for adding such constraints to [`HydroReservoir`](@ref), [`HydroGate`](@ref), [`HydroGenerator`](@ref), and [`HydroPump`](@ref) nodes.
-The constraints are optional through the use of the **`data::Vector{Data}`** fields.
+The constraints are optional through the use of the **`data::Vector{ExtensionData}`** fields.
 
 !!! note "ScheduleConstraint scaling"
     ScheduleConstraint inputs are given as values relative to a node capacity.

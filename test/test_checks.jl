@@ -196,7 +196,7 @@ end
         level_cap = FixedProfile(50),
         level_opex = FixedProfile(1),
         level_inflow = OperationalProfile([5, 10, 15, 20]),
-        data = Data[],
+        data = ExtensionData[],
     )
 
         products = [Water]
@@ -263,7 +263,7 @@ end
     function check_gate(;
         cap = FixedProfile(50),
         opex_fixed = FixedProfile(10),
-        data = Data[],
+        data = ExtensionData[],
     )
         products = [Water]
         # Creation of the node to be tested
@@ -321,7 +321,7 @@ end
         pq_1 = [0, 0.5, 1.0],
         pq_2 = [0, 0.5, 1.2],
         opex_fixed = FixedProfile(10),
-        data = Data[],
+        data = ExtensionData[],
     )
         products = [Water]
         # Creation of the node to be tested

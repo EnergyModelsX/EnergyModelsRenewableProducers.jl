@@ -43,7 +43,7 @@ The standard fields are given as:
   The field `output` includes [`Resource`](@extref EnergyModelsBase.Resource)s with their corresponding conversion factors as dictionaries.
   In the case of a non-dispatchable renewable energy source, `output` should always include your *electricity* resource.In practice, you should use a value of 1.\
   All values have to be non-negative.
-- **`data::Vector{Data}`**:\
+- **`data::Vector{ExtensionData}`**:\
   An entry for providing additional data to the model.
   In the current version, it is only relevant for additional investment data when [`EnergyModelsInvestments`](https://energymodelsx.github.io/EnergyModelsInvestments.jl/stable/) is used.
   !!! note

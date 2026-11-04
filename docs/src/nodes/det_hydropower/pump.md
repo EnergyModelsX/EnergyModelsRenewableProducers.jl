@@ -23,7 +23,7 @@ The standard fields are:
   The fixed operating expenses are relative to the installed capacity (through the field `cap`) and the chosen duration of a strategic period as outlined on *[Utilize `TimeStruct`](@extref EnergyModelsBase how_to-utilize_TS)*.
   It is important to note that you can only use `FixedProfile` or `StrategicProfile` for the fixed OPEX, but not `RepresentativeProfile` or `OperationalProfile`.
   In addition, all values have to be non-negative.
-- **`data::Vector{Data}`**:\
+- **`data::Vector{ExtensionData}`**:\
   An entry for providing additional data to the model.
 
   !!! note "Additional constraints"
@@ -146,7 +146,7 @@ The mathematical description is the same as for the `HydroGenerator` nodes, exce
     In this case, the installed capacity of the node, provided in the pq_curve::AbstractPqCurve field, has to refer to the power capacity.
 
 Furthermore, the dispatch on `constraints_flow_in` includes additional pumping capacity constraints.
-The constraints are optional and only added to the problem if given as input in the `Data` field of the nodes.
+The constraints are optional and only added to the problem if given as input in the `ExtensionData` field of the nodes.
 Soft constraints, *i.e.*, constraints with a penalty, are used if the constraints have non-infinite penalty values.
 For [`HydroPump`](@ref) nodes, the constraints can be defined for the `electricity_resource` and `water_resource`, limiting the flow into of the node.
 

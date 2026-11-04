@@ -9,6 +9,7 @@
   * Behavior of the battery not changed.
 * Use `has_repr_periods` from `TimeStruct` for declaring representative period variables.
 * Use `operational_type` from `TimeStruct` for dispatching on the operational time structure.
+* Replaced the alias `Data` with `ExtensionData`.
 
 ### Bug fixes
 

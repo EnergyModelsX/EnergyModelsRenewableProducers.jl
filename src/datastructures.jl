@@ -20,8 +20,8 @@ the strategic level.
 - **`opex_var::TimeProfile`** is the variable operating expense per energy unit produced.
 - **`opex_fixed::TimeProfile`** is the fixed operating expense.
 - **`output::Dict{Resource, Real}`** are the generated `Resource`s, normally Power.
-- **`data::Vector{Data}`** is the additional data (*e.g.*, for investments). The field `data`
-  is conditional through usage of a constructor.
+- **`data::Vector{ExtensionData}`** is the additional data (*e.g.*, for investments). The
+  field `data` is conditional through usage of a constructor.
 """
 struct NonDisRES <: AbstractNonDisRES
     id::Any
@@ -30,7 +30,7 @@ struct NonDisRES <: AbstractNonDisRES
     opex_var::TimeProfile
     opex_fixed::TimeProfile
     output::Dict{<:Resource, <:Real}
-    data::Vector{Data}
+    data::Vector{ExtensionData}
 end
 function NonDisRES(
         id::Any,
@@ -40,7 +40,7 @@ function NonDisRES(
         opex_fixed::TimeProfile,
         output::Dict{<:Resource, <:Real},
     )
-    return NonDisRES(id, cap, profile, opex_var, opex_fixed, output, Data[])
+    return NonDisRES(id, cap, profile, opex_var, opex_fixed, output, ExtensionData[])
 end
 
 """
@@ -82,8 +82,8 @@ except for water inflow from outside the model, although it requires a field `in
 - **`input::Dict{Resource, Real}`** are the input `Resource`s. In the case of a `HydroStor`,
   this field can be left out.
 - **`output::Dict{Resource, Real}`** can only contain one entry, the stored resource.
-- **`data::Vector{Data}`** additional data (*e.g.*, for investments). The field `data` is
-  conditional through usage of a constructor.
+- **`data::Vector{ExtensionData}`** additional data (*e.g.*, for investments). The field
+  `data` is conditional through usage of a constructor.
 """
 struct HydroStor{T} <: HydroStorage{T}
     id::Any
@@ -97,7 +97,7 @@ struct HydroStor{T} <: HydroStorage{T}
     stor_res::ResourceCarrier
     input::Dict{<:Resource, <:Real}
     output::Dict{<:Resource, <:Real}
-    data::Vector{Data}
+    data::Vector{ExtensionData}
 end
 function HydroStor{T}(
         id::Any,
@@ -110,7 +110,7 @@ function HydroStor{T}(
 
         stor_res::ResourceCarrier,
         output::Dict{<:Resource, <:Real},
-        data::Vector{Data},
+        data::Vector{ExtensionData},
     ) where {T<:EMB.StorageBehavior}
     return HydroStor{T}(
         id,
@@ -147,7 +147,7 @@ function HydroStor{T}(
         stor_res,
         Dict{Resource,Real}(stor_res => 1),
         output,
-        Data[],
+        ExtensionData[],
     )
 end
 function HydroStor{T}(
@@ -173,7 +173,7 @@ function HydroStor{T}(
         stor_res,
         input,
         output,
-        Data[],
+        ExtensionData[],
     )
 end
 
@@ -205,8 +205,8 @@ account for the potential to store energy in the form of potential energy.
 - **`stor_res::ResourceCarrier`** is the stored `Resource`.
 - **`input::Dict{Resource, Real}`** are the input `Resource`s.
 - **`output::Dict{Resource, Real}`** can only contain one entry, the stored resource.
-- **`data::Vector{Data}`** additional data (*e.g.*, for investments). The field `data` is
-  conditional through usage of a constructor.
+- **`data::Vector{ExtensionData}`** additional data (*e.g.*, for investments). The field
+  `data` is conditional through usage of a constructor.
 """
 struct PumpedHydroStor{T} <: HydroStorage{T}
     id::Any
@@ -221,7 +221,7 @@ struct PumpedHydroStor{T} <: HydroStorage{T}
     stor_res::ResourceCarrier
     input::Dict{<:Resource, <:Real}
     output::Dict{<:Resource, <:Real}
-    data::Vector{Data}
+    data::Vector{ExtensionData}
 end
 function PumpedHydroStor{T}(
         id::Any,
@@ -246,7 +246,7 @@ function PumpedHydroStor{T}(
         stor_res,
         input,
         output,
-        Data[],
+        ExtensionData[],
     )
 end
 
@@ -319,9 +319,10 @@ Abstract type used to define a `ScheduleConstraint` as a schedule constraint.
 abstract type EqualSchedule <: AbstractScheduleType end
 
 """
-    structScheduleConstraint{T} <: Data where {T<:AbstractScheduleType}
+    structScheduleConstraint{T} <: ExtensionData where {T<:AbstractScheduleType}
 
-A constraint that can be added as `Data`. `T <: AbstractScheduleType` denotes the constraint type.
+A constraint that can be added as `ExtensionData`. `T <: AbstractScheduleType` denotes the
+constraint type.
 
 ## Fields
 - **`resource::{Union{<:Resource, Nothing}}`** is the resource type the constraint applies
@@ -331,7 +332,7 @@ A constraint that can be added as `Data`. `T <: AbstractScheduleType` denotes th
 - **`penalty::TimeProfile`** is the penalty for violating the constraint. If penalty is set
   to `Inf` it will be built as a hard constraint.
 """
-struct ScheduleConstraint{T} <: Data where {T<:AbstractScheduleType}
+struct ScheduleConstraint{T} <: ExtensionData where {T<:AbstractScheduleType}
     resource::Union{<:Resource, Nothing}
     value::TimeProfile{<:Number}
     flag::TimeProfile{Bool}
@@ -346,18 +347,18 @@ Returns the `Resource` type of a `ScheduleConstraint`.
 resource(data::ScheduleConstraint) = data.resource
 
 """
-    is_constraint_data(data::Data)
+    is_constraint_data(data::ExtensionData)
     is_constraint_data(data::ScheduleConstraint)
 
-Returns true if `Data` input is of type `ScheduleConstraint`, otherwise false.
+Returns true if `ExtensionData` input is of type `ScheduleConstraint`, otherwise false.
 """
-is_constraint_data(data::Data) = false
+is_constraint_data(data::ExtensionData) = false
 is_constraint_data(data::ScheduleConstraint) = true
 
 """
     constraint_data(n::EMB.Node)
 
-Returns a `Vector{ScheduleConstraint}` with the `Data` of node `n` that are of type
+Returns a `Vector{ScheduleConstraint}` with the `ExtensionData` of node `n` that are of type
 `ScheduleConstraint`.
 """
 constraint_data(n::EMB.Node) =
@@ -366,8 +367,8 @@ constraint_data(n::EMB.Node) =
 """
     is_constraint_resource(data::ScheduleConstraint, p::Resource)
 
-Returns true if `Data` is of type `ScheduleConstraint` and `ScheduleConstraint` resource
-type is `p`.
+Returns true if `ExtensionData` is of type `ScheduleConstraint` and `ScheduleConstraint`
+resource type is `p`.
 """
 is_constraint_resource(data::ScheduleConstraint, p::Resource) = p == resource(data)
 
@@ -459,16 +460,16 @@ It can only be used in conjunction with [`HydroGenerator`](@ref) nodes.
 - **`vol_inflow::TimeProfile`** is the water inflow to the reservoir
   (typically million cubic per time unit).
 - **`stor_res::ResourceCarrier`** is the stored `Resource`.
-- **`data::Vector{<:Data}`** is the additional data (*e.g.*, for investments or constraints
-  through [`AbstractScheduleType`](@ref)). The field `data` is conditional through usage
-  of a constructor.
+- **`data::Vector{<:ExtensionData}`** is the additional data (*e.g.*, for investments or
+  constraints through [`AbstractScheduleType`](@ref)). The field `data` is conditional
+  through usage of a constructor.
 """
 struct HydroReservoir{T} <: EMB.Storage{T}
     id::Any
     vol::EMB.UnionCapacity
     vol_inflow::TimeProfile
     stor_res::ResourceCarrier # Water
-    data::Vector{<:Data}
+    data::Vector{<:ExtensionData}
 end
 function HydroReservoir{T}(
     id::Any,
@@ -481,7 +482,7 @@ function HydroReservoir{T}(
         vol,
         vol_inflow,
         stor_res,
-        Data[],
+        ExtensionData[],
     )
 end
 
@@ -542,9 +543,9 @@ between individual reservoirs without power generation.
 - **`opex_fixed::TimeProfile`** is the fixed operational costs.
 - **`resource::ResourceCarrier`** is the water resource type since gates are only used for
   discharging water.
-- **`data::Vector{<:Data}`** is the additional data (*e.g.*, for investments or constraints
-  through [`AbstractScheduleType`](@ref)). The field `data` is conditional through usage
-  of a constructor.
+- **`data::Vector{<:ExtensionData}`** is the additional data (*e.g.*, for investments or
+  constraints through [`AbstractScheduleType`](@ref)). The field `data` is conditional
+  through usage of a constructor.
 """
 struct HydroGate <: EMB.NetworkNode
     id::Any
@@ -552,7 +553,7 @@ struct HydroGate <: EMB.NetworkNode
     opex_var::TimeProfile
     opex_fixed::TimeProfile
     resource::ResourceCarrier
-    data::Vector{<:Data}
+    data::Vector{<:ExtensionData}
 end
 function HydroGate(
     id::Any,
@@ -561,7 +562,7 @@ function HydroGate(
     opex_fixed::TimeProfile,
     resource::ResourceCarrier,
 )
-    return HydroGate(id, cap, opex_var, opex_fixed, resource, Data[])
+    return HydroGate(id, cap, opex_var, opex_fixed, resource, ExtensionData[])
 end
 
 """
@@ -700,9 +701,9 @@ A hydropower generator is located between two [`HydroReservoir`](@ref)s or betwe
 - **`opex_fixed::TimeProfile`** is the fixed operational costs.
 - **`electricity_resource::Resource`** is the electricity resource generated as output.
 - **`water_resource::Resource`** is the water resource taken as input and discharged as output.
-- **`data::Vector{<:Data}`** is the additional data (*e.g.*, for investments or constraints
-  through [`AbstractScheduleType`](@ref)). The field `data` is conditional through usage
-  of a constructor.
+- **`data::Vector{<:ExtensionData}`** is the additional data (*e.g.*, for investments or
+  constraints through [`AbstractScheduleType`](@ref)). The field `data` is conditional
+  through usage of a constructor.
 """
 struct HydroGenerator <: HydroUnit
     id::Any
@@ -712,7 +713,7 @@ struct HydroGenerator <: HydroUnit
     opex_fixed::TimeProfile
     electricity_resource::Resource
     water_resource::Resource
-    data::Vector{<:Data}
+    data::Vector{<:ExtensionData}
 end
 function HydroGenerator(
     id::Any,
@@ -724,7 +725,7 @@ function HydroGenerator(
     water_resource::Resource,
 )
     return HydroGenerator(id, cap, pq_curve, opex_var, opex_fixed,
-        electricity_resource, water_resource, Data[])
+        electricity_resource, water_resource, ExtensionData[])
 end
 
 """
@@ -769,9 +770,9 @@ of water from one reservoir to the other through pumping the water.
 - **`opex_fixed::TimeProfile`** is the fixed operational costs.
 - **`electricity_resource::Resource`** is the electricity resource taken as input (consumed).
 - **`water_resource::Resource`** is the water resource taken as input and discharged (pumped) as output.
-- **`data::Vector{<:Data}`** is the additional data (*e.g.*, for investments or constraints
-  through [`AbstractScheduleType`](@ref)). The field `data` is conditional through usage
-  of a constructor.
+- **`data::Vector{<:ExtensionData}`** is the additional data (*e.g.*, for investments or
+  constraints through [`AbstractScheduleType`](@ref)). The field `data` is conditional
+  through usage of a constructor.
 """
 struct HydroPump <: HydroUnit
     id::Any
@@ -781,7 +782,7 @@ struct HydroPump <: HydroUnit
     opex_fixed::TimeProfile
     electricity_resource::Resource
     water_resource::Resource
-    data::Vector{<:Data}
+    data::Vector{<:ExtensionData}
 end
 function HydroPump(
     id::Any,
@@ -793,7 +794,7 @@ function HydroPump(
     water_resource::Resource,
 )
     return HydroPump(id, cap, pq_curve, opex_var, opex_fixed,
-        electricity_resource, water_resource, Data[])
+        electricity_resource, water_resource, ExtensionData[])
 end
 
 """
@@ -936,8 +937,8 @@ A battery storage, modelled as a `Storage` node. A battery storage nodes differs
   efficiency value.
 - **`battery_life::AbstractBatteryLife`** is used for calculating the maximum battery
   lifetime and corresponding degradation of the Battery.
-- **`data::Vector{Data}`** additional data (*e.g.*, for investments). The field `data` is
-  conditional through usage of a constructor.
+- **`data::Vector{ExtensionData}`** additional data (*e.g.*, for investments). The field
+  `data` is conditional through usage of a constructor.
 """
 struct Battery{T} <: AbstractBattery{T}
     id
@@ -949,7 +950,7 @@ struct Battery{T} <: AbstractBattery{T}
     input::Dict{<:Resource, <:Real}
     output::Dict{<:Resource, <:Real}
     battery_life::AbstractBatteryLife
-    data::Vector{<:Data}
+    data::Vector{<:ExtensionData}
 end
 function Battery{T}(
     id,
@@ -971,7 +972,7 @@ function Battery{T}(
         input,
         output,
         battery_life,
-        Data[],
+        ExtensionData[],
     )
 end
 
@@ -1011,8 +1012,8 @@ downwards reserves.
   providing energy to the system.
 - **`reserve_down::Vector{ResourceCarrier}`** are the `Resource`s used as reserve for
   removing energy from the system.
-- **`data::Vector{Data}`** additional data (*e.g.*, for investments). The field `data` is
-  conditional through usage of a constructor.
+- **`data::Vector{ExtensionData}`** additional data (*e.g.*, for investments). The field
+  `data` is conditional through usage of a constructor.
 """
 struct ReserveBattery{T} <: AbstractBattery{T}
     id
@@ -1026,7 +1027,7 @@ struct ReserveBattery{T} <: AbstractBattery{T}
     battery_life::AbstractBatteryLife
     reserve_up::Vector{<:ResourceCarrier}
     reserve_down::Vector{<:ResourceCarrier}
-    data::Vector{<:Data}
+    data::Vector{<:ExtensionData}
 end
 function ReserveBattery{T}(
     id,
@@ -1052,7 +1053,7 @@ function ReserveBattery{T}(
         battery_life,
         reserve_up,
         reserve_down,
-        Data[],
+        ExtensionData[],
     )
 end
 

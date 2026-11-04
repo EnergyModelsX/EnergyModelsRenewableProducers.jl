@@ -16,7 +16,7 @@
     input = Dict(Power => 0.9)
     output = Dict(Power => 1)
 
-    data = Data[]
+    data = ExtensionData[]
 
     # Check that `Hydrostor` nodes are correctly constructed
     @testset "Hydrostor node wo data" begin
@@ -44,7 +44,7 @@
             stor_res,
             input,
             output,
-            Data[],
+            ExtensionData[],
         )
         for field ∈ fieldnames(HydroStor{CyclicStrategic})
             @test getproperty(hydro_old, field) == getproperty(hydro_new, field)
@@ -112,7 +112,7 @@
             stor_res,
             input,
             output,
-            Data[],
+            ExtensionData[],
         )
         for field ∈ fieldnames(PumpedHydroStor{CyclicStrategic})
             @test getproperty(hydro_old, field) == getproperty(hydro_new, field)
@@ -173,7 +173,7 @@ end
     input = Dict(Power => 0.9)
     output = Dict(Power => 1)
 
-    data = Data[]
+    data = ExtensionData[]
 
     # Check that `Hydrostor` nodes are correctly constructed when using simplified
     # constructors
@@ -258,7 +258,7 @@ end
             stor_res,
             Dict{Resource,Real}(stor_res => 1),
             output,
-            Data[],
+            ExtensionData[],
         )
         for field ∈ fieldnames(HydroStor{CyclicStrategic})
             @test getproperty(hydro_old, field) == getproperty(hydro_new, field)

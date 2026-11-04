@@ -27,7 +27,7 @@ The [`HydroReservoir`](@ref) nodes builds on the [`RefStorage`](@extref EnergyMo
   The resource that is stored in the reservoir.
   This **must** be the reserource representing water.
   The resource **must** consistent for all components in the watercourse.
-- **`data::Vector{Data}`**:\
+- **`data::Vector{ExtensionData}`**:\
   An entry for providing additional data to the model.
   !!! note "Additional constraints"
       The `data` field can be used to add minimum, maximum, and schedule constraints on the storage volume using the general *[constraints types](@ref nodes-det_hydro_power-phil-con)*.
@@ -114,7 +114,7 @@ The energy balance in `constraints_level_aux` is altered to include the inflow t
 \end{aligned}
 ```
 
-The new method adds furthermore *[additional constraints](@ref nodes-det_hydro_power-phil-con)*, if the corresponding types are provided in the `Data` field.
+The new method adds furthermore *[additional constraints](@ref nodes-det_hydro_power-phil-con)*, if the corresponding types are provided in the `ExtensionData` field.
 Soft constraints, *i.e.*, constraints with a penalty, are used if the constraints have non-infinite penalty values.
 The mathematical formulation of the constraints are (the first equation corresponds to hard constraints, the second equation to soft constraints):
 
