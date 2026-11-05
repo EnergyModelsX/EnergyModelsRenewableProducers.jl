@@ -637,7 +637,8 @@ end
         case = Case(𝒯, [co2, water], [𝒩, ℒ], [[get_nodes, get_links]], Dict(:horizons => ℋ))
 
         # Run the receding horizon model and test that the schedule is followed
-        results = run_model_rh(case, modeltype, OPTIMIZER)
+        # Only `ParametricOptInterface` is required
+        results = run_model_rh(case, modeltype, POI.Optimizer(HiGHS.Optimizer()))
         gate_flow = filter(r -> r.x1 == 𝒩[2], results[:flow_out])[!, :y]
         @test gate_flow ≈ [20, 15, 30, 15]
     end
