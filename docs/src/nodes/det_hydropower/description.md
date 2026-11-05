@@ -78,6 +78,10 @@ The constraints are optional through the use of the **`data::Vector{ExtensionDat
 
 The minimum, maximum, and schedule constraints are subtypes of the abstract type [ScheduleConstraint{T<:AbstractScheduleType}](@ref EnergyModelsRenewableProducers.ScheduleConstraint), where new constraints types can be implemeted as subtypes.
 
+!!! warning "Using `EnergyModelsRecedingHorizon` with `ParametricOptInterface`"
+    If you use the package [`EnergyModelsRecedingHorizon`](https://github.com/EnergyModelsX/EnergyModelsRecedingHorizon.jl) with its `ParametricOptInterface` extension, the fields `flag` and `penalty` of a `ScheduleConstraint` must be given as `FixedProfile`s.
+    The model is built only once in this case, and only the field `value` can be updated between horizons.
+
 ## [End-value setting of water](@id nodes-det_hydro_power-phil-wv)
 
 Scheduling of large reservoirs typically require a method for valuating the future oportunity value of storing water beyond the optimization horizon.

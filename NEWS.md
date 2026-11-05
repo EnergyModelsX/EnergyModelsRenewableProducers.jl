@@ -14,6 +14,8 @@
 ### Bug fixes
 
 * Fixed `constraint_data` so that soft `ScheduleConstraint` penalties are included in the OPEX when a node has other `ExtensionData`.
+* Fixed the reset of `ScheduleConstraint` in `EnergyModelsRecedingHorizon` through a `constructorof` method in `EMRHExt`.
+* Allowed `VariableRef`s in the field `value` of `ScheduleConstraint` for using `ParametricOptInterface` in `EnergyModelsRecedingHorizon`.
 
 ## Version 0.7.1 (2026-06-10)
 

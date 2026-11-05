@@ -602,6 +602,46 @@ end
         gate = get_nodes(case)[2]
         @test all(value.(m[:opex_var][gate, t_inv]) ≈ 60 for t_inv ∈ 𝒯ⁱⁿᵛ)
     end
+
+    @testset "Receding horizon with ScheduleConstraint" begin
+        # Test that the operational profiles of a `ScheduleConstraint` can be reset in EMRH
+        # - Accessors.ConstructionBase.constructorof(obj::Type{<:ScheduleConstraint})
+        𝒯 = TwoLevel(1, 1, SimpleTimes(4, 1))
+        ℋ = PeriodHorizons(ones(Int, 4), 2, 1)
+        modeltype = RecHorOperationalModel(
+            Dict(co2 => FixedProfile(10)),
+            Dict(co2 => FixedProfile(0)),
+            co2,
+        )
+
+        # The hard MinSchedule increases the flow through the gate above the demand
+        gate_data = [
+            ScheduleConstraint{MinSchedule}(
+                nothing,
+                OperationalProfile([0.2, 0.1, 0.3, 0.1]),   # value
+                FixedProfile(true),                         # flag
+                FixedProfile(Inf),                          # penalty
+            ),
+        ]
+        𝒩 = [
+            RefSource("source", FixedProfile(100), FixedProfile(1), FixedProfile(0), Dict(water => 1)),
+            HydroGate("gate", FixedProfile(100), FixedProfile(0), FixedProfile(0), water, gate_data),
+            RefSink(
+                "ocean",
+                FixedProfile(15),
+                Dict(:surplus => FixedProfile(0), :deficit => FixedProfile(1e3)),
+                Dict(water => 1),
+            ),
+        ]
+        ℒ = [Direct("source-gate", 𝒩[1], 𝒩[2]), Direct("gate-ocean", 𝒩[2], 𝒩[3])]
+        case = Case(𝒯, [co2, water], [𝒩, ℒ], [[get_nodes, get_links]], Dict(:horizons => ℋ))
+
+        # Run the receding horizon model and test that the schedule is followed
+        # Only `ParametricOptInterface` is required
+        results = run_model_rh(case, modeltype, POI.Optimizer(HiGHS.Optimizer()))
+        gate_flow = filter(r -> r.x1 == 𝒩[2], results[:flow_out])[!, :y]
+        @test gate_flow ≈ [20, 15, 30, 15]
+    end
 end
 
 @testset "HydroGenerator" begin

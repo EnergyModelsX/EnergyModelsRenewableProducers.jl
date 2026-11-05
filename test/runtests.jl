@@ -3,12 +3,15 @@ using EnergyModelsRenewableProducers
 using EnergyModelsRecedingHorizon
 using HiGHS
 using JuMP
+using ParametricOptInterface
 using Test
 using TimeStruct
 import Interpolations
 
 const EMB = EnergyModelsBase
 const EMRP = EnergyModelsRenewableProducers
+const EMRH = EnergyModelsRecedingHorizon
+const POI = ParametricOptInterface
 
 @testset "RenewableProducers" begin
     include("utils.jl")

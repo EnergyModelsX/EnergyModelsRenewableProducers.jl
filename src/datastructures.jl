@@ -334,7 +334,7 @@ constraint type.
 """
 struct ScheduleConstraint{T} <: ExtensionData where {T<:AbstractScheduleType}
     resource::Union{<:Resource, Nothing}
-    value::TimeProfile{<:Number}
+    value::TimeProfile{<:Union{Number, VariableRef}}
     flag::TimeProfile{Bool}
     penalty::TimeProfile{<:Number}
 end
