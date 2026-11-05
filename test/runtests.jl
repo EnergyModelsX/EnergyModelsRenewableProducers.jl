@@ -13,7 +13,7 @@ const EMRP = EnergyModelsRenewableProducers
 const EMRH = EnergyModelsRecedingHorizon
 const POI = ParametricOptInterface
 
-@testset "RenewableProducers" begin
+@testset "RenewableProducers" verbose=true begin
     include("utils.jl")
 
     @testset "RP | Non-dispatchable renewable energy source" begin

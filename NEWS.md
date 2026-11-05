@@ -1,6 +1,6 @@
 # Release notes
 
-## Unversioned
+## Version 0.7.2 (2026-11-05)
 
 ### Enhancement
 
@@ -10,6 +10,7 @@
 * Use `has_repr_periods` from `TimeStruct` for declaring representative period variables.
 * Use `operational_type` from `TimeStruct` for dispatching on the operational time structure.
 * Replaced the alias `Data` with `ExtensionData`.
+* Moved the test of the examples into a separate process using the environment of the `examples` folder.
 
 ### Bug fixes
 
