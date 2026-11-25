@@ -1,4 +1,4 @@
-    """
+"""
     HydroStor(
         id::Any,
         rate_cap::TimeProfile,
@@ -9,9 +9,9 @@
         opex_var::TimeProfile,
         opex_fixed::TimeProfile,
         stor_res::ResourceCarrier,
-        input,
-        output,
-        ExtensionData,
+        input::Dict{<:Resource, <:Real},
+        output::Dict{<:Resource, <:Real},
+        data::Vector{ExtensionData},
     )
 
 Legacy constructor for a regulated hydropower plant without pumping capabilities.
@@ -22,24 +22,24 @@ In addition, the introduction of `AbstractStorageParameters` allows for an impro
 description of the individual capacities and OPEX contributions for the storage `level` and
 `discharge` capacity.
 
-See the *[documentation](https://energymodelsx.github.io/EnergyModelsRenewableProducers.jl/stable/how-to/update-models/#Adjustments-from-0.4.0-to-0.6.x)*
+See the *[documentation](https://energymodelsx.github.io/EnergyModelsRenewableProducers.jl/stable/how-to/update-models/#Adjustments-from-0.4.x-to-0.6.x)*
 for further information regarding how you can translate your existing model to the new model.
 
 ## Fields
-- **`id`** is the name/identifyer of the node.
-- **`rate_cap::TimeProfile`** is the installed installed rate capacity.
+- **`id`** is the name/identifier of the node.
+- **`rate_cap::TimeProfile`** is the installed rate capacity.
 - **`stor_cap::TimeProfile`** is the installed storage capacity in the dam.
 - **`level_init::TimeProfile`** is the initial stored energy in the dam.
 - **`level_inflow::TimeProfile`** is the inflow of power per operational period.
 - **`level_min::TimeProfile`** is the minimum fraction of the reservoir capacity that
   has to remain in the `HydroStorage` node.
 - **`opex_var::TimeProfile`** are the variable operating expenses per GWh produced.
-- **`opex_fixed::TimeProfile`** are the fixed operational costs of the storage caacity.
+- **`opex_fixed::TimeProfile`** are the fixed operational costs of the storage capacity.
 - **`stor_res::ResourceCarrier`** is the stored `Resource`.
-- **`input::Dict{Resource, Real}`** are the stored and used resources. The values in the Dict
-  are ratios describing the energy loss when using the pumps.
+- **`input::Dict{Resource, Real}`** are the input `Resource`s. The input flow is fixed to 0
+  for a `HydroStor`.
 - **`output::Dict{Resource, Real}`** can only contain one entry, the stored resource.
-- **`data::Array{ExtensionData}`** additional data (e.g. for investments). This value is
+- **`data::Vector{ExtensionData}`** additional data (*e.g.*, for investments). This value is
   conditional through the application of a constructor.
 """
 function HydroStor(
@@ -137,27 +137,28 @@ end
         level_inflow::TimeProfile,
         level_min::TimeProfile,
         opex_var::TimeProfile,
+        opex_var_pump::TimeProfile,
         opex_fixed::TimeProfile,
         stor_res::ResourceCarrier,
-        input,
-        output,
-        ExtensionData,
+        input::Dict{<:Resource, <:Real},
+        output::Dict{<:Resource, <:Real},
+        data::Vector{ExtensionData},
     )
 
-Legacy constructor for a regulated  pumped hydropower storage plant.
+Legacy constructor for a regulated pumped hydropower storage plant.
 This version will be discontinued in the near future and replaced with the new version of
-`HydroStor{StorageBehavior}` in which the parametric input defines the behavior of the
+`PumpedHydroStor{StorageBehavior}` in which the parametric input defines the behavior of the
 hydropower plant.
 In addition, the introduction of `AbstractStorageParameters` allows for an improved
 description of the individual capacities and OPEX contributions for the pump capacity
 (`charge`), storage `level` and `discharge` capacity.
 
-See the *[documentation](https://energymodelsx.github.io/EnergyModelsRenewableProducers.jl/stable/how-to/update-models/#Adjustments-from-0.4.0-to-0.6.x)*
+See the *[documentation](https://energymodelsx.github.io/EnergyModelsRenewableProducers.jl/stable/how-to/update-models/#Adjustments-from-0.4.x-to-0.6.x)*
 for further information regarding how you can translate your existing model to the new model.
 
 ## Fields
-- **`id`** is the name/identifyer of the node.
-- **`rate_cap::TimeProfile`** is the installed installed rate capacity.
+- **`id`** is the name/identifier of the node.
+- **`rate_cap::TimeProfile`** is the installed rate capacity.
 - **`stor_cap::TimeProfile`** is the installed storage capacity in the dam.
 - **`level_init::TimeProfile`** is the initial stored energy in the dam.
 - **`level_inflow::TimeProfile`** is the inflow of power per operational period.
@@ -166,12 +167,12 @@ for further information regarding how you can translate your existing model to t
 - **`opex_var::TimeProfile`** are the variable operating expenses per GWh produced.
 - **`opex_var_pump::TimeProfile`** are the variable operating expenses per GWh pumped
   into the storage.
-- **`opex_fixed::TimeProfile`** are the fixed operational costs of the storage caacity.
+- **`opex_fixed::TimeProfile`** are the fixed operational costs of the storage capacity.
 - **`stor_res::ResourceCarrier`** is the stored `Resource`.
 - **`input::Dict{Resource, Real}`** are the stored and used resources. The values in the Dict
   are ratios describing the energy loss when using the pumps.
 - **`output::Dict{Resource, Real}`** can only contain one entry, the stored resource.
-- **`data::Array{ExtensionData}`** additional data (e.g. for investments). This value is
+- **`data::Vector{ExtensionData}`** additional data (*e.g.*, for investments). This value is
   conditional through the application of a constructor.
 """
 function PumpedHydroStor(

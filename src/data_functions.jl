@@ -12,8 +12,8 @@ while the capacity to which the profile should apply is identified through the f
 [`get_var_inst`](@ref).
 
 There exist several configurations:
-- **[`MaxSchedule`](@ref)** corresponds to minimum constraints,
-- **[`MinSchedule`](@ref)** corresponds to maximum constraints, and
+- **[`MinSchedule`](@ref)** corresponds to minimum constraints,
+- **[`MaxSchedule`](@ref)** corresponds to maximum constraints, and
 - **[`EqualSchedule`](@ref)** corresponds to equality constraints.
 """
 function EMB.constraints_ext_data(
