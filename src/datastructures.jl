@@ -281,16 +281,6 @@ level_min(n::HydroStorage) = n.level_min
 level_min(n::HydroStorage, t) = n.level_min[t]
 
 """
-    opex_var_pump(n::PumpedHydroStor)
-    opex_var_pump(n::PumpedHydroStor, t)
-
-Returns the variable OPEX of a node `n` of type `PumpedHydroStor` related to pumping either
-as `TimeProfile` or in operational period `t`.
-"""
-opex_var_pump(n::PumpedHydroStor) = n.opex_var_pump
-opex_var_pump(n::PumpedHydroStor, t) = n.opex_var_pump[t]
-
-"""
     abstract type AbstractScheduleType
 
 Abstract supertype for the different constraint types.
@@ -820,37 +810,34 @@ not occur.
 EMB.outputs(n::HydroPump) = [water_resource(n)]
 EMB.outputs(n::HydroPump, p::Resource) = 1
 
-
 """
-    discharge_segments(pq_curve::PqPoints)
+    discharge_segments(n::HydroUnit)
+    discharge_segments(pq::PqPoints)
 
-Returns the range of segment indices for a PqPoints `pq_curve`.
+Returns the range of segment indices for a PqPoints `pq` or for the PQ curve of HydroUnit `n`.
 """
-discharge_segments(pq_curve::PqPoints) = range(1, length(pq_curve.discharge_levels) - 1)
+discharge_segments(n::HydroUnit) = discharge_segments(pq_curve(n))
+discharge_segments(pq::PqPoints) = range(1, length(pq.discharge_levels) - 1)
 
 """
     max_normalized_power(n::HydroUnit)
+    max_normalized_power(pq::PqPoints)
 
 Returns the maximum power as a fraction of the capacity of HydroUnit `n` based on the
-pq_curve input.
+pq_curve input. The method for a PqPoints `pq` returns its last power level.
 """
-function max_normalized_power(n::HydroUnit)
-    if pq_curve(n) isa PqPoints
-        return pq_curve(n).power_levels[end]
-    end
-end
+max_normalized_power(n::HydroUnit) = max_normalized_power(pq_curve(n))
+max_normalized_power(pq::PqPoints) = pq.power_levels[end]
 
 """
     max_normalized_flow(n::HydroUnit)
+    max_normalized_flow(pq::PqPoints)
 
 Returns the maximum flow as a fraction of the capacity of HydroUnit `n` based on the
-pq_curve input.
+pq_curve input. The method for a PqPoints `pq` returns its last discharge level.
 """
-function max_normalized_flow(n::HydroUnit)
-    if pq_curve(n) isa PqPoints
-        return pq_curve(n).discharge_levels[end]
-    end
-end
+max_normalized_flow(n::HydroUnit) = max_normalized_flow(pq_curve(n))
+max_normalized_flow(pq::PqPoints) = pq.discharge_levels[end]
 
 """
     HydroNode

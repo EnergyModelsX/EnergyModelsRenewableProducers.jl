@@ -5,6 +5,38 @@ Hence, there are frequently breaking changes occurring, although we plan to keep
 This document is designed to provide users with information regarding how they have to adjust their models to keep compatibility to the latest changes.
 We will as well implement information regarding the adjustment of extension packages, although this is more difficult due to the vast majority of potential changes.
 
+## Adjustments from 0.7.x
+
+### PQ curves of [`HydroUnit`](@ref EnergyModelsRenewableProducers.HydroUnit) nodes
+
+The function [`build_pq_constaints`](@ref EnergyModelsRenewableProducers.build_pq_constaints) was split into two functions:
+
+- [`constraints_capacity_pq`](@ref EnergyModelsRenewableProducers.constraints_capacity_pq) is called in `constraints_capacity` and creates the constraints on the variables `cap_use` and `discharge_segment`.
+- [`constraints_flow_out_pq`](@ref EnergyModelsRenewableProducers.constraints_flow_out_pq) is called in `constraints_flow_out` and creates the constraint on the variable `flow_out` of the water resource.
+
+Both functions have the `modeltype` as additional argument.
+If you created a new subtype of `AbstractPqCurve` with a method for `build_pq_constaints`, you have to split this method into a method for each of the new functions:
+
+```julia
+# The previous method was given by:
+function EMRP.build_pq_constaints(m, n::HydroUnit, pq::MyPqCurve, 𝒯::TimeStructure)
+    # Constraints on `cap_use` and `discharge_segment`
+    # Constraint on `flow_out` of `water_resource(n)`
+end
+
+# This translates to the following new methods
+function EMRP.constraints_capacity_pq(m, n::HydroUnit, pq::MyPqCurve, 𝒯::TimeStructure, modeltype::EnergyModel)
+    # Constraints on `cap_use` and `discharge_segment`
+end
+function EMRP.constraints_flow_out_pq(m, n::HydroUnit, pq::MyPqCurve, 𝒯::TimeStructure, modeltype::EnergyModel)
+    # Constraint on `flow_out` of `water_resource(n)`
+end
+```
+
+!!! note
+    `constraints_capacity_pq` still calls the legacy function `build_pq_constaints` for PQ curves without own methods of the new functions and logs a warning once.
+    This fallback only exists for backwards compatibility.
+
 ## Adjustments from 0.5.x
 
 ### Key changes for nodal descriptions

@@ -26,12 +26,6 @@ EMRP.level_inflow
 EMRP.level_min
 ```
 
-## [`PumpedHydroStor`](@id lib-int-met_field-pumpedhydrostor)
-
-```@docs
-EMRP.opex_var_pump
-```
-
 ## [`HydroReservoir`](@id lib-int-met_field-hydroreservoir)
 
 ```@docs

@@ -785,7 +785,7 @@ end
         for t ∈ 𝒯)
 
         # Check that the discharge segments are correctly calculated
-        # - build_pq_constaints(m, n::HydroUnit, pq::PqPoints, 𝒯::TimeStructure)
+        # - constraints_capacity_pq(m, n::HydroUnit, pq::PqPoints, 𝒯::TimeStructure, modeltype::EnergyModel)
         Q = EMRP.discharge_segments(pq_val)
         η = [
             (EMRP.power_level(pq_val, q+1) - EMRP.power_level(pq_val, q)) /
@@ -795,10 +795,6 @@ end
             value.(m[:discharge_segment])[gen, t, q] ≤
                 capacity(gen, t) * (EMRP.discharge_level(pq_val, q+1) - EMRP.discharge_level(pq_val, q))
         for t ∈ 𝒯, q ∈ Q)
-        @test all(
-            gen_out[t, water] ≈
-                sum(value.(m[:discharge_segment])[gen, t, q] for q ∈ Q)
-        for t ∈ 𝒯)
         @test all(
             value.(m[:cap_use])[gen, t] ≈
                 sum(value.(m[:discharge_segment])[gen, t, q] * η[q] for q ∈ Q)
@@ -818,6 +814,13 @@ end
         # Check that the electricity balance is enforced
         # - EMB.constraints_flow_out(m, n::HydroGenerator, 𝒯::TimeStructure, modeltype::EnergyModel)
         @test all(gen_out[t, power] ≈ value.(m[:cap_use][gen, t]) for t ∈ 𝒯)
+
+        # Check that the water outlet flow is given by the discharge segments
+        # - constraints_flow_out_pq(m, n::HydroUnit, pq::PqPoints, 𝒯::TimeStructure, modeltype::EnergyModel)
+        @test all(
+            gen_out[t, water] ≈
+                sum(value.(m[:discharge_segment])[gen, t, q] for q ∈ Q)
+        for t ∈ 𝒯)
     end
 
     @testset "Hard EqualSchedule for power" begin
@@ -1125,7 +1128,7 @@ end
         for t ∈ 𝒯)
 
         # Check that the discharge segments are correctly calculated
-        # - build_pq_constaints(m, n::HydroUnit, pq::PqPoints, 𝒯::TimeStructure)
+        # - constraints_capacity_pq(m, n::HydroUnit, pq::PqPoints, 𝒯::TimeStructure, modeltype::EnergyModel)
         Q = EMRP.discharge_segments(pq_val)
         η = [
             (EMRP.power_level(pq_val, q+1) - EMRP.power_level(pq_val, q)) /
@@ -1135,10 +1138,6 @@ end
             value.(m[:discharge_segment])[pump, t, q] ≤
                 capacity(pump, t) * (EMRP.discharge_level(pq_val, q+1) - EMRP.discharge_level(pq_val, q))
         for t ∈ 𝒯, q ∈ Q)
-        @test all(
-            pump_out[t, water] ≈
-                sum(value.(m[:discharge_segment])[pump, t, q] for q ∈ Q)
-        for t ∈ 𝒯)
         @test all(
             value.(m[:cap_use])[pump, t] ≈
                 sum(value.(m[:discharge_segment])[pump, t, q] * η[q] for q ∈ Q)
@@ -1156,8 +1155,15 @@ end
         @test all(pump_in[t, power] ≈ value.(m[:cap_use][pump, t]) for t ∈ 𝒯)
 
         # Check that the electricity balance is enforced
-        # - EMB.constraints_flow_out(m, n::HydroGenerator, 𝒯::TimeStructure, modeltype::EnergyModel)
-        @test all(pump_out[t, water] ≈ pump_out[t, water] for t ∈ 𝒯)
+        # - EMB.constraints_flow_out(m, n::HydroPump, 𝒯::TimeStructure, modeltype::EnergyModel)
+        @test all(pump_in[t, water] ≈ pump_out[t, water] for t ∈ 𝒯)
+
+        # Check that the water outlet flow is given by the discharge segments
+        # - constraints_flow_out_pq(m, n::HydroUnit, pq::PqPoints, 𝒯::TimeStructure, modeltype::EnergyModel)
+        @test all(
+            pump_out[t, water] ≈
+                sum(value.(m[:discharge_segment])[pump, t, q] for q ∈ Q)
+        for t ∈ 𝒯)
 
         # Check that as much is pumped up as used for generation
         @test sum(pump_in[t, water] * duration(t) for t ∈ 𝒯) ≈

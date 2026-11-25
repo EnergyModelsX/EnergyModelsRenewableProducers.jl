@@ -26,12 +26,11 @@ function EMB.constraints_ext_data(
 )
     # Extract the variables
     var_schedule = get_var_schedule(m, n, 𝒯, data)
-    var_pen_up = get_var_pen_up(m, n, 𝒯, data)
     var_inst = get_var_inst(m, n, 𝒯, data)
 
     # Add the constraints for the scheduling variable
     @constraint(m, [t ∈ 𝒯; is_active(data, t) & has_penalty(data, t)],
-        var_schedule[t] + var_pen_up[t] ≥ var_inst[t] * value(data, t)
+        var_schedule[t] + get_var_pen_up(m, n, t, data) ≥ var_inst[t] * value(data, t)
     )
     @constraint(m, [t ∈ 𝒯; is_active(data, t) & !has_penalty(data, t)],
         var_schedule[t] ≥ var_inst[t] * value(data, t)
@@ -47,12 +46,11 @@ function EMB.constraints_ext_data(
 )
     # Extract the variables
     var_schedule = get_var_schedule(m, n, 𝒯, data)
-    var_pen_down = get_var_pen_down(m, n, 𝒯, data)
     var_inst = get_var_inst(m, n, 𝒯, data)
 
     # Add the constraints for the scheduling variable
     @constraint(m, [t ∈ 𝒯; is_active(data, t) & has_penalty(data, t)],
-        var_schedule[t] - var_pen_down[t] ≤ var_inst[t] * value(data, t)
+        var_schedule[t] - get_var_pen_down(m, n, t, data) ≤ var_inst[t] * value(data, t)
     )
     @constraint(m, [t ∈ 𝒯; is_active(data, t) & !has_penalty(data, t)],
         var_schedule[t] ≤ var_inst[t] * value(data, t)
@@ -68,13 +66,12 @@ function EMB.constraints_ext_data(
 )
     # Extract the variables
     var_schedule = get_var_schedule(m, n, 𝒯, data)
-    var_pen_up = get_var_pen_up(m, n, 𝒯, data)
-    var_pen_down = get_var_pen_down(m, n, 𝒯, data)
     var_inst = get_var_inst(m, n, 𝒯, data)
 
     # Add the constraints for the scheduling variable
     @constraint(m, [t ∈ 𝒯; is_active(data, t) & has_penalty(data, t)],
-        var_schedule[t] + var_pen_up[t] - var_pen_down[t] == var_inst[t] * value(data, t)
+        var_schedule[t] + get_var_pen_up(m, n, t, data) - get_var_pen_down(m, n, t, data) ==
+            var_inst[t] * value(data, t)
     )
     @constraint(m, [t ∈ 𝒯; is_active(data, t) & !has_penalty(data, t)],
         var_schedule[t] == var_inst[t] * value(data, t)
