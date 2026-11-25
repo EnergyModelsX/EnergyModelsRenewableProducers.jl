@@ -3,7 +3,7 @@
     EMB.variables_node(m, 𝒩ⁿᵈʳ::Vector{<:AbstractNonDisRES}, 𝒯, modeltype::EnergyModel)
 
 Creates the following additional variables for **ALL** [`AbstractNonDisRES`](@ref) nodes:
-- `:curtailment[n, t]` is the unused energy within operational period t.
+- `:curtailment[n, t]` is the unused energy within operational period `t`.
 """
 function EMB.variables_node(m, 𝒩ⁿᵈʳ::Vector{<:AbstractNonDisRES}, 𝒯, modeltype::EnergyModel)
     @variable(m, curtailment[𝒩ⁿᵈʳ, 𝒯] ≥ 0)
@@ -14,7 +14,7 @@ end
 
 Creates the following additional variables for **ALL** [`HydroStorage`](@ref) nodes:
 - `:hydro_spill[n, t]` is the spilled energy from node `n` in operational period `t` without
-  pproducing energy. It is included to avoid infeasible models.
+  producing energy. It is included to avoid infeasible models.
 """
 function EMB.variables_node(m, 𝒩::Vector{<:HydroStorage}, 𝒯, modeltype::EnergyModel)
     @variable(m, hydro_spill[𝒩, 𝒯] ≥ 0)
@@ -25,8 +25,8 @@ end
 
 Sets all constraints for the regulated hydro storage node.
 
-It differs from the function for a standard [`RefStorage`](@extref EnergyModelsBase.RefStorage)
-node through not calling the function
+It differs from the function for a standard
+[`RefStorage`](@extref EnergyModelsBase.RefStorage) node through not calling the function
 [`constraints_flow_out`](@extref EnergyModelsBase.constraints_flow_out) but incorporating
 the outflow constraints directly.
 
@@ -80,8 +80,8 @@ Creates the following additional variables for **ALL** [`HydroGate`](@ref) nodes
 additional constraints through [`ScheduleConstraint`](@ref):
 - `gate_penalty_up[n, t, p]` is the *up* penalty variable of hydro gate `n` in operational
   period `t` for resource `p`.
-- `gate_penalty_down[n, t, p]` is the *down* penalty variable of hydro gate `n` in operational
-  period `t` for resource `p`.
+- `gate_penalty_down[n, t, p]` is the *down* penalty variable of hydro gate `n` in
+  operational period `t` for resource `p`.
 
 These variables enable `HydroGate` nodes to penalize a violation of the discharge constraint
 instead of providing a strict upper bound. They hence transform the constraint to a soft
@@ -114,10 +114,10 @@ have additional constraints through [`ScheduleConstraint`](@ref):
 - `rsv_penalty_down[n, t, p]` is the *down* penalty variable of hydro reservoir `n` in
   operational period `t` for resource `p`.
 
-These variables enable `HydroReservoir` nodes to penalize a violation of the volume constraint
-instead of providing a strict bound. They hence transform the constraint to a soft
-constraint. Without these penalty variables, too strict volume restrictions may cause an
-infeasible model.
+These variables enable `HydroReservoir` nodes to penalize a violation of the volume
+constraint instead of providing a strict bound. They hence transform the constraint to a
+soft constraint. Without these penalty variables, too strict volume restrictions may cause
+an infeasible model.
 """
 function EMB.variables_node(m, 𝒩::Vector{<:HydroReservoir}, 𝒯, modeltype::EnergyModel)
     # Create the variables
@@ -137,22 +137,22 @@ end
 
 
 """
-    EMB.variables_node(m, 𝒩::Vector{:<HydroUnit}, 𝒯, modeltype::EnergyModel)
+    EMB.variables_node(m, 𝒩::Vector{<:HydroUnit}, 𝒯, modeltype::EnergyModel)
 
-Creates the following additional variables for **ALL** [`HydroUnit`](@ref) nodes that
-have additional constraints through [`ScheduleConstraint`](@ref):
-- `gen_penalty_up[n, t, p]` is the *up* penalty variable of hydro unit `n` in
-  operational period `t` for resource `p`.
-- `rsv_penalty_down[n, t, p]` is the *down* penalty variable of hydro unit `n` in
+Creates the following additional variables for **ALL** [`HydroUnit`](@ref) nodes that have
+additional constraints through [`ScheduleConstraint`](@ref):
+- `gen_penalty_up[n, t, p]` is the *up* penalty variable of hydro unit `n` in operational
+  period `t` for resource `p`.
+- `gen_penalty_down[n, t, p]` is the *down* penalty variable of hydro unit `n` in
   operational period `t` for resource `p`.
 - `discharge_segment[n, t, q]` is the discharge segment variable of hydro unit `n` in
-  operational period `t` for discharge segment `q`
-  The capacity of the `discharge_segment`s sums up to the total discharge capacity.
+  operational period `t` for discharge segment `q`. The capacity of the `discharge_segment`s
+  sums up to the total discharge capacity.
 
 The first two variables enable `HydroUnit` nodes to penalize a violation of the
 generation/pumping constraints instead of providing a strict bound. They hence transform the
-constraint to a soft constraint. Without these penalty variables, too strict generation/pumping
-constraints may cause an infeasible model.
+constraint to a soft constraint. Without these penalty variables, too strict
+generation/pumping constraints may cause an infeasible model.
 """
 function EMB.variables_node(m, 𝒩::Vector{<:HydroUnit}, 𝒯, modeltype::EnergyModel)
     # Create the variable for the discharge segment
@@ -181,20 +181,20 @@ end
 """
     EMB.variables_node(m, 𝒩::Vector{<:AbstractBattery}, 𝒯, modeltype::EnergyModel)
 
-Creates the following additional variables for **ALL** [`AbstractBattery`](@ref) nodes
-- `bat_prev_use[n, t]` is the accumulated charge effect of an `AbstractBattery` up
-  to operational period `t`.
-- `bat_prev_use_sp[n, t_inv]` is the accumulated charge effect of an `AbstractBattery` up
-  to investment period `t_inv`.
-- `bat_use_sp[n, t_inv]` is the accummulated charge effect of an `AbstractBattery` in
+Creates the following additional variables for **ALL** [`AbstractBattery`](@ref) nodes:
+- `bat_prev_use[n, t]` is the accumulated charge effect of an `AbstractBattery` up to
+  operational period `t`.
+- `bat_prev_use_sp[n, t_inv]` is the accumulated charge effect of an `AbstractBattery` up to
   investment period `t_inv`.
-- `bat_use_rp[n, t_rp]` is the accummulated charge effect of an `AbstractBattery` in
+- `bat_use_sp[n, t_inv]` is the accumulated charge effect of an `AbstractBattery` in
+  investment period `t_inv`.
+- `bat_use_rp[n, t_rp]` is the accumulated charge effect of an `AbstractBattery` in
   representative period `t_rp`. It is only declared if the `TimeStructure` includes
   `RepresentativePeriods`.
-- `bat_stack_replace_b[n, t_inv]` is a binary variable for identification of battery
-  battery stack replacement. Stack replacement occurs before the first operational period of a
-  strategic period. It is only declared for batterys which utilize an
-  [`AbstractBatteryLife`](@ref) that includes degradation.
+- `bat_stack_replace_b[n, t_inv]` is a binary variable for identification of battery stack
+  replacement. Stack replacement occurs before the first operational period of a strategic
+  period. It is only declared for batteries which utilize an [`AbstractBatteryLife`](@ref)
+  that includes degradation.
 """
 function EMB.variables_node(m, 𝒩::Vector{<:AbstractBattery}, 𝒯, modeltype::EnergyModel)
     # Declaration of the required subsets
@@ -215,10 +215,9 @@ end
 """
     EMB.variables_node(m, 𝒩::Vector{<:ReserveBattery}, 𝒯, modeltype::EnergyModel)
 
-Creates the following additional variables for **ALL** [`ReserveBattery`](@ref) nodes
+Creates the following additional variables for **ALL** [`ReserveBattery`](@ref) nodes:
 - `bat_res_up[n, t]` is the upwards reserve of battery storage `n` in operational period `t`.
-- `bat_res_down[n, t]` is the upwards reserve of battery of storage `n` in operational
-  period `t`.
+- `bat_res_down[n, t]` is the downwards reserve of battery storage `n` in operational period `t`.
 """
 function EMB.variables_node(m, 𝒩::Vector{<:ReserveBattery}, 𝒯, modeltype::EnergyModel)
     @variable(m, bat_res_up[𝒩, 𝒯] ≥ 0)
@@ -229,10 +228,10 @@ end
 """
     EMB.create_node(m, n::AbstractBattery, 𝒯, 𝒫, modeltype::EnergyModel)
 
-Set all constraints for a `AbstractBattery`. Can serve as fallback option for all unspecified
-subtypes of `AbstractBattery`. It differs from the function for a standard `Storage` node
-through calling the constraint function [`constraints_usage`](@ref) for calculating the
-cycles of the node.
+Set all constraints for an `AbstractBattery`. Can serve as fallback option for all
+unspecified subtypes of `AbstractBattery`. It differs from the function for a standard
+`Storage` node through calling the constraint function [`constraints_usage`](@ref) for
+calculating the cycles of the node.
 
 # Called constraint functions
 - [`constraints_level`](@extref EnergyModelsBase.constraints_level),

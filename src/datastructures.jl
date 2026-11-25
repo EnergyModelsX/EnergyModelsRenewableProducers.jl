@@ -1,19 +1,19 @@
 """
     abstract type AbstractNonDisRES <: EMB.Source
 
-Abstract supertype for all non-dispatchable renewable energy source. All functions for the
+Abstract supertype for all non-dispatchable renewable energy sources. All functions for the
 implemented version of the [`NonDisRES`](@ref) are dispatching on this supertype.
 """
 abstract type AbstractNonDisRES <: EMB.Source end
 """
     struct NonDisRES <: AbstractNonDisRES
 
-A non-dispatchable renewable energy source. It extends the existing `RefSource` node through
-including a profile that corresponds to the production. The profile can have variations on
-the strategic level.
+A non-dispatchable renewable energy source. It differs from a
+[`RefSource`](@extref EnergyModelsBase.RefSource) node through including a profile that
+corresponds to the production. The profile can have variations on the strategic level.
 
-# Fields
-- **`id`** is the name/identifyer of the node.
+## Fields
+- **`id`** is the name/identifier of the node.
 - **`cap::TimeProfile`** is the installed capacity.
 - **`profile::TimeProfile`** is the power production in each operational period as a ratio
   of the installed capacity at that time.
@@ -68,16 +68,16 @@ requires a capacity for the `discharge` and does not have a required inflow from
 except for water inflow from outside the model, although it requires a field `input`.
 
 ## Fields
-- **`id`** is the name/identifyer of the node.
-- **`level::EMB.UnionCapacity`** are the level parameters of the `HydroStor` node.
-  Depending on the chosen type, the charge parameters can include variable OPEX and/or fixed OPEX.
+- **`id`** is the name/identifier of the node.
+- **`level::EMB.UnionCapacity`** are the level parameters of the `HydroStor` node. Depending
+  on the chosen type, the level parameters can include variable OPEX and/or fixed OPEX.
 - **`discharge::EMB.UnionCapacity`** are the discharging parameters of the `HydroStor` node.
-  Depending on the chosen type, the discharge parameters can include variable OPEX, fixed OPEX,
-  and/or a capacity.
+  Depending on the chosen type, the discharge parameters can include variable OPEX, fixed
+  OPEX, and/or a capacity.
 - **`level_init::TimeProfile`** is the initial stored energy in the dam.
 - **`level_inflow::TimeProfile`** is the inflow of power per operational period.
-- **`level_min::TimeProfile`** is the minimum fraction of the reservoir capacity that
-  has to remain in the `HydroStorage` node.
+- **`level_min::TimeProfile`** is the minimum fraction of the reservoir capacity that has to
+  remain in the `HydroStorage` node.
 - **`stor_res::ResourceCarrier`** is the stored `Resource`.
 - **`input::Dict{Resource, Real}`** are the input `Resource`s. In the case of a `HydroStor`,
   this field can be left out.
@@ -185,23 +185,23 @@ allows for storing energy through pumping water into the reservoir. The current
 implementation is a simplified node in which no lower reservoir is required. Instead, it is
 assumed that the reservoir has an infinite size.
 
-A pumped hydro storage node requires a capacity for both `charge` and `discharge` to
-account for the potential to store energy in the form of potential energy.
+A pumped hydro storage node requires a capacity for both `charge` and `discharge` to account
+for the potential to store energy in the form of potential energy.
 
 ## Fields
-- **`id`** is the name/identifyer of the node.
+- **`id`** is the name/identifier of the node.
 - **`charge::EMB.UnionCapacity`** are the charging parameters of the `PumpedHydroStor` node.
   Depending on the chosen type, the charge parameters can include variable OPEX, fixed OPEX,
   and/or a capacity.
 - **`level::EMB.UnionCapacity`** are the level parameters of the `PumpedHydroStor` node.
-  Depending on the chosen type, the charge parameters can include variable OPEX and/or fixed OPEX.
+  Depending on the chosen type, the level parameters can include variable OPEX and/or fixed OPEX.
 - **`discharge::EMB.UnionCapacity`** are the discharging parameters of the `PumpedHydroStor`
   node. Depending on the chosen type, the discharge parameters can include variable OPEX,
   fixed OPEX, and/or a capacity.
 - **`level_init::TimeProfile`** is the initial stored energy in the dam.
 - **`level_inflow::TimeProfile`** is the inflow of power per operational period.
-- **`level_min::TimeProfile`** is the minimum fraction of the reservoir capacity that
-  has to remain in the `HydroStorage` node.
+- **`level_min::TimeProfile`** is the minimum fraction of the reservoir capacity that has to
+  remain in the `HydroStorage` node.
 - **`stor_res::ResourceCarrier`** is the stored `Resource`.
 - **`input::Dict{Resource, Real}`** are the input `Resource`s.
 - **`output::Dict{Resource, Real}`** can only contain one entry, the stored resource.
@@ -314,23 +314,24 @@ abstract type MaxSchedule <: AbstractScheduleType end
 """
     abstract type EqualSchedule <: AbstractScheduleType
 
-Abstract type used to define a `ScheduleConstraint` as a schedule constraint.
+Abstract type used to define a `ScheduleConstraint` as an equality constraint.
 """
 abstract type EqualSchedule <: AbstractScheduleType end
 
 """
-    structScheduleConstraint{T} <: ExtensionData where {T<:AbstractScheduleType}
+    struct ScheduleConstraint{T} <: ExtensionData where {T<:AbstractScheduleType}
 
 A constraint that can be added as `ExtensionData`. `T <: AbstractScheduleType` denotes the
 constraint type.
 
 ## Fields
-- **`resource::{Union{<:Resource, Nothing}}`** is the resource type the constraint applies
-  to if the node can have multiple resources as input/outputs.
-- **`value::TimeProfile`** is the constraint value, that is the limit that should not be violated.
-- **`flag::TimeProfile`** is a boolean value indicating if the constraint is active.
-- **`penalty::TimeProfile`** is the penalty for violating the constraint. If penalty is set
-  to `Inf` it will be built as a hard constraint.
+- **`resource::Union{<:Resource, Nothing}`** is the resource the constraint applies to if
+  the node can have multiple resources as input/outputs.
+- **`value::TimeProfile{<:Union{Number, VariableRef}}`** is the constraint value relative to
+  the installed capacity, that is the limit that should not be violated.
+- **`flag::TimeProfile{Bool}`** is a boolean value indicating if the constraint is active.
+- **`penalty::TimeProfile{<:Number}`** is the penalty for violating the constraint. If
+  penalty is set to `Inf` it will be built as a hard constraint.
 """
 struct ScheduleConstraint{T} <: ExtensionData where {T<:AbstractScheduleType}
     resource::Union{<:Resource, Nothing}
@@ -342,7 +343,7 @@ end
 """
     resource(data::ScheduleConstraint)
 
-Returns the `Resource` type of a `ScheduleConstraint`.
+Returns the `Resource` of a `ScheduleConstraint` or `nothing`, if no resource is specified.
 """
 resource(data::ScheduleConstraint) = data.resource
 
@@ -408,12 +409,11 @@ has_penalty(data::ScheduleConstraint, t) = !isinf(penalty(data, t)) & is_active(
 Returns true if a constraint `data` is of a type that may require a penalty up variable,
 which is true for [`MinSchedule`](@ref) and [`EqualSchedule`](@ref).
 
-When the operational period `t` is provided in addition, it is furthermore necessary that the
-penalty is finite.
+When the operational period `t` is provided in addition, it is furthermore necessary that
+the constraint is active and the penalty is finite.
 
-When the operational period `t` and the resource `p` is provided in addition, it is
-furthermore necessary that the penalty is finite and that `p` corresponds to the `ScheduleConstraint`
-resource.
+When the operational period `t` and the resource `p` are provided in addition, it is
+furthermore necessary that `p` corresponds to the `ScheduleConstraint` resource.
 """
 has_penalty_up(data::ScheduleConstraint) = false
 has_penalty_up(data::ScheduleConstraint{MinSchedule}) = true
@@ -425,17 +425,16 @@ has_penalty_up(data::ScheduleConstraint, t, p::Resource) =
 """
     has_penalty_down(data::ScheduleConstraint)
     has_penalty_down(data::ScheduleConstraint, t)
-    has_penalty_down(data::ScheduleConstraint, t, resource::Resource)
+    has_penalty_down(data::ScheduleConstraint, t, p::Resource)
 
-Returns true if a constraint `data` is of a type that may require a penalty up down,
+Returns true if a constraint `data` is of a type that may require a penalty down variable,
 which is true for [`MaxSchedule`](@ref) and [`EqualSchedule`](@ref).
 
-When the operational period `t` is provided in addition, it is furthermore necessary that the
-penalty is finite.
+When the operational period `t` is provided in addition, it is furthermore necessary that
+the constraint is active and the penalty is finite.
 
-When the operational period `t` and the resource `p` is provided in addition, it is
-furthermore necessary that the penalty is finite and that `p` corresponds to the `ScheduleConstraint`
-resource.
+When the operational period `t` and the resource `p` are provided in addition, it is
+furthermore necessary that `p` corresponds to the `ScheduleConstraint` resource.
 """
 has_penalty_down(data::ScheduleConstraint) = false
 has_penalty_down(data::ScheduleConstraint{MaxSchedule}) = true
@@ -445,24 +444,25 @@ has_penalty_down(data::ScheduleConstraint, t, p::Resource) =
     has_penalty_down(data, t) & (resource(data) == p)
 
 """
-    structHydroReservoir{T} <: EMB.Storage{T}
+    struct HydroReservoir{T} <: EMB.Storage{T}
 
 A regulated hydropower reservoir, modelled as a `Storage` node.
 
-A `HydroReservoir` differs from [`HydroStor`](@ref) and[`PumpedHydroStor`](@ref) nodes as
-it models the stored energy in the form of water through the potential energy.
-It can only be used in conjunction with [`HydroGenerator`](@ref) nodes.
+A `HydroReservoir` differs from [`HydroStor`](@ref) and [`PumpedHydroStor`](@ref) nodes as
+it models the stored energy in the form of water through the potential energy. It can only
+be used in conjunction with [`HydroGenerator`](@ref), [`HydroPump`](@ref), and
+[`HydroGate`](@ref) nodes.
 
 ## Fields
-- **`id`** is the name/identifyer of the node.
-- **`vol::EMB.UnionCapacity`** are the storage volume parameters of the `HydroReservoir` node
-  (typically million cubic meters).
-- **`vol_inflow::TimeProfile`** is the water inflow to the reservoir
-  (typically million cubic per time unit).
+- **`id`** is the name/identifier of the node.
+- **`vol::EMB.UnionCapacity`** are the storage volume parameters of the `HydroReservoir`
+  node (typically million cubic meters).
+- **`vol_inflow::TimeProfile`** is the water inflow to the reservoir (typically million
+  cubic meters per time unit).
 - **`stor_res::ResourceCarrier`** is the stored `Resource`.
 - **`data::Vector{<:ExtensionData}`** is the additional data (*e.g.*, for investments or
-  constraints through [`AbstractScheduleType`](@ref)). The field `data` is conditional
-  through usage of a constructor.
+  constraints through [`ScheduleConstraint`](@ref)). The field `data` is conditional through
+  usage of a constructor.
 """
 struct HydroReservoir{T} <: EMB.Storage{T}
     id::Any
@@ -521,31 +521,29 @@ EMB.level(n::HydroReservoir) = n.vol
     vol_inflow(n::HydroReservoir)
     vol_inflow(n::HydroReservoir, t)
 
-Returns the inflow to a HydroReservoir `n` either as `TimeProfile` or in operational period
-`t`.
+Returns the inflow to a HydroReservoir `n` either as `TimeProfile` or in operational period `t`.
 """
 vol_inflow(n::HydroReservoir) = n.vol_inflow
 vol_inflow(n::HydroReservoir, t) = n.vol_inflow[t]
 
 """
-    structHydroGate <: EMB.NetworkNode
+    struct HydroGate <: EMB.NetworkNode
 
 A hydro gate, modelled as a `NetworkNode` node.
 
-It an be used to model outlets/inlets and minimum/maximum requirements for water flow
+It can be used to model outlets/inlets and minimum/maximum requirements for water flow
 between individual reservoirs without power generation.
 
 ## Fields
 - **`id`** is the name/identifier of the node.
 - **`cap::TimeProfile`** is the installed discharge capacity.
-- **`opex_var::TimeProfile`** is the variational operational costs per water flow through
-  the gate.
+- **`opex_var::TimeProfile`** is the variable operational costs per water flow through the gate.
 - **`opex_fixed::TimeProfile`** is the fixed operational costs.
 - **`resource::ResourceCarrier`** is the water resource type since gates are only used for
   discharging water.
 - **`data::Vector{<:ExtensionData}`** is the additional data (*e.g.*, for investments or
-  constraints through [`AbstractScheduleType`](@ref)). The field `data` is conditional
-  through usage of a constructor.
+  constraints through [`ScheduleConstraint`](@ref)). The field `data` is conditional through
+  usage of a constructor.
 """
 struct HydroGate <: EMB.NetworkNode
     id::Any
@@ -613,7 +611,7 @@ water_resource(n::HydroUnit) = n.water_resource
 """
     pq_curve(n::HydroUnit)
 
-Returns the resources in the PQ-curve of a HydroUnit `n`.
+Returns the PQ-curve of a HydroUnit `n`.
 """
 pq_curve(n::HydroUnit) = n.pq_curve
 
@@ -637,8 +635,8 @@ represented by a set of discharge and power values (PQ-points).
 - **`power_levels::Vector{Real}`** is a vector of power values.
 - **`discharge_levels::Vector{Real}`** is a vector of discharge values.
 
-The two vectors muct be of equal size and ordered so that the power and discharge values
-describes the conversion from energy (stored in the water) to electricity (power) for a
+The two vectors must be of equal size and ordered so that the power and discharge values
+describe the conversion from energy (stored in the water) to electricity (power) for a
 [`HydroGenerator`](@ref) node or the conversion from electric energy to energy stored as
 water in the reservoirs for a [`HydroPump`](@ref) node.
 
@@ -647,12 +645,12 @@ to the installed capacity, so that either the power-vector or the discharge vect
 range [0, 1].
 
 If a single `Real` is provided as input, it constructs the two Arrays through the energy
-equivalent input. If this approach is used, the installed capacity of the node must refer
-to the power capacity of a [`HydroGenerator`](@ref) or [`HydroPump`](@ref) node.
+equivalent input. If this approach is used, the installed capacity of the node must refer to
+the power capacity of a [`HydroGenerator`](@ref) or [`HydroPump`](@ref) node.
 
 !!! note
-    The described power-discharge relationship should be concave for a [`HydroGenerator`](@ref)
-    node and convex for a [`HydroPump`](@ref) node.
+    The described power-discharge relationship should be concave for a
+    [`HydroGenerator`](@ref) node and convex for a [`HydroPump`](@ref) node.
 """
 struct PqPoints <: AbstractPqCurve
     power_levels::Vector{Real}
@@ -690,20 +688,20 @@ A hydropower generator, modelled as a `HydroUnit` node.
 
 A hydropower generator is located between two [`HydroReservoir`](@ref)s or between a
 [`HydroReservoir`](@ref) and a `Sink` node corresponding to the ocean. It differs from a
-[`HydroGate`](@ref) as it allows for power generation desctibed through an
+[`HydroGate`](@ref) as it allows for power generation described through an
 [`AbstractPqCurve`](@ref).
 
 ## Fields
 - **`id`** is the name/identifier of the node.
 - **`cap::TimeProfile`** is the installed discharge or power capacity.
-- **`pq_curve::AbstractPqCurve` describes the relationship between power and discharge (water).
+- **`pq_curve::AbstractPqCurve`** describes the relationship between power and discharge (water).
 - **`opex_var::TimeProfile`** is the variable operational costs per energy unit produced.
 - **`opex_fixed::TimeProfile`** is the fixed operational costs.
 - **`electricity_resource::Resource`** is the electricity resource generated as output.
 - **`water_resource::Resource`** is the water resource taken as input and discharged as output.
 - **`data::Vector{<:ExtensionData}`** is the additional data (*e.g.*, for investments or
-  constraints through [`AbstractScheduleType`](@ref)). The field `data` is conditional
-  through usage of a constructor.
+  constraints through [`ScheduleConstraint`](@ref)). The field `data` is conditional through
+  usage of a constructor.
 """
 struct HydroGenerator <: HydroUnit
     id::Any
@@ -732,8 +730,7 @@ end
     inputs(n::HydroGenerator)
     inputs(n::HydroGenerator, p::Resource)
 
-Returns the input resources of a HydroGenerator `n`, specified *via* the field
-`water_resource`.
+Returns the input resources of a HydroGenerator `n`, specified *via* the field `water_resource`.
 
 If the resource `p` is specified, it returns a value of 1. This behaviour should in theory
 not occur.
@@ -764,15 +761,16 @@ of water from one reservoir to the other through pumping the water.
 
 ## Fields
 - **`id`** is the name/identifier of the node.
-- **`cap::TimeProfile`** is the installed pumping capacity in piwer or volume per time unit.
-- **`pq_curve::AbstractPqCurve` describes the relationship between power and pumping of water.
-- **`opex_var::TimeProfile`** is the variable operational costs per energy unit produced.
+- **`cap::TimeProfile`** is the installed pumping capacity in power or volume per time unit.
+- **`pq_curve::AbstractPqCurve`** describes the relationship between power and pumping of water.
+- **`opex_var::TimeProfile`** is the variable operational costs per energy unit consumed.
 - **`opex_fixed::TimeProfile`** is the fixed operational costs.
 - **`electricity_resource::Resource`** is the electricity resource taken as input (consumed).
-- **`water_resource::Resource`** is the water resource taken as input and discharged (pumped) as output.
+- **`water_resource::Resource`** is the water resource taken as input and discharged
+  (pumped) as output.
 - **`data::Vector{<:ExtensionData}`** is the additional data (*e.g.*, for investments or
-  constraints through [`AbstractScheduleType`](@ref)). The field `data` is conditional
-  through usage of a constructor.
+  constraints through [`ScheduleConstraint`](@ref)). The field `data` is conditional through
+  usage of a constructor.
 """
 struct HydroPump <: HydroUnit
     id::Any
@@ -864,8 +862,9 @@ HydroNode = Union{HydroUnit, HydroReservoir, HydroGate}
 """
     abstract type AbstractBatteryLife
 
-Abstract supertype for the modelling of the battery lifetime of an [`AbstractBattery`](@ref).
-It allows to differentiate between different degradation approaches for the storage node.
+Abstract supertype for the modelling of the battery lifetime of an
+[`AbstractBattery`](@ref). It allows to differentiate between different degradation
+approaches for the storage node.
 """
 abstract type AbstractBatteryLife  end
 
@@ -908,31 +907,29 @@ abstract type AbstractBattery{T} <: EMB.Storage{T} end
 """
     struct Battery{T} <: AbstractBattery{T}
 
-A battery storage, modelled as a `Storage` node. A battery storage nodes differs from a
+A battery storage, modelled as a `Storage` node. A battery storage node differs from a
 [`RefStorage`](@extref EnergyModelsBase.RefStorage) node through:
 
 1. incorporating a discharge capacity,
 2. including charge and discharge efficiencies, and
-3. allow for the introduction of battery degradation and lifetime reduction.
+3. allowing for the introduction of battery degradation and lifetime reduction.
 
 !!! warning "Implementation details"
     - The discharge and charge capacities are independent of each other.
-    - The values for the charge and discharge efficiencies must be smaller than 1.
+    - The values for the charge and discharge efficiencies must be less than or equal to 1.
 
 ## Fields
-- **`id`** is the name/identifyer of the node.
-- **`charge::EMB.UnionCapacity`** are the charging parameters of the `BatteryStorage` node.
+- **`id`** is the name/identifier of the node.
+- **`charge::EMB.UnionCapacity`** are the charging parameters of the `Battery` node.
   Depending on the chosen type, the charge parameters can include variable OPEX, fixed OPEX,
   and/or a capacity.
-- **`level::EMB.UnionCapacity`** are the level parameters of the `BatteryStorage` node.
-  Depending on the chosen type, the charge parameters can include variable OPEX and/or
-  fixed OPEX.
-- **`discharge::EMB.UnionCapacity`** are the discharging parameters of the `BatteryStorage`
-  node. Depending on the chosen type, the discharge parameters can include variable OPEX,
-  fixed OPEX, and/or a capacity.
+- **`level::EMB.UnionCapacity`** are the level parameters of the `Battery` node. Depending
+  on the chosen type, the level parameters can include variable OPEX and/or fixed OPEX.
+- **`discharge::EMB.UnionCapacity`** are the discharging parameters of the `Battery` node.
+  Depending on the chosen type, the discharge parameters can include variable OPEX, fixed
+  OPEX, and/or a capacity.
 - **`stor_res::ResourceCarrier`** is the stored `Resource`.
-- **`input::Dict{Resource, Real}`** are the input `Resource`s with corresponding efficiency
-  value.
+- **`input::Dict{Resource, Real}`** are the input `Resource`s with corresponding efficiency value.
 - **`output::Dict{Resource, Real}`** are the output `Resource`s with corresponding
   efficiency value.
 - **`battery_life::AbstractBatteryLife`** is used for calculating the maximum battery
@@ -979,31 +976,29 @@ end
 """
     struct ReserveBattery{T} <: AbstractBattery{T}
 
-A reserve battery storage, modelled as a `Storage` node. A battery storage nodes differs
-from a [`Battery`](@ref) node through allowing for the introduction of both upwards and
-downwards reserves.
+A reserve battery storage, modelled as a `Storage` node. A reserve battery storage node
+differs from a [`Battery`](@ref) node through allowing for the introduction of both upwards
+and downwards reserves.
 
 !!! warning "Implementation details"
     - The discharge and charge capacities are independent of each other.
-    - The values for the charge and discharge efficiencies must be smaller than 1.
+    - The values for the charge and discharge efficiencies must be less than or equal to 1.
     - The upwards and downwards reserves are implemented as resources leaving the battery.
       It is hence important to also provide a potential sink which determines the total
       reserve required in the system.
 
 ## Fields
-- **`id`** is the name/identifyer of the node.
-- **`charge::EMB.UnionCapacity`** are the charging parameters of the `BatteryStorage` node.
+- **`id`** is the name/identifier of the node.
+- **`charge::EMB.UnionCapacity`** are the charging parameters of the `ReserveBattery` node.
   Depending on the chosen type, the charge parameters can include variable OPEX, fixed OPEX,
   and/or a capacity.
-- **`level::EMB.UnionCapacity`** are the level parameters of the `BatteryStorage` node.
-  Depending on the chosen type, the charge parameters can include variable OPEX and/or
-  fixed OPEX.
-- **`discharge::EMB.UnionCapacity`** are the discharging parameters of the `BatteryStorage`
+- **`level::EMB.UnionCapacity`** are the level parameters of the `ReserveBattery` node.
+  Depending on the chosen type, the level parameters can include variable OPEX and/or fixed OPEX.
+- **`discharge::EMB.UnionCapacity`** are the discharging parameters of the `ReserveBattery`
   node. Depending on the chosen type, the discharge parameters can include variable OPEX,
   fixed OPEX, and/or a capacity.
 - **`stor_res::ResourceCarrier`** is the stored `Resource`.
-- **`input::Dict{Resource, Real}`** are the input `Resource`s with corresponding efficiency
-  value.
+- **`input::Dict{Resource, Real}`** are the input `Resource`s with corresponding efficiency value.
 - **`output::Dict{Resource, Real}`** are the output `Resource`s with corresponding
   efficiency value.
 - **`battery_life::AbstractBatteryLife`** is used for calculating the maximum battery
@@ -1061,8 +1056,7 @@ end
     EMB.outputs(n::ReserveBattery)
     EMB.outputs(n::ReserveBattery, p::Resource)
 
-When the node is an [`ReserveBattery`](@ref), it returns both the output and reserve
-resources.
+When the node is a [`ReserveBattery`](@ref), it returns both the output and reserve resources.
 
 If the resource `p` is specified, it returns the value if the resource is in the output
 dictionary. Otherwise, it returns a value of 0.
@@ -1103,9 +1097,10 @@ has_degradation(n::AbstractBattery) = isa(battery_life(n), CycleLife)
 
 """
     cycles(n::AbstractBattery)
+    cycles(life::AbstractBatteryLife)
 
 Returns the maximum number of cycles of AbstractBattery `n` through calling its subfunction.
-If the [`battery_life`](@ref) is an [`AbstractBatteryLife`](@ref), it will return `nothing`.
+If the [`battery_life`](@ref) is not a [`CycleLife`](@ref), it will return `nothing`.
 """
 cycles(n::AbstractBattery) = cycles(battery_life(n))
 cycles(life::AbstractBatteryLife) = nothing
@@ -1113,10 +1108,11 @@ cycles(life::CycleLife) = life.cycles
 
 """
     degradation(n::AbstractBattery)
+    degradation(life::AbstractBatteryLife)
 
 Returns the degradation of the battery storage capacity at the end of its lifetime through
-calling its subfunction. If the [`battery_life`](@ref) is an [`AbstractBatteryLife`](@ref),
-it will return `nothing`.
+calling its subfunction. If the [`battery_life`](@ref) is not a [`CycleLife`](@ref), it will
+return `nothing`.
 """
 degradation(n::AbstractBattery) = degradation(battery_life(n))
 degradation(life::AbstractBatteryLife) = nothing
@@ -1124,12 +1120,14 @@ degradation(life::CycleLife) = life.degradation
 
 """
     stack_cost(n::AbstractBattery)
+    stack_cost(life::AbstractBatteryLife)
     stack_cost(n::AbstractBattery, t_inv::TS.AbstractStrategicPeriod)
+    stack_cost(life::AbstractBatteryLife, t_inv::TS.AbstractStrategicPeriod)
 
 Returns the relative stack cost of the battery storage capacity for replacing the existing
 battery capacity as `TimeProfile` or in strategic period `t_inv`.
 
-If the [`battery_life`](@ref) is an [`AbstractBatteryLife`](@ref), it will return `nothing`.
+If the [`battery_life`](@ref) is not a [`CycleLife`](@ref), it will return `nothing`.
 """
 stack_cost(n::AbstractBattery) = stack_cost(battery_life(n))
 stack_cost(n::AbstractBattery, t_inv::TS.AbstractStrategicPeriod) =

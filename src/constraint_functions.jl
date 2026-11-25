@@ -5,8 +5,7 @@
 
 Method for creating the constraint on the maximum capacity of an [`AbstractNonDisRES`](@ref).
 
-The difference to the default method is the inclusion of `:curtailment` within the energy
-balance.
+The difference to the default method is the inclusion of `:curtailment` within the energy balance.
 """
 function EMB.constraints_capacity(m, n::AbstractNonDisRES, 𝒯::TimeStructure, modeltype::EnergyModel)
     @constraint(m, [t ∈ 𝒯],
@@ -61,8 +60,8 @@ reserve capacity to the system.
 
 !!! note "`ReserveBattery`"
     Several constraints are added to guarantee that the provided reserve can be delivered
-    through the values of the variables `:stor_charge_use`, `stor_discharge_use`,
-    and `stor_level`.
+    through the values of the variables `:stor_charge_use`, `:stor_discharge_use`, and
+    `:stor_level`.
 """
 constraints_reserve(m, n::AbstractBattery, 𝒯::TimeStructure, modeltype::EnergyModel) = nothing
 function constraints_reserve(m, n::ReserveBattery, 𝒯::TimeStructure, modeltype::EnergyModel)
@@ -95,10 +94,11 @@ end
 Methods for creating the constraints on the inlet flow to a [`HydroStor`](@ref) or
 [`PumpedHydroStor`](@ref).
 
-When `n::HydroStor`, the variable `:flow_in` is fixed to 0 for all potential inputs.
+When `n::HydroStor`, the variable `:flow_in` is fixed to 0 for all potential inputs and the
+variable `:stor_charge_use` is fixed to 0.
 
-When `n::PumpedHydroStor`, the variable `:flow_in` is multiplied with the `inputs` value
-to calculate the variable `:stor_charge_use`.
+When `n::PumpedHydroStor`, the variable `:flow_in` is multiplied with the `inputs` value to
+calculate the variable `:stor_charge_use`.
 """
 function EMB.constraints_flow_in(m, n::HydroStor, 𝒯::TimeStructure, modeltype::EnergyModel)
     # Declaration of the required subsets
@@ -127,9 +127,10 @@ end
 
 Function for creating the constraint on the outlet flow from a [`ReserveBattery`](@ref).
 
-When `n::ReserveBattery`, the variable `:flow_out` is also declared for the different
-reserve resources as identified through the functions [`reserve_up`](@ref) and
-[`reserve_down`](@ref).
+The outlet flow of the stored resource is equal to `:stor_discharge_use`. The variable
+`:flow_out` of the different reserve resources, as identified through the functions
+[`reserve_up`](@ref) and [`reserve_down`](@ref), is in addition constrained to the reserve
+variables `:bat_res_up` and `:bat_res_down`.
 """
 function EMB.constraints_flow_out(m, n::ReserveBattery, 𝒯::TimeStructure, modeltype::EnergyModel)
     # Declaration of the required subsets
@@ -152,15 +153,19 @@ function EMB.constraints_flow_out(m, n::ReserveBattery, 𝒯::TimeStructure, mod
 end
 
 """
-    EMB.constraints_level_aux(m, n::HydroStorage, 𝒯, 𝒫, modeltype)
+    EMB.constraints_level_aux(m, n::HydroStorage, 𝒯, 𝒫, modeltype::EnergyModel)
 
 Method for creating the Δ constraint for the level of a [`HydroStorage`](@ref) node.
 
-The change in storage level in the reservoir at operational periods `t` is the inflow through
-`:level_inflow` plus the input `:stor_charge_use` minus the production `:stor_discharge_use`
-and the spillage of water due to overflow `:hydro_spill`.
+The change in storage level in the reservoir at operational periods `t` is the inflow
+through the field `level_inflow` plus the input `:stor_charge_use` minus the production
+`:stor_discharge_use` and the spillage of water due to overflow `:hydro_spill`.
 
-It furthermore uses the specification of the initial level in a strategic period.
+It furthermore uses the specification of the initial level in a strategic period and bounds
+the level from below through the field `level_min`.
+
+!!! note "EnergyModelsRecedingHorizon"
+    With a `RecHorEnergyModel`, the initial level is not constrained through the field `level_init`.
 """
 function EMB.constraints_level_aux(m, n::HydroStorage, 𝒯, 𝒫, modeltype::EnergyModel)
 
@@ -205,8 +210,9 @@ function EMB.constraints_level_aux(m, n::AbstractBattery, 𝒯, 𝒫, modeltype:
             m[:stor_discharge_use][n, t] / outputs(n, p_stor)
     )
 end
+
 """
-    constraints_usage(m, n::AbstractBattery, 𝒯ᴵⁿᵛ, modeltype::EnergyModel)
+    constraints_usage(m, n::AbstractBattery, 𝒯, modeltype::EnergyModel)
 
 Function for creating the usage constraints of a generic [`AbstractBattery`](@ref).
 
@@ -255,19 +261,13 @@ function constraints_usage(m, n::AbstractBattery, 𝒯, modeltype::EnergyModel)
     end
 end
 """
-    constraints_usage_sp(
-        m,
-        n::AbstractBattery,
-        prev_pers::PreviousPeriods,
-        t_inv::TS.AbstractStrategicPeriod,
-        modeltype::EnergyModel,
-    )
+    constraints_usage_sp(m, n::AbstractBattery, prev_pers::PreviousPeriods, t_inv::TS.AbstractStrategicPeriod, modeltype::EnergyModel)
 
-Function for creating the constraints on the previous usage of a generic [`AbstractBattery`](@ref)
-before the beginning of a strategic period.
+Function for creating the constraints on the previous usage of a generic
+[`AbstractBattery`](@ref) before the beginning of a strategic period.
 
-In the case of the first strategic period, it fixes the variable `bat_prev_use_sp` to 0.
-In all subsequent strategic periods, the previous usage is calculated.
+In the case of the first strategic period, it fixes the variable `bat_prev_use_sp` to 0. In
+all subsequent strategic periods, the previous usage is calculated.
 """
 function constraints_usage_sp(
     m,
@@ -307,9 +307,8 @@ end
 Iterate through the individual time structures of a generic [`AbstractBattery`](@ref).
 
 In the case of `RepresentativePeriods`, additional constraints are calculated for the usage
-of the battery in representative periods through introducing the variable
-`bat_use_rp[𝒩, 𝒯ʳᵖ]`.
- """
+of the battery in representative periods through introducing the variable `bat_use_rp[𝒩, 𝒯ʳᵖ]`.
+"""
 function constraints_usage_iterate(
     m,
     n::AbstractBattery,
@@ -342,8 +341,7 @@ function constraints_usage_iterate(
     end
 end
 """
-In the case of `OperationalScenarios`, we purely iterate through the individual time
-structures.
+In the case of `OperationalScenarios`, we purely iterate through the individual time structures.
 """
 function constraints_usage_iterate(
     m,
@@ -367,9 +365,9 @@ end
 
 """
 In the case of `SimpleTimes`, the iterator function is at its lowest level. In this
-situation,the previous usage is calculated using the function [`previous_usage`](@ref).
-The approach for calculating the constraints is depending on the types in the parameteric
-type [`EMB.PreviousPeriods`](@extref EnergyModelsBase.PreviousPeriods).
+situation, the previous usage is calculated using the function [`previous_usage`](@ref). The
+approach for calculating the constraints is depending on the types in the parametric type
+[`EMB.PreviousPeriods`](@extref EnergyModelsBase.PreviousPeriods).
 """
 function constraints_usage_iterate(
     m,
@@ -403,13 +401,13 @@ end
 
 Method for creating the constraint on the fixed OPEX of a generic [`AbstractBattery`](@ref).
 
-The functions nodes includes fixed OPEX for `charge`, `level`, and `discharge` if the node
-has the corresponding storage parameter. The individual contributions are in all situations
+The function includes fixed OPEX for `charge`, `level`, and `discharge` if the node has the
+corresponding storage parameter. The individual contributions are in all situations
 calculated based on the installed capacities.
 
 In addition, battery stack replacement is included if the `battery_life` has a limited cycle
-lifetime. The division by duration_strat(t_inv) for the battery stack replacement is required
-due to the multiplication with the duration in the objective function calculation.
+lifetime. The division by `duration_strat(t_inv)` for the battery stack replacement is
+required due to the multiplication with the duration in the objective function calculation.
 """
 function EMB.constraints_opex_fixed(m, n::AbstractBattery, 𝒯ᴵⁿᵛ, modeltype::EnergyModel)
 
@@ -460,8 +458,8 @@ end
 
 Method for creating the Δ constraint for the level of a [`HydroReservoir`](@ref).
 
-The change in storage level in the reservoir at operational periods `t` is the flow into
-the reservoir through the variable `stor_charge_use` and inflow (through the function
+The change in storage level in the reservoir at operational periods `t` is the flow into the
+reservoir through the variable `stor_charge_use` and inflow (through the function
 `vol_inflow`) minus the flow out of the reservoir through the variable `stor_discharge_use`.
 """
 function EMB.constraints_level_aux(m, n::HydroReservoir, 𝒯, 𝒫, modeltype::EnergyModel)
@@ -474,9 +472,8 @@ function EMB.constraints_level_aux(m, n::HydroReservoir, 𝒯, 𝒫, modeltype::
 end
 
 """
-    EMB.constraints_opex_var(m, n::HydroReservoir{T}, 𝒯ᴵⁿᵛ, modeltype::EnergyModel)
-    EMB.constraints_opex_var(m, n::HydroGate, 𝒯ᴵⁿᵛ, modeltype::EnergyModel)
-    EMB.constraints_opex_var(m, n::HydroUnit, 𝒯ᴵⁿᵛ, modeltype::EnergyModel)
+    EMB.constraints_opex_var(m, n::Union{HydroGate, HydroUnit}, 𝒯ᴵⁿᵛ, modeltype::EnergyModel)
+    EMB.constraints_opex_var(m, n::HydroReservoir, 𝒯ᴵⁿᵛ, modeltype::EnergyModel)
 
 Method for creating the constraint on the variable OPEX of the nodes used in the detailed
 hydro power modelling.
@@ -559,8 +556,8 @@ end
 
 Methods for creating the constraints on the maximum capacity of a [`HydroUnit`](@ref) node.
 
-It differs from the base functions through incorporating the PQ Curve through the function
-[`max_normalized_power`](@ref)
+It differs from the base functions through incorporating the PQ curve through the function
+[`max_normalized_power`](@ref).
 
 Furthermore, the function [`build_pq_constaints`](@ref) is called for creating additional
 constraints on the capacity utilization.
@@ -578,10 +575,10 @@ function EMB.constraints_capacity(m, n::HydroUnit, 𝒯::TimeStructure, modeltyp
 end
 
 """
-    build_pq_constaints(m, n::HydroUnit, c::PqPoints, 𝒯::TimeStructure)
+    build_pq_constaints(m, n::HydroUnit, pq::PqPoints, 𝒯::TimeStructure)
 
 Function for creating the constraints on the variables `flow_out`, `cap_use`, and
-`discharge_segments` as declared in the PqPoints `pq` of a [`HydroUnit`](@ref) node.
+`discharge_segment` as declared in the PqPoints `pq` of a [`HydroUnit`](@ref) node.
 """
 function build_pq_constaints(m, n::HydroUnit, pq::PqPoints, 𝒯::TimeStructure)
 
@@ -638,12 +635,12 @@ end
     EMB.constraints_flow_out(m, n::HydroGenerator, 𝒯::TimeStructure, modeltype::EnergyModel)
     EMB.constraints_flow_out(m, n::HydroPump, 𝒯::TimeStructure, modeltype::EnergyModel)
 
-Method for creating the constraint on the oulet flow of of a [`HydroGenerator`](@ref) and
+Method for creating the constraint on the outlet flow of a [`HydroGenerator`](@ref) and
 [`HydroPump`](@ref).
 
 !!! tip "`HydroGenerator`"
     - The electricity flow from the unit is equal to the capacity utilization.
-    - The water inlet flow is included in the function [`EMB.constraints_flow_out`](@ref).
+    - The water inlet flow is included in the function [`EMB.constraints_flow_in`](@ref).
 !!! note "`HydroPump`"
     - The constraints enforce that the water outlet flow is equal to the inlet flow at each
       operational period `t`, and hence, preserve conservation of mass.

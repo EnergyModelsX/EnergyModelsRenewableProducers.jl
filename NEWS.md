@@ -1,5 +1,13 @@
 # Release notes
 
+## Unversioned
+
+### Documentation
+
+* Fixed docstrings:
+  * Stale information was updated.
+  * Grammar and typos were fixed.
+
 ## Version 0.7.2 (2026-11-05)
 
 ### Enhancement

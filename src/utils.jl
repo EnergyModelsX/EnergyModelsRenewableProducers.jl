@@ -1,14 +1,9 @@
 """
-    capacity_reduction(
-        m,
-        n::AbstractBattery,
-        bat_life::AbstractBatteryLife,
-        𝒯::TimeStructure,
-        modeltype::EnergyModel,
-    )
+    capacity_reduction(m, n::AbstractBattery, 𝒯::TimeStructure, modeltype::EnergyModel)
+    capacity_reduction(m, n::AbstractBattery, bat_life::AbstractBatteryLife, 𝒯::TimeStructure, modeltype::EnergyModel)
 
-Returns the reduction in the storage capacity of an [`AbstractBattery`](@ref) depending once
-on the chosen [`AbstractBatteryLife`](@ref).
+Returns the reduction in the storage capacity of an [`AbstractBattery`](@ref) depending on
+the chosen [`AbstractBatteryLife`](@ref).
 
 !!! tip "Default approach"
     Returns a value of 0 indicating no reduction in storage capacity.
@@ -50,18 +45,18 @@ end
         modeltype::EnergyModel,
     )
 
-Function for dispatching no the different type of battery lifes for incorporation of the
-preivous usage constraints in the first operational period (of the first representative
+Function for dispatching on the different types of battery lives for incorporation of the
+previous usage constraints in the first operational period (of the first representative
 period) of a strategic period.
 
 !!! tip "Default approach"
-    Returns the value based on the the calculation of the previous usage in the previous
+    Returns the value based on the calculation of the previous usage in the previous
     strategic period and the initial value in the previous strategic period.
 
 !!! note "`CycleLife`"
-    In the case of a cycle life, it takes into account the potential for battery stack replacement
-    through a bilinear formulation. The bilinear formulation is simplifed due to the known
-    lower bounds.
+    In the case of a cycle life, it takes into account the potential for battery stack
+    replacement through a bilinear formulation. The bilinear formulation is simplified due
+    to the known lower bounds.
 """
 function replace_disjunct(
     m,
@@ -113,19 +108,14 @@ function replace_disjunct(
 end
 
 """
-    previous_usage(
-        m,
-        n::AbstractBattery,
-        t_inv::TS.AbstractStrategicPeriod,
-        prev_pers::PreviousPeriods,
-        modeltype::EnergyModel,
-    )
+    previous_usage(m, n::AbstractBattery, t_inv::TS.AbstractStrategicPeriod, prev_pers::PreviousPeriods, modeltype::EnergyModel)
 
 Returns the previous usage of an `AbstractBattery` node depending on the type of
 [`PreviousPeriods`](@extref EnergyModelsBase.PreviousPeriods).
 
 The basic functionality is used in the case when the previous operational period is a
-`TimePeriod`, in which case it just returns the previous operational period.
+`TimePeriod`, in which case it returns the variable `bat_prev_use` of the previous
+operational period.
 """
 function previous_usage(
     m,
@@ -139,7 +129,7 @@ function previous_usage(
 end
 """
 When the previous operational and representative periods are `Nothing`, the variable
-`bat_prev_use_sp` is used for the initial usage in a strategic period
+`bat_prev_use_sp` is used for the initial usage in a strategic period.
 """
 function previous_usage(
     m,
@@ -177,17 +167,10 @@ function previous_usage(
 end
 
 """
-    linear_reformulation(
-        m,
-        𝒯,
-        var_binary,
-        var_continuous,
-        lb::TimeProfile,
-        ub::TimeProfile,
-    )
+    linear_reformulation(m, 𝒯, var_binary, var_continuous, lb::TimeProfile, ub::TimeProfile)
 
-Linear reformulation of the element-wise multiplication of the binary variable `var_binary[𝒯]`
-and the continuous variable `var_continuous[𝒯] ∈ [ub, lb]`.
+Linear reformulation of the element-wise multiplication of the binary variable
+`var_binary[𝒯]` and the continuous variable `var_continuous[𝒯] ∈ [lb, ub]`.
 
 It returns the product `var_aux[𝒯]` with
 
@@ -224,14 +207,9 @@ function linear_reformulation(
 end
 
 """
-    multiplication_variables(
-        m,
-        n::AbstractBattery,
-        𝒯ᴵⁿᵛ,
-        modeltype::EnergyModel
-    )
+    multiplication_variables(m, n::AbstractBattery, 𝒯ᴵⁿᵛ, modeltype::EnergyModel)
 
-Function for calculating the muliplication of the capacity of an [`AbstractBattery`](@ref)
+Function for calculating the multiplication of the capacity of an [`AbstractBattery`](@ref)
 and the binary variable `:bat_stack_replace_b`.
 
     modeltype::EnergyModel
@@ -240,24 +218,24 @@ Multiplication of the installed capacity (expressed through `capacity(level(n), 
 the binary variable `bat_stack_replace_b` in a strategic period `t_inv`.
 
 ## Returns
-- **`prod[t]`**: Multiplication of `capacity(level(n), t_inv)` and
+- **`prod[t_inv]`**: Multiplication of `capacity(level(n), t_inv)` and
   `bat_stack_replace_b[n, t_inv]`.
 
 
     modeltype::AbstractInvestmentModel
 
-When the modeltype is an `AbstractInvestmentModel`, then the function applies a linear
-reformulation of the binary-continuous multiplication based on the McCormick relaxation and
-the function [`linear_reformulation`](@ref).
+When the modeltype is an `AbstractInvestmentModel`, then the function applies an exact
+linear reformulation of the binary-continuous multiplication based on McCormick envelopes
+and the function [`linear_reformulation`](@ref).
 
 !!! note
-    If the [`AbstractBattery`](@ref) node does not have investments, it reuses the
-    default function to avoid increasing the number of variables in the model.
+    If the [`AbstractBattery`](@ref) node does not have investments in its `level`, it uses
+    the same multiplication as the default method to avoid increasing the number of
+    variables in the model.
 
 ## Returns
-- **`prod[t]`**: Multiplication of `cap_inst[n, t]` and `var_b[t]` or alternatively
-  `cap_current[n, t]` and `var_b[t]`, if the TimeStructure is a `StrategicPeriods` and
-  the node `n` has investments.
+- **`prod[t_inv]`**: Multiplication of `stor_level_current[n, t_inv]` and
+  `bat_stack_replace_b[n, t_inv]`, if the node `n` has investments in its `level`.
 """
 function multiplication_variables(
     m,
@@ -279,18 +257,17 @@ Function for calculating the maximum capacity, including the number of cycles.
 
     modeltype::EnergyModel
 
-When the modeltype is an `EnergyModel`, it returns the muliplication of the installed
+When the modeltype is an `EnergyModel`, it returns the multiplication of the installed
 storage level capacity and the number of cycles before the stack must be replaced.
 
     modeltype::AbstractInvestmentModel
 
-When the modeltype is an `AbstractInvestmentModel`, it returns the muliplication of the
-maximum installed storage level capacity and the number of cycles before the stack must be
-replaced.
+When the modeltype is an `AbstractInvestmentModel`, it returns the multiplication of the
+maximum installed storage level capacity and the number of cycles before the stack must be replaced.
 
 !!! note
-    If the [`AbstractBattery`](@ref) node does not have investments, it reuses the
-    default function.
+    If the [`AbstractBattery`](@ref) node does not have investments in its `level`, it
+    returns the same value as the default method.
 """
 capacity_max(n::AbstractBattery, t_inv, modeltype::EnergyModel) =
     capacity(level(n), t_inv) * cycles(n)
@@ -351,7 +328,7 @@ get_var_schedule(m, n::HydroGenerator, 𝒯::TimeStructure, data::ScheduleConstr
     get_var_pen_up(m, n::HydroGate, t::TS.TimePeriod, data::ScheduleConstraint)
     get_var_pen_up(m, n::HydroUnit, t::TS.TimePeriod, data::ScheduleConstraint)
 
-Extracts the variable for which scheduling constraints are included indexed over the
+Extracts the *up* penalty variable of the scheduling constraints indexed over the
 `TimeStructure` or in operational period `t`. The variables are
 
 * `n::HydroReservoir` - `:rsv_penalty_up[n, :, storage_resource(n)]`,
@@ -379,7 +356,7 @@ get_var_pen_up(m, n::HydroUnit, t::TS.TimePeriod, data::ScheduleConstraint) =
     get_var_pen_down(m, n::HydroGate, t::TS.TimePeriod, data::ScheduleConstraint)
     get_var_pen_down(m, n::HydroUnit, t::TS.TimePeriod, data::ScheduleConstraint)
 
-Extracts the variable for which scheduling constraints are included indexed over the
+Extracts the *down* penalty variable of the scheduling constraints indexed over the
 `TimeStructure` or in operational period `t`. The variables are
 
 * `n::HydroReservoir` - `:rsv_penalty_down[n, :, storage_resource(n)]`,

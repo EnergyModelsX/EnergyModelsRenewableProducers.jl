@@ -1,21 +1,21 @@
 """
     EMB.check_node(n::NonDisRES, 𝒯, modeltype::EnergyModel, check_timeprofiles::Bool)
 
-This method checks that the *[`NonDisRES`](@ref)* node is valid.
+This method checks that the [`NonDisRES`](@ref) node is valid.
 
 It reuses the standard checks of a `Source` node through calling the function
 [`EMB.check_node_default`](@extref EnergyModelsBase.check_node_default), but adds an
 additional check on the data.
 
 ## Checks
- - The field `cap` is required to be non-negative (similar to the `Source` check).
- - The value of the field `fixed_opex` is required to be non-negative and
-   accessible through a `StrategicPeriod` as outlined in the function
-   `check_fixed_opex(n, 𝒯ᴵⁿᵛ, check_timeprofiles)`.
- - The values of the dictionary `output` are required to be non-negative
-   (similar to the `Source` check).
- - The field `profile` is required to be in the range ``[0, 1]`` for all time steps
-   ``t ∈ \\mathcal{T}``.
+- The field `cap` is required to be non-negative (similar to the `Source` check).
+- The value of the field `opex_fixed` is required to be non-negative and accessible through
+  a `StrategicPeriod` as outlined in the function
+  [`EMB.check_fixed_opex`](@extref EnergyModelsBase.check_fixed_opex).
+- The values of the dictionary `output` are required to be non-negative (similar to the
+  `Source` check).
+- The field `profile` is required to be in the range ``[0, 1]`` for all time steps
+  ``t ∈ \\mathcal{T}``.
 """
 function EMB.check_node(n::NonDisRES, 𝒯, modeltype::EnergyModel, check_timeprofiles::Bool)
     EMB.check_node_default(n, 𝒯, modeltype, check_timeprofiles)
@@ -32,29 +32,32 @@ end
 """
     EMB.check_node(n::HydroStorage, 𝒯, modeltype::EnergyModel, check_timeprofiles::Bool)
 
-This method checks that the *[`HydroStorage`](@ref)* node is valid.
+This method checks that the [`HydroStorage`](@ref) node is valid.
 
 It reuses the standard checks of a `Storage` node through calling the function
 [`EMB.check_node_default`](@extref EnergyModelsBase.check_node_default), but adds an
 additional check on the data.
 
 ## Checks
-- The `TimeProfile` of the field `capacity` in the type in the field `charge` is required
-  to be non-negative if the chosen composite type has the field `capacity`.
-- The `TimeProfile` of the field `capacity` in the type in the field `level` is required
-  to be non-negative`.
+- The `TimeProfile` of the field `capacity` in the type in the field `charge` is required to
+  be non-negative if the chosen composite type has the field `capacity`.
+- The `TimeProfile` of the field `capacity` in the type in the field `level` is required to
+  be non-negative.
 - The `TimeProfile` of the field `capacity` in the type in the field `discharge` is required
   to be non-negative if the chosen composite type has the field `capacity`.
-- The `TimeProfile` of the field `fixed_opex` is required to be non-negative and
-  accessible through a `StrategicPeriod` as outlined in the function
-  `check_fixed_opex(n, 𝒯ᴵⁿᵛ, check_timeprofiles)` for the chosen composite type .
- - The field `output` can only include a single `Resource`.
- - The value of the field `output` is required to be in the range ``[0, 1]``.
- - The value of the field `input` is required to be in the range ``[0, 1]``.
- - The value of the field `level_init` is required to be in the range
-   ``[level\\_min, 1] \\cdot stor\\_cap(t)`` for all time steps ``t ∈ \\mathcal{T}``.
- - The value of the field `level_init` is required to be in the range ``[0, 1]``.
- - The value of the field `level_min` is required to be in the range ``[0, 1]``.
+- The `TimeProfile` of the field `opex_fixed` is required to be non-negative and accessible
+  through a `StrategicPeriod` as outlined in the function
+  [`EMB.check_fixed_opex`](@extref EnergyModelsBase.check_fixed_opex) for the chosen
+  composite type.
+- The field `output` can only include a single `Resource`.
+- The value of the field `output` is required to be less than or equal to 1.
+- The value of the field `input` is required to be less than or equal to 1.
+- The value of the field `level_init` is required to be non-negative and less than or equal
+  to the storage capacity for all time steps ``t ∈ \\mathcal{T}``.
+- The sum of the fields `level_init` and `level_inflow` in the first operational period of
+  each strategic period is required to be at least the minimum level
+  ``level\\_min \\cdot stor\\_cap(t)``.
+- The value of the field `level_min` is required to be in the range ``[0, 1]``.
 """
 function EMB.check_node(n::HydroStorage, 𝒯, modeltype::EnergyModel, check_timeprofiles::Bool)
 
@@ -106,14 +109,13 @@ end
 This method checks that the [`HydroReservoir`](@ref) node is valid.
 
 ## Checks
-- The `TimeProfile` of the `capacity` of the `HydroReservoir` `level` is required
-  to be non-negative.
-- The `TimeProfile` of the field `fixed_opex` is required to be non-negative and
-  accessible through a `StrategicPeriod` as outlined in the function
-  function [`EMB.check_fixed_opex()`](@extref EnergyModelsBase.check_fixed_opex) for the
-  field `level`, if included.
-- The `TimeProfile` of the `vol_inflow` of the `HydroReservoir` is required to be
+- The `TimeProfile` of the `capacity` of the `HydroReservoir` field `vol` is required to be
   non-negative.
+- The `TimeProfile` of the field `opex_fixed` is required to be non-negative and accessible
+  through a `StrategicPeriod` as outlined in the function
+  [`EMB.check_fixed_opex`](@extref EnergyModelsBase.check_fixed_opex) for the field `vol`,
+  if included.
+- The `TimeProfile` of the `vol_inflow` of the `HydroReservoir` is required to be non-negative.
 """
 function EMB.check_node(n::HydroReservoir, 𝒯, modeltype::EnergyModel, check_timeprofiles::Bool)
     𝒯ᴵⁿᵛ = strategic_periods(𝒯)
@@ -137,11 +139,13 @@ end
 """
     EMB.check_node(n::HydroGate, 𝒯, modeltype::EnergyModel, check_timeprofiles::Bool)
 
-This method checks that the *[`HydroGate`](@ref)* node is valid.
+This method checks that the [`HydroGate`](@ref) node is valid.
+
 ## Checks
- - The field `cap` is required to be non-negative.
- - The value of the field `fixed_opex` is required to be non-negative and accessible through
-  a `StrategicPeriod` as outlined in the function [`EMB.check_fixed_opex()`](@extref EnergyModelsBase.check_fixed_opex).
+- The field `cap` is required to be non-negative.
+- The value of the field `opex_fixed` is required to be non-negative and accessible through
+  a `StrategicPeriod` as outlined in the function
+  [`EMB.check_fixed_opex`](@extref EnergyModelsBase.check_fixed_opex).
 """
 function EMB.check_node(n::HydroGate, 𝒯, modeltype::EnergyModel, check_timeprofiles::Bool)
     𝒯ᴵⁿᵛ = strategic_periods(𝒯)
@@ -161,11 +165,12 @@ This method checks that the [`HydroGenerator`](@ref) and [`HydroPump`](@ref) nod
 - The field `cap` is required to be non-negative.
 - The [`PqPoints`](@ref) vectors are required to have the same length.
 - The [`PqPoints`](@ref) vectors should start at 0.
-- The [`PqPoints`](@ref) vectors are required to be increasing.
-- One of the [`PqPoints`](@ref) vectors should have values between 0 and 1.
+- The [`PqPoints`](@ref) vectors are required to be strictly increasing.
+- One of the [`PqPoints`](@ref) vectors should range from 0 to 1.
 - The [`PqPoints`](@ref) curve should be concave for generators and convex for pumps.
-- The value of the field `fixed_opex` is required to be non-negative and accessible through
-  a `StrategicPeriod` as outlined in the function [`EMB.check_fixed_opex()`](@extref EnergyModelsBase.check_fixed_opex).
+- The value of the field `opex_fixed` is required to be non-negative and accessible through
+  a `StrategicPeriod` as outlined in the function
+  [`EMB.check_fixed_opex`](@extref EnergyModelsBase.check_fixed_opex).
 """
 function EMB.check_node(n::HydroUnit, 𝒯, modeltype::EnergyModel, check_timeprofiles::Bool)
 
@@ -229,7 +234,8 @@ end
 Performs various checks on [`ScheduleConstraint`](@ref) data for all nodes.
 
 ## Checks
-- The the field `resource` is required to be a valid resource of the node.
+- The field `resource` is required to be either the water or the electricity resource if the
+  node is a [`HydroUnit`](@ref).
 - The value of constraints are required to be in the range ``[0, 1]`` for all time steps
   ``t ∈ \\mathcal{T}``.
 - The penalty of constraints are required to be non-negative for all time steps
@@ -262,25 +268,25 @@ end
 """
     EMB.check_node(n::AbstractBattery, 𝒯, modeltype::EnergyModel, check_timeprofiles::Bool)
 
-This method checks that the *[`AbstractBattery`](@ref)* node is valid.
+This method checks that the [`AbstractBattery`](@ref) node is valid.
 
 It reuses the standard checks of a `Storage` node through calling the function
 [`EMB.check_node_default`](@extref EnergyModelsBase.check_node_default), but adds an
 additional check on the data.
 
 ## Checks
-- The `TimeProfile` of the field `capacity` in the type in the field `charge` is required
-  to be non-negative.
-- The `TimeProfile` of the field `capacity` in the type in the field `level` is required
-  to be non-negative`.
+- The `TimeProfile` of the field `capacity` in the type in the field `charge` is required to
+  be non-negative.
+- The `TimeProfile` of the field `capacity` in the type in the field `level` is required to
+  be non-negative.
 - The `TimeProfile` of the field `capacity` in the type in the field `discharge` is required
   to be non-negative.
-- The `TimeProfile` of the field `fixed_opex` is required to be non-negative and
-  accessible through a `StrategicPeriod` as outlined in the function
-  `check_fixed_opex(n, 𝒯ᴵⁿᵛ, check_timeprofiles)` for the chosen composite type .
-- The field `output` can only include a single `Resource`.
-- The value of the field `input` is required to be in the range ``[0, 1]``.
-- The value of the field `output` is required to be in the range ``[0, 1]``
+- The `TimeProfile` of the field `opex_fixed` is required to be non-negative and accessible
+  through a `StrategicPeriod` as outlined in the function
+  [`EMB.check_fixed_opex`](@extref EnergyModelsBase.check_fixed_opex) for the chosen
+  composite type.
+- The value of the field `input` is required to be less than or equal to 1.
+- The value of the field `output` is required to be less than or equal to 1.
 - The [`AbstractBatteryLife`](@ref) must follow the provided values as outlined in the
   function [`check_battery_life`](@ref).
 """
@@ -300,26 +306,28 @@ end
 """
     EMB.check_node(n::ReserveBattery, 𝒯, modeltype::EnergyModel, check_timeprofiles::Bool)
 
-This method checks that the *[`ReserveBattery`](@ref)* node is valid.
+This method checks that the [`ReserveBattery`](@ref) node is valid.
 
 It reuses the standard checks of a `Storage` node through calling the function
 [`EMB.check_node_default`](@extref EnergyModelsBase.check_node_default), but adds an
 additional check on the data.
 
 ## Checks
-- The `TimeProfile` of the field `capacity` in the type in the field `charge` is required
-  to be non-negative.
-- The `TimeProfile` of the field `capacity` in the type in the field `level` is required
-  to be non-negative`.
+- The `TimeProfile` of the field `capacity` in the type in the field `charge` is required to
+  be non-negative.
+- The `TimeProfile` of the field `capacity` in the type in the field `level` is required to
+  be non-negative.
 - The `TimeProfile` of the field `capacity` in the type in the field `discharge` is required
   to be non-negative.
-- The `TimeProfile` of the field `fixed_opex` is required to be non-negative and
-  accessible through a `StrategicPeriod` as outlined in the function
-  `check_fixed_opex(n, 𝒯ᴵⁿᵛ, check_timeprofiles)` for the chosen composite type .
-- The field `output` can only include a single `Resource`.
-- The value of the field `input` is required to be in the range ``[0, 1]``.
-- The value of the field `output` is required to be in the range ``[0, 1]``
-- The resources in the array `reserve_up` cannot be part of the resources in the dictionaries
+- The `TimeProfile` of the field `opex_fixed` is required to be non-negative and accessible
+  through a `StrategicPeriod` as outlined in the function
+  [`EMB.check_fixed_opex`](@extref EnergyModelsBase.check_fixed_opex) for the chosen
+  composite type.
+- The value of the field `input` is required to be less than or equal to 1.
+- The value of the field `output` is required to be less than or equal to 1.
+- The [`AbstractBatteryLife`](@ref) must follow the provided values as outlined in the
+  function [`check_battery_life`](@ref).
+- The resources in the array `reserve_up` cannot be part of the resources in the
   dictionaries `input` and `output`.
 - The resources in the array `reserve_down` cannot be part of the resources in the
   dictionaries `input` and `output`.
@@ -358,18 +366,18 @@ function EMB.check_node(n::ReserveBattery, 𝒯, modeltype::EnergyModel, check_t
 end
 
 """
-check_battery_life(n::AbstractBattery, bat_life::AbstractBatteryLife, 𝒯, modeltype::EnergyModel, check_timeprofiles::Bool)
-check_battery_life(n::AbstractBattery, bat_life::CycleLife, 𝒯, modeltype::EnergyModel, check_timeprofiles::Bool)
+    check_battery_life(n::AbstractBattery, bat_life::AbstractBatteryLife, 𝒯, modeltype::EnergyModel, check_timeprofiles::Bool)
+    check_battery_life(n::AbstractBattery, bat_life::CycleLife, 𝒯, modeltype::EnergyModel, check_timeprofiles::Bool)
 
-Check that the included [`AbstractBatteryLife`](@ref) types of an [`AbstractBattery`](@ref)
-follows to the
+Check that the included [`AbstractBatteryLife`](@ref) type of an [`AbstractBattery`](@ref)
+follows the requirements of the type.
 
 ## Checks [`AbstractBatteryLife`](@ref)
 - None.
 
 ## Checks [`CycleLife`](@ref)
 - All fields must be positive.
-- The value of the field `degradation` must be smaller than 1.
+- The value of the field `degradation` must be less than or equal to 1.
 - The value of the field `stack_cost` is required to be accessible through a
   `StrategicPeriod` as outlined in the function
   [`EMB.check_fixed_opex`](@extref EnergyModelsBase.check_fixed_opex).
