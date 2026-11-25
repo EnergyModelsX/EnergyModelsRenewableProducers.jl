@@ -135,8 +135,7 @@ end
 """
     EMB.variables_node(m, 𝒩::Vector{<:HydroUnit}, 𝒯, modeltype::EnergyModel)
 
-Creates the following additional variables for **ALL** [`HydroUnit`](@ref) nodes that have
-additional constraints through [`ScheduleConstraint`](@ref):
+Creates the following additional variables for **ALL** [`HydroUnit`](@ref) nodes:
 - `gen_penalty_up[n, t, p]` is the *up* penalty variable of hydro unit `n` in operational
   period `t` for resource `p`.
 - `gen_penalty_down[n, t, p]` is the *down* penalty variable of hydro unit `n` in
@@ -145,7 +144,8 @@ additional constraints through [`ScheduleConstraint`](@ref):
   operational period `t` for discharge segment `q`. The capacity of the `discharge_segment`s
   sums up to the total discharge capacity.
 
-The first two variables enable `HydroUnit` nodes to penalize a violation of the
+The first two variables are only created for nodes with additional constraints through
+[`ScheduleConstraint`](@ref). They enable `HydroUnit` nodes to penalize a violation of the
 generation/pumping constraints instead of providing a strict bound. They hence transform the
 constraint to a soft constraint. Without these penalty variables, too strict
 generation/pumping constraints may cause an infeasible model.
@@ -154,19 +154,19 @@ function EMB.variables_node(m, 𝒩::Vector{<:HydroUnit}, 𝒯, modeltype::Energ
     # Declaration of the required subsets
     𝒞 = Dict(n => constraint_data(n) for n ∈ 𝒩)
     𝒩ˢᶜ = filter(n -> !isempty(𝒞[n]), 𝒩)
-    𝒫ᴴᵁ = [water_resource(n), electricity_resource(n)]
+    𝒫ˢᶜ = Dict(n => [water_resource(n), electricity_resource(n)] for n ∈ 𝒩ˢᶜ)
 
     # Add discharge/production constraint penalty variables
-    @variable(m, gen_penalty_up[n ∈ 𝒩ˢᶜ, t ∈ 𝒯, p ∈ 𝒫ᴴᵁ;
+    @variable(m, gen_penalty_up[n ∈ 𝒩ˢᶜ, t ∈ 𝒯, p ∈ 𝒫ˢᶜ[n];
         any(c -> has_penalty_up(c, t, p), 𝒞[n])
     ] ≥ 0)
 
-    @variable(m, gen_penalty_down[n ∈ 𝒩ˢᶜ, t ∈ 𝒯, p ∈ 𝒫ᴴᵁ;
+    @variable(m, gen_penalty_down[n ∈ 𝒩ˢᶜ, t ∈ 𝒯, p ∈ 𝒫ˢᶜ[n];
         any(c -> has_penalty_down(c, t, p), 𝒞[n])
     ] ≥ 0)
 
     # Create the variable for the discharge segment
-    @variable(m, discharge_segment[n ∈ 𝒩, 𝒯, discharge_segments(pq_curve(n))] ≥ 0)
+    @variable(m, discharge_segment[n ∈ 𝒩, 𝒯, discharge_segments(n)] ≥ 0)
 end
 
 """
