@@ -41,7 +41,8 @@ The standard fields are given as:
   In addition, all values have to be non-negative.
 - **`output::Dict{<:Resource, <:Real}`**:\
   The field `output` includes [`Resource`](@extref EnergyModelsBase.Resource)s with their corresponding conversion factors as dictionaries.
-  In the case of a non-dispatchable renewable energy source, `output` should always include your *electricity* resource. In practice, you should use a value of 1.\
+  In the case of a non-dispatchable renewable energy source, `output` should always include your *electricity* resource.
+  In practice, you should use a value of 1.\
   All values have to be non-negative.
 - **`data::Vector{ExtensionData}`**:\
   An entry for providing additional data to the model.

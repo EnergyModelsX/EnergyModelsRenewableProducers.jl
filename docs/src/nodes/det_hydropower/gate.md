@@ -10,7 +10,8 @@ Costs for operating gates can be added to penalize unwanted spillage using the f
 
 ### [Standard fields](@id nodes-det_hydro_power-gate-fields-stand)
 
-The [`HydroGate`](@ref) nodes build on the [NetworkNode](@extref EnergyModelsBase.NetworkNode) node type. Standard fields are given as:
+The [`HydroGate`](@ref) nodes build on the [NetworkNode](@extref EnergyModelsBase.NetworkNode) node type.
+Standard fields are given as:
 
 - **`id`**:\
   The field `id` is only used for providing a name to the node.

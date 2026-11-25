@@ -77,7 +77,8 @@ These variables are hence created for [`HydroPump`](@ref) nodes.
 
 - ``\texttt{discharge\_segment}[n, t, q]``: One discharge variable is defined for each segment `q` of the PQ-curve defined by the field `pq_curve` of node ``n`` in operational period ``t`` with unit volume per time unit.\
   If [`PqPoints`](@ref) are provided, the number of discharge segments will be ``Q``, where ``Q+1`` is the length of the vectors in the fields of [`PqPoints`](@ref).
-  There is only one discharge segment if an energy equivalent is used. The ``\texttt{discharge\_segment}`` variables define the utilisation of each discharge segment and sum up to the total discharge.
+  There is only one discharge segment if an energy equivalent is used.
+  The ``\texttt{discharge\_segment}`` variables define the utilisation of each discharge segment and sum up to the total discharge.
 
   !!! warning "discharge_segment"
       Sequential allocation is not enforced by binary variables, but will occur sequentially if the problem is set up correctly.

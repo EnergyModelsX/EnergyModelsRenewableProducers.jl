@@ -26,7 +26,8 @@ For detailed hydropower modeling, see *[Detailed hydropower](@ref nodes-det_hydr
 The standard fields are given as:
 
 - **`id`**:\
-  The field `id` is only used for providing a name to the node. This is similar to the approach utilized in `EnergyModelsBase`.
+  The field `id` is only used for providing a name to the node.
+  This is similar to the approach utilized in `EnergyModelsBase`.
 - **`charge::EMB.UnionCapacity`**:\
   The charge storage parameters must include a capacity.
   More information can be found on *[storage parameters](@extref EnergyModelsBase lib-pub-nodes-stor_par)*.

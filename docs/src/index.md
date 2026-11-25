@@ -25,7 +25,9 @@ These all use intermittent energy sources in the production of energy, so the ma
 
 ### Simple hydropower
 
-The [`PumpedHydroStor`](@ref) and [`HydroStor`](@ref) nodes implement a regulated hydropower storage plant, either with or without pumps for filling the reservoir with excess energy. These nodes can be used to model a single hydropower plant and reservoir, or to model an aggregated description of a hydropower system. The nodes do not include conversion from water to energy, and thereby require an energy-based description of the hydropower system.
+The [`PumpedHydroStor`](@ref) and [`HydroStor`](@ref) nodes implement a regulated hydropower storage plant, either with or without pumps for filling the reservoir with excess energy.
+These nodes can be used to model a single hydropower plant and reservoir, or to model an aggregated description of a hydropower system.
+The nodes do not include conversion from water to energy, and thereby require an energy-based description of the hydropower system.
 The hydropower storage plants can also be extended as they are declared as subtypes of [`HydroStorage`](@ref).
 
 ### Detailed hydropower

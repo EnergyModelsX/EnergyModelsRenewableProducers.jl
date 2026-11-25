@@ -5,14 +5,17 @@
 The [`HydroReservoir`](@ref) node represents a water storage in a hydropower system.
 In its simplest form, the [`HydroGenerator`](@ref) and [`HydroPump`](@ref) can convert potential energy between [`HydroReservoir`](@ref) nodes at different head levels to electricity, under the assumption that the reservoirs have constant head levels.
 In these cases, the [`HydroReservoir`](@ref) node does not require a description of the relation between volume level and head level.
-For more detailed modelling, this relation is required to account for the increased power output when the head level difference between reservoirs increases. Head-dependencies are currently not implemented.
+For more detailed modelling, this relation is required to account for the increased power output when the head level difference between reservoirs increases.
+Head-dependencies are currently not implemented.
 
 !!! warning "Spillage"
-    The [`HydroReservoir`](@ref) nodes do not include a spillage variable. To avoid infeasible solutions, all reservoir nodes should be connected to a [`HydroGate`](@ref) node representing a water way for spillage in case of full reservoirs.
+    The [`HydroReservoir`](@ref) nodes do not include a spillage variable.
+    To avoid infeasible solutions, all reservoir nodes should be connected to a [`HydroGate`](@ref) node representing a water way for spillage in case of full reservoirs.
 
 ### [Standard fields](@id nodes-det_hydro_power-reservoir-fields-stand)
 
-The [`HydroReservoir`](@ref) node builds on the [`RefStorage`](@extref EnergyModelsBase.RefStorage) node type. The standard fields are given as:
+The [`HydroReservoir`](@ref) node builds on the [`RefStorage`](@extref EnergyModelsBase.RefStorage) node type.
+The standard fields are given as:
 
 - **`id`**:\
   The field `id` is only used for providing a name to the node.

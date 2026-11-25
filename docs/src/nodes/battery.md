@@ -54,7 +54,8 @@ In practice, battery storages should utilize [`CyclicRepresentative`](@extref En
 The standard fields are given as:
 
 - **`id`**:\
-  The field `id` is only used for providing a name to the node. This is similar to the approach utilized in `EnergyModelsBase`.
+  The field `id` is only used for providing a name to the node.
+  This is similar to the approach utilized in `EnergyModelsBase`.
 - **`charge::EMB.UnionCapacity`**:\
   The charge storage parameters must include a capacity.
   The charge capacity is the capacity **before** taking into account the charging efficiency from the viewpoint of the storage level.

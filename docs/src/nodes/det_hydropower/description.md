@@ -2,12 +2,17 @@
 
 Cascaded hydropower systems can be modelled using the [`HydroReservoir`](@ref), [`HydroGate`](@ref), [`HydroGenerator`](@ref), and [`HydroPump`](@ref) nodes.
 The nodes can be used in combination to model a detailed hydropower system.
-Unlike [`HydroStorage`](@ref), these nodes allow for modelling of water as a resource that can be stored in reservoirs and moved between reservoirs to generate/consume electricity. The defined node types are:
+Unlike [`HydroStorage`](@ref), these nodes allow for modelling of water as a resource that can be stored in reservoirs and moved between reservoirs to generate/consume electricity.
+The defined node types are:
 
-- [`HydroReservoir`](@ref) can have water as the stored resource. It is explained in more detail on its *[nodal page](@ref nodes-det_hydro_power-reservoir)*.
-- [`HydroGenerator`](@ref) can generate electricity by moving water to a reservoir at a lower altitude or the ocean. It is explained in more detail on its *[nodal page](@ref nodes-det_hydro_power-generator)*.
-- [`HydroPump`](@ref) can move water to a reservoir at a higher altitude by consuming electricity. It is explained in more detail on its *[nodal page](@ref nodes-det_hydro_power-pump)*.
-- [`HydroGate`](@ref) can discharge to lower reservoirs without producing electricity, for example due to spillage or environmental restrictions in the water course. It is explained in more detail on its *[nodal page](@ref nodes-det_hydro_power-gate)*.
+- [`HydroReservoir`](@ref) can have water as the stored resource.
+  It is explained in more detail on its *[nodal page](@ref nodes-det_hydro_power-reservoir)*.
+- [`HydroGenerator`](@ref) can generate electricity by moving water to a reservoir at a lower altitude or the ocean.
+  It is explained in more detail on its *[nodal page](@ref nodes-det_hydro_power-generator)*.
+- [`HydroPump`](@ref) can move water to a reservoir at a higher altitude by consuming electricity.
+  It is explained in more detail on its *[nodal page](@ref nodes-det_hydro_power-pump)*.
+- [`HydroGate`](@ref) can discharge to lower reservoirs without producing electricity, for example due to spillage or environmental restrictions in the water course.
+  It is explained in more detail on its *[nodal page](@ref nodes-det_hydro_power-gate)*.
 
 !!! warning
     The defined node types have to be used in combination to set up a hydropower system.
@@ -21,12 +26,15 @@ By connecting nodes of different types, unique systems with optional number of r
 The [`HydroReservoir`](@ref) node is a storage node used for storing water, while [`HydroGenerator`](@ref), [`HydroPump`](@ref) and [`HydroGate`](@ref) nodes move water around in the system.
 In addition, [`HydroGenerator`](@ref) and [`HydroPump`](@ref) nodes convert potential energy to electric energy and *vice versa*.
 
-The detailed modelling of hydropower requires two resources to be defined: a water resource and an electricity resource.  [`HydroReservoir`](@ref) and [`HydroGate`](@ref) nodes only use the water resource, while [`HydroGenerator`](@ref) and [`HydroPump`](@ref) nodes use both resources.
+The detailed modelling of hydropower requires two resources to be defined: a water resource and an electricity resource.
+[`HydroReservoir`](@ref) and [`HydroGate`](@ref) nodes only use the water resource, while [`HydroGenerator`](@ref) and [`HydroPump`](@ref) nodes use both resources.
 
-The nodes should be connected by [`links`](@extref lib-pub-links) to represent the water ways in the system. Links are also used to define flow of electricity in and out of the system through [`HydroPump`](@ref) and [`HydroGenerator`](@ref) nodes, respectively.
+The nodes should be connected by [`links`](@extref lib-pub-links) to represent the water ways in the system.
+Links are also used to define flow of electricity in and out of the system through [`HydroPump`](@ref) and [`HydroGenerator`](@ref) nodes, respectively.
 
 !!! danger "Direct linking required"
-    The nodes included in the water way should be connected directly and not through an [`Availability`](@extref EnergyModelsBase.Availability) node. An availability node can be used to connect electricity resources, but the water resource must be excluded from the availability node to prevent that the availability node is used to move water to reservoirs with higher altitude without consuming electricity.
+    The nodes included in the water way should be connected directly and not through an [`Availability`](@extref EnergyModelsBase.Availability) node.
+    An availability node can be used to connect electricity resources, but the water resource must be excluded from the availability node to prevent that the availability node is used to move water to reservoirs with higher altitude without consuming electricity.
 
 !!! danger "Reservoir input and output required"
     All nodes must have both input and output.
@@ -70,7 +78,8 @@ The constraints are optional through the use of the **`data::Vector{ExtensionDat
 
 !!! note "ScheduleConstraint scaling"
     ScheduleConstraint inputs are given as values relative to a node capacity.
-    For example, a constraint value 0.5 represents 50% of the node capacity. This makes the use of constraints in investment models possible where the capacity is not known ahead.
+    For example, a constraint value 0.5 represents 50% of the node capacity.
+    This makes the use of constraints in investment models possible where the capacity is not known ahead.
 
 - Minimum constraints ([MinSchedule](@ref EnergyModelsRenewableProducers.MinSchedule)): hard constraints (absolute) or soft constraints (with a penalty for violation) that restrict the minimum of a variable to a given value (*e.g.*, discharge, power, reservoir level)
 - Maximum constraints ([MaxSchedule](@ref EnergyModelsRenewableProducers.MaxSchedule)): hard constraints (absolute) or soft constraints (with a penalty for violation) that restrict the maximum of a variable to a given value (*e.g.*, discharge, power, reservoir level)
