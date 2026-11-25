@@ -4,11 +4,15 @@ power = ResourceCarrier("Power", 0.0)
 water = ResourceCarrier("Water", 0.0)
 
 """
-    test_case_gate_res(;data_res=ExtensionData[], data_gate=ExtensionData[])
+    test_case_gate_res(;res_data=ExtensionData[], gate_data=ExtensionData[], surplus=FixedProfile(0))
 
 Simple test case for testing the hydro gate and hydro reservoirs.
 """
-function test_case_gate_res(;res_data=ExtensionData[], gate_data=ExtensionData[])
+function test_case_gate_res(;
+    res_data=ExtensionData[],
+    gate_data=ExtensionData[],
+    surplus=FixedProfile(0),
+)
     # Declare the used resources
     𝒫 = [co2, power, water]
 
@@ -56,7 +60,7 @@ function test_case_gate_res(;res_data=ExtensionData[], gate_data=ExtensionData[]
         "ocean",   # Node id
         FixedProfile(15),    # Firm demand that can't be fulfilled
         Dict(
-            :surplus => FixedProfile(0),
+            :surplus => surplus,
             :deficit => OperationalProfile([0, 20, 0, 0]) # Cost for violating demand at step 2
         ),
         Dict(water => 1),   # Resource and corresponding ratio
@@ -414,7 +418,10 @@ end
         ]
 
         # Create and solve the model
-        case, modeltype = test_case_gate_res(;gate_data)
+        # - The surplus costs result in a unique optimum: the release of the remaining water
+        #   is otherwise arbitrary between the first and the last operational period
+        surplus = OperationalProfile([2, 0, 0, 1])
+        case, modeltype = test_case_gate_res(;gate_data, surplus)
         m = EMB.run_model(case, modeltype, OPTIMIZER)
 
         # Extract the data
@@ -436,7 +443,8 @@ end
         @test !isempty(m[:gate_penalty_down])
 
         # Test that the outflow is high when there are no penalties
-        prof = OperationalProfile([5, 10, 10, 22.5])
+        # - The surplus of water is released in the period with the lower surplus cost
+        prof = OperationalProfile([15, 10, 10, 20])
         @test all(gate_flow[t] ≈ prof[t] for t ∈ 𝒯)
 
         # Test that the constraint is enforced
