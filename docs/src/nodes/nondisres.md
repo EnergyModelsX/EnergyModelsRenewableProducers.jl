@@ -14,6 +14,7 @@ Hence, it is necessary to implement a source node representing intermittent rene
     Hence, if you plan to create a new non-dispatchable renewable energy source, you can create it as subtype of `AbstractNonDisRES`, resulting in the variable being available.
 
     The function `constraints_capacity` is also declared *via* this abstract supertype.
+    The default checks, including the range of the profile, also apply to new subtypes through the function `EMB.check_node_default`.
 
 ## [Introduced type and its field](@id nodes-nondisres-fields)
 

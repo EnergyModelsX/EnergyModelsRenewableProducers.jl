@@ -6,6 +6,7 @@
 
 * `ReserveBattery` checks reject every reserve resource in `input` or `output`, also with several reserve resources, and the `stack_cost` message of `CycleLife` names the field correctly.
 * `Battery` and `ReserveBattery` checks require positive values in `input` and `output`.
+* New method `EMB.check_node_default` for `AbstractNonDisRES`: the checks of `NonDisRES`, including the range of `profile`, apply to all subtypes without their own `check_node` method.
 
 ### Documentation
 

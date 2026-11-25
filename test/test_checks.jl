@@ -2,10 +2,11 @@
 EMB.TEST_ENV = true
 
 # Test that the fields of a NonDisRES are correctly checked
-# - check_node(n::NonDisRES, 𝒯, modeltype::EnergyModel)
+# - EMB.check_node_default(n::AbstractNonDisRES, 𝒯, modeltype::EnergyModel, check_timeprofiles::Bool)
 @testset "NonDisRES" begin
     # Function for setting up the system for testing a `NonDisRES` node
     function check_nondisres(;
+        type = NonDisRES,
         cap = FixedProfile(20),
         profile = FixedProfile(0.5),
         opex_fixed = FixedProfile(1),
@@ -14,13 +15,14 @@ EMB.TEST_ENV = true
 
         products = [Power, CO2]
         # Creation of the source and sink module as well as the arrays used for nodes and links
-        source = NonDisRES(
+        source = type(
             "wind",
             cap,
             profile,
             FixedProfile(10),
             opex_fixed,
             output,
+            ExtensionData[],
         )
         sink = RefSink(
             "power_demand",
@@ -49,12 +51,13 @@ EMB.TEST_ENV = true
         return create_model(case, modeltype), case, modeltype
     end
 
-    # Test that a wrong capacity is caught by the checks
-    @test_throws AssertionError check_nondisres(; cap=FixedProfile(-25))
-
-    # Test that a wrong profile is caught by the checks
-    @test_throws AssertionError check_nondisres(; profile=FixedProfile(-0.5))
-    @test_throws AssertionError check_nondisres(; profile=FixedProfile(1.5))
+    # Test that a wrong capacity and a wrong profile are caught by the checks, also for a
+    # subtype of `AbstractNonDisRES` without its own `check_node` method
+    for type ∈ [NonDisRES, TestNonDisRES]
+        @test_throws AssertionError check_nondisres(; type, cap=FixedProfile(-25))
+        @test_throws AssertionError check_nondisres(; type, profile=FixedProfile(-0.5))
+        @test_throws AssertionError check_nondisres(; type, profile=FixedProfile(1.5))
+    end
 
     # Test that a wrong fixed OPEX is caught by the checks
     @test_throws AssertionError check_nondisres(; opex_fixed=FixedProfile(-5))

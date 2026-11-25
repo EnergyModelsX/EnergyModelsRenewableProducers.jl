@@ -30,6 +30,7 @@ EMB.constraints_ext_data
 
 ```@docs
 EMB.check_node
+EMB.check_node_default
 EMB.check_node_data
 ```
 

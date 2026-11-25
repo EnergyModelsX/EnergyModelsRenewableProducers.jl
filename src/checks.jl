@@ -1,11 +1,9 @@
 """
-    EMB.check_node(n::NonDisRES, 𝒯, modeltype::EnergyModel, check_timeprofiles::Bool)
+    EMB.check_node_default(n::AbstractNonDisRES, 𝒯, modeltype::EnergyModel, check_timeprofiles::Bool)
 
-This method checks that the [`NonDisRES`](@ref) node is valid.
-
-It reuses the standard checks of a `Source` node through calling the function
-[`EMB.check_node_default`](@extref EnergyModelsBase.check_node_default), but adds an
-additional check on the data.
+This method provides the default checks for all [`AbstractNonDisRES`](@ref) nodes. It is
+called by [`EMB.check_node`](@extref EnergyModelsBase.check_node) unless a subtype defines
+its own `check_node` method, in which case it can call this function.
 
 ## Checks
 - The field `cap` is required to be non-negative (similar to the `Source` check).
@@ -17,8 +15,24 @@ additional check on the data.
 - The field `profile` is required to be in the range ``[0, 1]`` for all time steps
   ``t ∈ \\mathcal{T}``.
 """
-function EMB.check_node(n::NonDisRES, 𝒯, modeltype::EnergyModel, check_timeprofiles::Bool)
-    EMB.check_node_default(n, 𝒯, modeltype, check_timeprofiles)
+function EMB.check_node_default(
+    n::AbstractNonDisRES,
+    𝒯,
+    modeltype::EnergyModel,
+    check_timeprofiles::Bool,
+)
+    𝒯ᴵⁿᵛ = strategic_periods(𝒯)
+
+    @assert_or_log(
+        all(capacity(n, t) ≥ 0 for t ∈ 𝒯),
+        "The capacity must be non-negative."
+    )
+    @assert_or_log(
+        all(outputs(n, p) ≥ 0 for p ∈ outputs(n)),
+        "The values for the Dictionary `output` must be non-negative."
+    )
+    EMB.check_fixed_opex(n, 𝒯ᴵⁿᵛ, check_timeprofiles)
+
     @assert_or_log(
         all(profile(n, t) ≤ 1 for t ∈ 𝒯),
         "The profile field must be less or equal to 1."
