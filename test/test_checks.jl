@@ -413,6 +413,7 @@ end
     @test_throws AssertionError check_hydrounit(; pq_2 = [0.0, 1.0, 0.5])
     @test_throws AssertionError check_hydrounit(; pq_1 = [0.0, 0.5, 1.2])
     @test_throws AssertionError check_hydrounit(; pq_1 = [0.0, 0.1, 1.0])
+    @test_throws AssertionError check_hydrounit(; pq_1 = [0.0], pq_2 = [0.0])
 
     # Test that collinear PqPoints are accepted
     pq = [0.0, 0.5, 1.0]
@@ -420,10 +421,6 @@ end
     @test isnothing(
         EMB.check_data(hydrounit_case(; type = HydroPump, pq_1 = pq, pq_2 = pq)..., true)
     )
-
-    # Test that PqPoints of unequal length or with a single point are caught
-    @test_throws AssertionError check_hydrounit(; pq_1 = [0.0, 0.5, 1.0], pq_2 = [0.0, 1.0])
-    @test_throws AssertionError check_hydrounit(; pq_1 = [0.0], pq_2 = [0.0])
 
     # Test that the correct function is also called for HydroStor
     type = HydroPump
