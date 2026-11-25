@@ -69,8 +69,8 @@ end
 # Test that the fields of a `HydroStorage` are correctly checked
 # - EMB.check_node(n::HydroStorage, 𝒯, modeltype::EnergyModel, check_timeprofiles::Bool)
 @testset "HydroStor and PumpedHydroStor" begin
-    # Function for setting up the system for testing an `PumpedHydroStorage` node
-    function check_hydrostor(;
+    # Function for setting up the case for testing a `HydroStorage` node
+    function hydrostor_case(;
         type = PumpedHydroStor,
         charge_cap = FixedProfile(20),
         charge_opex = FixedProfile(1),
@@ -78,9 +78,9 @@ end
         level_opex = FixedProfile(1),
         discharge_cap = FixedProfile(20),
         discharge_opex = FixedProfile(1),
-        level_init = StrategicProfile([20, 25, 30, 20]),
+        level_init = StrategicProfile([20, 25]),
         level_inflow = FixedProfile(10),
-        level_min = StrategicProfile([0.1, 0.2, 0.05, 0.1]),
+        level_min = StrategicProfile([0.1, 0.2]),
         input = Dict(Power => 0.9),
         output = Dict(Power => 0.9),
     )
@@ -146,8 +146,16 @@ end
         # Input data structure
         case = Case(T, products, [nodes, links], [[get_nodes, get_links]])
 
+        return case, modeltype
+    end
+    # Function for creating the model of the case
+    function check_hydrostor(; kwargs...)
+        case, modeltype = hydrostor_case(; kwargs...)
         return create_model(case, modeltype), case, modeltype
     end
+
+    # Test that the default case passes the checks
+    @test isnothing(EMB.check_data(hydrostor_case()..., true))
 
     # Test that a wrong capacity is caught by the checks
     @test_throws AssertionError check_hydrostor(; charge_cap=FixedProfile(-25))
@@ -170,17 +178,25 @@ end
     @test_throws AssertionError check_hydrostor(; output=Dict(Power => 1.0, CO2 => 0.5))
 
     # Test that a wrong initial level is caught by the checks.
-    level_init = StrategicProfile([50, 25, 45, 20])
+    level_init = StrategicProfile([60, 25])
     @test_throws AssertionError check_hydrostor(; level_init)
-    level_init = StrategicProfile([40, 25, 1, 20])
+    level_init = StrategicProfile([40, 1])
     level_min = FixedProfile(.5)
     @test_throws AssertionError check_hydrostor(; level_init, level_min)
-    level_init = StrategicProfile([40, 25, -5, 20])
-    @test_throws AssertionError check_hydrostor(; level_init)
+    level_init = StrategicProfile([40, -5])
+    level_min = StrategicProfile([0.1, 0.05])
+    @test_throws AssertionError check_hydrostor(; level_init, level_min)
 
     # Test that a wrong minimum level is caught by the checks.
     @test_throws AssertionError check_hydrostor(; level_min=FixedProfile(-0.5))
     @test_throws AssertionError check_hydrostor(; level_min=FixedProfile(2))
+
+    # Test that an `OperationalProfile` for `level_init` is accepted and checked
+    level_init = OperationalProfile(fill(20.0, 24))
+    @test isnothing(EMB.check_data(hydrostor_case(; level_init)..., true))
+    level_init = OperationalProfile(vcat(0.0, fill(20.0, 23)))
+    level_min = FixedProfile(0.5)
+    @test_throws AssertionError check_hydrostor(; level_init, level_min)
 
     # Test that the correct function is also called for HydroStor
     type = HydroStor{CyclicRepresentative}
@@ -194,11 +210,11 @@ end
     using EnergyModelsInvestments
     Water = ResourceCarrier("Water", 0.0)
 
-    # Function for setting up the system for testing a `HydroReservoir` node
-    function check_reservoir(;
+    # Function for setting up the case for testing a `HydroReservoir` node
+    function reservoir_case(;
         level_cap = FixedProfile(50),
         level_opex = FixedProfile(1),
-        level_inflow = OperationalProfile([5, 10, 15, 20]),
+        level_inflow = OperationalProfile(fill(10, 10)),
         data = ExtensionData[],
     )
 
@@ -213,7 +229,6 @@ end
         )
 
         nodes = [reservoir]
-        links = EMB.Link[]
 
         # Creation of the time structure and the used global data
         op_per_strat = 8760.0
@@ -226,10 +241,18 @@ end
         )
 
         # Input data structure
-        case = Case(T, products, [nodes, links], [[get_nodes, get_links]])
+        case = Case(T, products, Vector[nodes], [Function[]])
 
+        return case, modeltype
+    end
+    # Function for creating the model of the case
+    function check_reservoir(; kwargs...)
+        case, modeltype = reservoir_case(; kwargs...)
         return create_model(case, modeltype), case, modeltype
     end
+
+    # Test that the default case passes the checks
+    @test isnothing(EMB.check_data(reservoir_case()..., true))
 
     # Test that a wrong capacity is caught by the checks
     @test_throws AssertionError check_reservoir(; level_cap=FixedProfile(-25))
@@ -262,8 +285,8 @@ end
     using EnergyModelsInvestments
     Water = ResourceCarrier("Water", 0.0)
 
-    # Function for setting up the system for testing a `HydroGate` node
-    function check_gate(;
+    # Function for setting up the case for testing a `HydroGate` node
+    function gate_case(;
         cap = FixedProfile(50),
         opex_fixed = FixedProfile(10),
         data = ExtensionData[],
@@ -279,8 +302,6 @@ end
             data,
         )]
 
-        links = EMB.Link[]
-
         # Creation of the time structure and the used global data
         op_per_strat = 8760.0
         T = TwoLevel(2, 2, SimpleTimes(10,1); op_per_strat)
@@ -292,10 +313,18 @@ end
         )
 
         # Input data structure
-        case = Case(T, products, [nodes, links], [[get_nodes, get_links]])
+        case = Case(T, products, Vector[nodes], [Function[]])
 
+        return case, modeltype
+    end
+    # Function for creating the model of the case
+    function check_gate(; kwargs...)
+        case, modeltype = gate_case(; kwargs...)
         return create_model(case, modeltype), case, modeltype
     end
+
+    # Test that the default case passes the checks
+    @test isnothing(EMB.check_data(gate_case()..., true))
 
     # Test that a wrong capacity is caught by the checks
     @test_throws AssertionError check_gate(; cap=FixedProfile(-25))
@@ -317,8 +346,8 @@ end
     using EnergyModelsInvestments
     Water = ResourceCarrier("Water", 0.0)
 
-    # Function for setting up the system for testing a `HydroUnit` node
-    function check_hydrounit(;
+    # Function for setting up the case for testing a `HydroUnit` node
+    function hydrounit_case(;
         type = HydroGenerator,
         cap = FixedProfile(50),
         pq_1 = [0, 0.5, 1.0],
@@ -352,8 +381,16 @@ end
         # Input data structure
         case = Case(T, products, Vector[nodes], [Function[]])
 
+        return case, modeltype
+    end
+    # Function for creating the model of the case
+    function check_hydrounit(; kwargs...)
+        case, modeltype = hydrounit_case(; kwargs...)
         return create_model(case, modeltype), case, modeltype
     end
+
+    # Test that the default case passes the checks
+    @test isnothing(EMB.check_data(hydrounit_case()..., true))
 
     # Test that a wrong capacity is caught by the checks
     @test_throws AssertionError check_hydrounit(; cap=FixedProfile(-25))
@@ -376,6 +413,17 @@ end
     @test_throws AssertionError check_hydrounit(; pq_2 = [0.0, 1.0, 0.5])
     @test_throws AssertionError check_hydrounit(; pq_1 = [0.0, 0.5, 1.2])
     @test_throws AssertionError check_hydrounit(; pq_1 = [0.0, 0.1, 1.0])
+
+    # Test that collinear PqPoints are accepted
+    pq = [0.0, 0.5, 1.0]
+    @test isnothing(EMB.check_data(hydrounit_case(; pq_1 = pq, pq_2 = pq)..., true))
+    @test isnothing(
+        EMB.check_data(hydrounit_case(; type = HydroPump, pq_1 = pq, pq_2 = pq)..., true)
+    )
+
+    # Test that PqPoints of unequal length or with a single point are caught
+    @test_throws AssertionError check_hydrounit(; pq_1 = [0.0, 0.5, 1.0], pq_2 = [0.0, 1.0])
+    @test_throws AssertionError check_hydrounit(; pq_1 = [0.0], pq_2 = [0.0])
 
     # Test that the correct function is also called for HydroStor
     type = HydroPump
@@ -402,6 +450,7 @@ end
         degradation = 0.2,
         stack_cost = FixedProfile(100),
         T = TwoLevel(2, 2, SimpleTimes(10,1); op_per_strat=8760.0),
+        data = ExtensionData[],
     )
 
         products = [Power, CO2]
@@ -426,6 +475,7 @@ end
                 degradation,
                 stack_cost
             ),
+            data,
         )
         sink = RefSink(
             "power_demand",
@@ -474,6 +524,12 @@ end
     @test_throws AssertionError check_battery(; output=Dict(Power => 1.9))
     @test_throws AssertionError check_battery(; output=Dict(Power => -0.9))
     @test_throws AssertionError check_battery(; output=Dict(Power => 0.0))
+
+    # Test that a `ScheduleConstraint` on a non-hydro node is caught
+    data = [ScheduleConstraint{MinSchedule}(
+        Power, FixedProfile(0.5), FixedProfile(true), FixedProfile(2)
+    )]
+    @test_throws AssertionError check_battery(; data)
 
     # Test that a wrong battery life is caught
     @test_throws AssertionError check_battery(; cycles=-10)
