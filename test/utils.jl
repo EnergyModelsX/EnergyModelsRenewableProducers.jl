@@ -9,6 +9,18 @@ OPTIMIZER = optimizer_with_attributes(HiGHS.Optimizer, MOI.Silent() => true)
 ⪆(x, y) = x > y || isapprox(x, y; atol = TEST_ATOL)
 ⪅(x, y) = x < y || isapprox(x, y; atol = TEST_ATOL)
 
+# Dedicated subtype of `AbstractNonDisRES` for the check tests, as it only uses the default
+# checks of the abstract type
+struct TestNonDisRES <: EMRP.AbstractNonDisRES
+    id::Any
+    cap::TimeProfile
+    profile::TimeProfile
+    opex_var::TimeProfile
+    opex_fixed::TimeProfile
+    output::Dict{<:Resource,<:Real}
+    data::Vector{<:ExtensionData}
+end
+
 function small_graph(; source = nothing, sink = nothing, ops = SimpleTimes(24, 2))
 
     products = [Power, CO2]

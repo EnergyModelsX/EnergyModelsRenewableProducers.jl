@@ -2,6 +2,15 @@
 
 ## Unversioned
 
+### Check improvements
+
+* `ReserveBattery` checks reject every reserve resource in `input` or `output`, also with several reserve resources, and the `stack_cost` message of `CycleLife` names the field correctly.
+* `Battery` and `ReserveBattery` checks require positive values in `input` and `output`.
+* New method `EMB.check_node_default` for `AbstractNonDisRES`: the checks of `NonDisRES`, including the range of `profile`, apply to all subtypes without their own `check_node` method.
+* `HydroUnit` checks require at least two `PqPoints`, accept collinear curves, and no longer throw an error for vectors of different length.
+* `HydroStorage` checks index `level_init` with the first operational period of each strategic period, so `OperationalProfile`s are accepted.
+* `ScheduleConstraint`s are only accepted for `HydroReservoir`, `HydroGate`, `HydroGenerator`, and `HydroPump` nodes.
+
 ### Documentation
 
 * Fixed docstrings:

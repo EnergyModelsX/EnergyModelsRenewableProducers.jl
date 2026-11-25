@@ -1,11 +1,9 @@
 """
-    EMB.check_node(n::NonDisRES, 𝒯, modeltype::EnergyModel, check_timeprofiles::Bool)
+    EMB.check_node_default(n::AbstractNonDisRES, 𝒯, modeltype::EnergyModel, check_timeprofiles::Bool)
 
-This method checks that the [`NonDisRES`](@ref) node is valid.
-
-It reuses the standard checks of a `Source` node through calling the function
-[`EMB.check_node_default`](@extref EnergyModelsBase.check_node_default), but adds an
-additional check on the data.
+This method provides the default checks for all [`AbstractNonDisRES`](@ref) nodes. It is
+called by [`EMB.check_node`](@extref EnergyModelsBase.check_node) unless a subtype defines
+its own `check_node` method, in which case it can call this function.
 
 ## Checks
 - The field `cap` is required to be non-negative (similar to the `Source` check).
@@ -17,8 +15,24 @@ additional check on the data.
 - The field `profile` is required to be in the range ``[0, 1]`` for all time steps
   ``t ∈ \\mathcal{T}``.
 """
-function EMB.check_node(n::NonDisRES, 𝒯, modeltype::EnergyModel, check_timeprofiles::Bool)
-    EMB.check_node_default(n, 𝒯, modeltype, check_timeprofiles)
+function EMB.check_node_default(
+    n::AbstractNonDisRES,
+    𝒯,
+    modeltype::EnergyModel,
+    check_timeprofiles::Bool,
+)
+    𝒯ᴵⁿᵛ = strategic_periods(𝒯)
+
+    @assert_or_log(
+        all(capacity(n, t) ≥ 0 for t ∈ 𝒯),
+        "The capacity must be non-negative."
+    )
+    @assert_or_log(
+        all(outputs(n, p) ≥ 0 for p ∈ outputs(n)),
+        "The values for the Dictionary `output` must be non-negative."
+    )
+    EMB.check_fixed_opex(n, 𝒯ᴵⁿᵛ, check_timeprofiles)
+
     @assert_or_log(
         all(profile(n, t) ≤ 1 for t ∈ 𝒯),
         "The profile field must be less or equal to 1."
@@ -86,7 +100,7 @@ function EMB.check_node(n::HydroStorage, 𝒯, modeltype::EnergyModel, check_tim
         t = first(t_inv)
         # Check that the reservoir isn't underfilled from the start.
         @assert_or_log(
-            level_init(n, t_inv) + level_inflow(n, t) ≥ level_min(n, t) * capacity(par_level, t),
+            level_init(n, t) + level_inflow(n, t) ≥ level_min(n, t) * capacity(par_level, t),
             "The reservoir cannot be underfilled from the start (" * string(t) * ").")
     end
     @assert_or_log(
@@ -163,11 +177,12 @@ This method checks that the [`HydroGenerator`](@ref) and [`HydroPump`](@ref) nod
 
 ## Checks
 - The field `cap` is required to be non-negative.
-- The [`PqPoints`](@ref) vectors are required to have the same length.
+- The [`PqPoints`](@ref) vectors are required to have the same length and at least two points.
 - The [`PqPoints`](@ref) vectors should start at 0.
 - The [`PqPoints`](@ref) vectors are required to be strictly increasing.
 - One of the [`PqPoints`](@ref) vectors should range from 0 to 1.
-- The [`PqPoints`](@ref) curve should be concave for generators and convex for pumps.
+- The [`PqPoints`](@ref) curve should be concave for generators and convex for pumps. Linear
+  segments, that is equal slopes, are allowed.
 - The value of the field `opex_fixed` is required to be non-negative and accessible through
   a `StrategicPeriod` as outlined in the function
   [`EMB.check_fixed_opex`](@extref EnergyModelsBase.check_fixed_opex).
@@ -182,47 +197,57 @@ function EMB.check_node(n::HydroUnit, 𝒯, modeltype::EnergyModel, check_timepr
     )
 
     pq = pq_curve(n)
-    if pq isa PqPoints
-        @assert_or_log(
-            length(power_level(pq)) == length(discharge_level(pq)),
-            "The `PqPoint` vectors must have the same length."
-        )
-
-        @assert_or_log(
-            (power_level(pq, 1) ≈ 0) & (discharge_level(pq, 1) ≈ 0),
-            "The `PqPoint` vectors should start at 0."
-        )
-
-        @assert_or_log(
-            issorted(power_level(pq), lt= <=) & issorted(discharge_level(pq), lt= <=),
-            "The `PqPoint` vectors must be increasing."
-        )
+    if isa(pq, PqPoints)
         n_p = length(power_level(pq))
         n_d = length(discharge_level(pq))
         @assert_or_log(
-            ((power_level(pq, 1) ≈ 0) & (power_level(pq, n_p) ≈ 1)) |
-            ((discharge_level(pq, 1) ≈ 0) & (discharge_level(pq, n_d) ≈ 1)),
-            "One of the `PqPoint` vectors should be from 0 to 1."
+            n_p == n_d,
+            "The `PqPoint` vectors must have the same length."
+        )
+        @assert_or_log(
+            (n_p ≥ 2) & (n_d ≥ 2),
+            "The `PqPoint` vectors must have at least two points."
         )
 
-        if n isa HydroGenerator
+        if (n_p ≥ 1) & (n_d ≥ 1)
             @assert_or_log(
-                issorted(
-                    (power_level(pq)[2:end] - power_level(pq)[1:end-1]) ./
-                        (discharge_level(pq)[2:end] - discharge_level(pq)[1:end-1]),
-                    rev=true, lt= <=
-                ),
-                "The `PqPoint` curve should be concave for generators."
+                (power_level(pq, 1) ≈ 0) & (discharge_level(pq, 1) ≈ 0),
+                "The `PqPoint` vectors should start at 0."
             )
-        else
+        end
+
+        inc_p = issorted(power_level(pq), lt= <=)
+        inc_d = issorted(discharge_level(pq), lt= <=)
+        @assert_or_log(
+            inc_p & inc_d,
+            "The `PqPoint` vectors must be increasing."
+        )
+
+        if (n_p ≥ 1) & (n_d ≥ 1)
             @assert_or_log(
-                issorted(
-                    (power_level(pq)[2:end] - power_level(pq)[1:end-1]) ./
-                        (discharge_level(pq)[2:end] - discharge_level(pq)[1:end-1]),
-                    rev=false, lt= <=
-                ),
-                "The `PqPoint` curve should be convex for pumps."
+                ((power_level(pq, 1) ≈ 0) & (power_level(pq, n_p) ≈ 1)) |
+                ((discharge_level(pq, 1) ≈ 0) & (discharge_level(pq, n_d) ≈ 1)),
+                "One of the `PqPoint` vectors should be from 0 to 1."
             )
+        end
+
+        # The slopes are only well defined for vectors of equal length with at least two
+        # points and a strictly increasing discharge
+        if (n_p == n_d) & (n_d ≥ 2) & inc_d
+            slopes =
+                (power_level(pq)[2:end] - power_level(pq)[1:end-1]) ./
+                (discharge_level(pq)[2:end] - discharge_level(pq)[1:end-1])
+            if isa(n, HydroGenerator)
+                @assert_or_log(
+                    issorted(slopes; rev = true),
+                    "The `PqPoint` curve should be concave for generators."
+                )
+            else
+                @assert_or_log(
+                    issorted(slopes),
+                    "The `PqPoint` curve should be convex for pumps."
+                )
+            end
         end
     end
     EMB.check_fixed_opex(n, 𝒯ᴵⁿᵛ, check_timeprofiles)
@@ -234,6 +259,8 @@ end
 Performs various checks on [`ScheduleConstraint`](@ref) data for all nodes.
 
 ## Checks
+- The node is required to be a [`HydroReservoir`](@ref), [`HydroGate`](@ref),
+  [`HydroGenerator`](@ref), or [`HydroPump`](@ref).
 - The field `resource` is required to be either the water or the electricity resource if the
   node is a [`HydroUnit`](@ref).
 - The value of constraints are required to be in the range ``[0, 1]`` for all time steps
@@ -248,6 +275,11 @@ function EMB.check_node_data(
     modeltype::EnergyModel,
     check_timeprofiles::Bool,
 )
+    @assert_or_log(
+        isa(n, HydroNode),
+        "`ScheduleConstraint`s are only supported for `HydroReservoir`, `HydroGate`, " *
+        "`HydroGenerator`, and `HydroPump` nodes."
+    )
     if isa(n, HydroUnit)
         @assert_or_log(
             (resource(data) == water_resource(n)) |
@@ -285,20 +317,22 @@ additional check on the data.
   through a `StrategicPeriod` as outlined in the function
   [`EMB.check_fixed_opex`](@extref EnergyModelsBase.check_fixed_opex) for the chosen
   composite type.
-- The value of the field `input` is required to be less than or equal to 1.
-- The value of the field `output` is required to be less than or equal to 1.
+- The values of the field `input` must be in the range ``(0, 1]``.
+- The values of the field `output` must be in the range ``(0, 1]``.
 - The [`AbstractBatteryLife`](@ref) must follow the provided values as outlined in the
   function [`check_battery_life`](@ref).
 """
 function EMB.check_node(n::AbstractBattery, 𝒯, modeltype::EnergyModel, check_timeprofiles::Bool)
     EMB.check_node_default(n, 𝒯, modeltype, check_timeprofiles)
     has_input(n) && @assert_or_log(
-        all(inputs(n, p) ≤ 1 for p ∈ inputs(n)),
-        "The values for the Dictionary `input` must be less than or equal to 1."
+        all(0 < inputs(n, p) ≤ 1 for p ∈ inputs(n)),
+        "The values for the Dictionary `input` must be positive and less than or equal " *
+        "to 1."
     )
     has_output(n) && @assert_or_log(
-        all(outputs(n, p) ≤ 1 for p ∈ outputs(n)),
-        "The values for the Dictionary `output` must be less than or equal to 1."
+        all(0 < outputs(n, p) ≤ 1 for p ∈ outputs(n)),
+        "The values for the Dictionary `output` must be positive and less than or equal " *
+        "to 1."
     )
     check_battery_life(n, battery_life(n), 𝒯, modeltype, check_timeprofiles)
 end
@@ -323,8 +357,8 @@ additional check on the data.
   through a `StrategicPeriod` as outlined in the function
   [`EMB.check_fixed_opex`](@extref EnergyModelsBase.check_fixed_opex) for the chosen
   composite type.
-- The value of the field `input` is required to be less than or equal to 1.
-- The value of the field `output` is required to be less than or equal to 1.
+- The values of the field `input` must be in the range ``(0, 1]``.
+- The values of the field `output` must be in the range ``(0, 1]``.
 - The [`AbstractBatteryLife`](@ref) must follow the provided values as outlined in the
   function [`check_battery_life`](@ref).
 - The resources in the array `reserve_up` cannot be part of the resources in the
@@ -335,34 +369,33 @@ additional check on the data.
 function EMB.check_node(n::ReserveBattery, 𝒯, modeltype::EnergyModel, check_timeprofiles::Bool)
     EMB.check_node_default(n, 𝒯, modeltype, check_timeprofiles)
     has_input(n) && @assert_or_log(
-        all(inputs(n, p) ≤ 1 for p ∈ inputs(n)),
-        "The values for the Dictionary `input` must be less than or equal to 1."
+        all(0 < inputs(n, p) ≤ 1 for p ∈ inputs(n)),
+        "The values for the Dictionary `input` must be positive and less than or equal " *
+        "to 1."
     )
+    # The reserve resources are included in `outputs(n)` with a value of 0
     has_output(n) && @assert_or_log(
-        all(outputs(n, p) ≤ 1 for p ∈ outputs(n)),
-        "The values for the Dictionary `output` must be less than or equal to 1."
+        all(0 < outputs(n, p) ≤ 1 for p ∈ keys(n.output)),
+        "The values for the Dictionary `output` must be positive and less than or equal " *
+        "to 1."
     )
     check_battery_life(n, battery_life(n), 𝒯, modeltype, check_timeprofiles)
-    if !isempty(reserve_up(n))
-        @assert_or_log(
-            any([!haskey(n.input, p) for p ∈ reserve_up(n)]),
-            "The `reserve_up` resources cannot be in the `input` dictionary."
-        )
-        @assert_or_log(
-            any([!haskey(n.output, p) for p ∈ reserve_up(n)]),
-            "The `reserve_up` resources cannot be in the `output` dictionary."
-        )
-    end
-    if !isempty(reserve_down(n))
-        @assert_or_log(
-            any([!haskey(n.input, p) for p ∈ reserve_down(n)]),
-            "The `reserve_down` resources cannot be in the `input` dictionary."
-        )
-        @assert_or_log(
-            any([!haskey(n.output, p) for p ∈ reserve_down(n)]),
-            "The `reserve_down` resources cannot be in the `output` dictionary."
-        )
-    end
+    @assert_or_log(
+        all(!haskey(n.input, p) for p ∈ reserve_up(n)),
+        "The `reserve_up` resources cannot be in the `input` dictionary."
+    )
+    @assert_or_log(
+        all(!haskey(n.output, p) for p ∈ reserve_up(n)),
+        "The `reserve_up` resources cannot be in the `output` dictionary."
+    )
+    @assert_or_log(
+        all(!haskey(n.input, p) for p ∈ reserve_down(n)),
+        "The `reserve_down` resources cannot be in the `input` dictionary."
+    )
+    @assert_or_log(
+        all(!haskey(n.output, p) for p ∈ reserve_down(n)),
+        "The `reserve_down` resources cannot be in the `output` dictionary."
+    )
 end
 
 """
@@ -414,7 +447,7 @@ function check_battery_life(
     sc_prof = stack_cost(bat_life)
     if (isa(sc_prof, StrategicProfile) || isa(sc_prof, StrategicStochasticProfile)) &&
         check_timeprofiles
-        EMB.check_profile(`stack_cost`, sc_prof, 𝒯; bool=false)
+        EMB.check_profile(:stack_cost, sc_prof, 𝒯; bool=false)
     end
 
     # Check for potential indexing problems
