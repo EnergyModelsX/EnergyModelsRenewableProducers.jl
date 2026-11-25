@@ -2,17 +2,17 @@
 
 ## [Introduced type and its field](@id nodes-det_hydro_power-reservoir-fields)
 
-The [`HydroReservoir`](@ref) nodes represents a water storage in a hydropower system.
+The [`HydroReservoir`](@ref) node represents a water storage in a hydropower system.
 In its simplest form, the [`HydroGenerator`](@ref) and [`HydroPump`](@ref) can convert potential energy between [`HydroReservoir`](@ref) nodes at different head levels to electricity, under the assumption that the reservoirs have constant head levels.
 In these cases, the [`HydroReservoir`](@ref) node does not require a description of the relation between volume level and head level.
-For more detailed modelling, this relation is required to account for the increased power output when the head level difference between reservoirs increase. Head-dependencies are currently not implemented.
+For more detailed modelling, this relation is required to account for the increased power output when the head level difference between reservoirs increases. Head-dependencies are currently not implemented.
 
 !!! warning "Spillage"
     The [`HydroReservoir`](@ref) nodes do not include a spillage variable. To avoid infeasible solutions, all reservoir nodes should be connected to a [`HydroGate`](@ref) node representing a water way for spillage in case of full reservoirs.
 
 ### [Standard fields](@id nodes-det_hydro_power-reservoir-fields-stand)
 
-The [`HydroReservoir`](@ref) nodes builds on the [`RefStorage`](@extref EnergyModelsBase.RefStorage) node type. The tandard fields are given as:
+The [`HydroReservoir`](@ref) node builds on the [`RefStorage`](@extref EnergyModelsBase.RefStorage) node type. The standard fields are given as:
 
 - **`id`**:\
   The field `id` is only used for providing a name to the node.
@@ -25,8 +25,8 @@ The [`HydroReservoir`](@ref) nodes builds on the [`RefStorage`](@extref EnergyMo
       This results in consistency in terminology with existing hydro power models.
 - **`stor_res::ResourceCarrier`**:\
   The resource that is stored in the reservoir.
-  This **must** be the reserource representing water.
-  The resource **must** consistent for all components in the watercourse.
+  This **must** be the resource representing water.
+  The resource **must** be consistent for all components in the watercourse.
 - **`data::Vector{ExtensionData}`**:\
   An entry for providing additional data to the model.
   !!! note "Additional constraints"
@@ -34,7 +34,7 @@ The [`HydroReservoir`](@ref) nodes builds on the [`RefStorage`](@extref EnergyMo
 
 ### [Additional fields](@id nodes-det_hydro_power-reservoir-fields-new)
 
-[`HydroReservoir`](@ref) nodes add a single additional field compared to a [`RefStorage`](@extref EnergyModelsBase.RefStorage), and does not include the `charge` field since charge/discharge capacity is given through the [`HydroGenerator`](@ref), [`HydroPump`](@ref), and [`HydroGate`](@ref):
+[`HydroReservoir`](@ref) nodes add a single additional field compared to a [`RefStorage`](@extref EnergyModelsBase.RefStorage), and do not include the `charge` field since charge/discharge capacity is given through the [`HydroGenerator`](@ref), [`HydroPump`](@ref), and [`HydroGate`](@ref):
 
 - **`vol_inflow::TimeProfile`**:\
   The water inflow rate to the reservoir.
@@ -63,16 +63,16 @@ The mathematical description is similar to the [`RefStorage`](@extref EnergyMode
 - [``\texttt{stor\_level\_Δ\_op}``](@extref EnergyModelsBase man-opt_var-cap)
 - [``\texttt{stor\_level\_Δ\_rp}``](@extref EnergyModelsBase man-opt_var-cap) if the `TimeStruct` includes `RepresentativePeriods`
 
-It will however not use the vaeriables ``\texttt{stor\_charge\_inst}`` and ``\texttt{stor\_discharge\_inst}`` as the charge and discharge capacities are handled by the connected [`HydroGenerator`](@ref), [`HydroPump`](@ref), and [`HydroGate`](@ref).
+It will however not use the variables ``\texttt{stor\_charge\_inst}`` and ``\texttt{stor\_discharge\_inst}`` as the charge and discharge capacities are handled by the connected [`HydroGenerator`](@ref), [`HydroPump`](@ref), and [`HydroGate`](@ref).
 
 #### [Additional variables](@id nodes-det_hydro_power-reservoir-math-add)
 
 [`HydroReservoir`](@ref) nodes add additional variables if required by the *[additional constraints](@ref nodes-det_hydro_power-phil-con)*:
 
-- ``\texttt{rsv\_vol\_penalty\_up}[n, t]``: Variable for penalizing violation of the volume constraint in direction *up* in `HydroReservoir` node ``n`` in operational period ``t`` with a typical unit of ``Mm^3``.\
-  *Up* implies in this case that the reservoir volume is larger than planned.
-- ``\texttt{rsv\_vol\_penalty\_down}[n, t]``: Variable for penalizing violation of the volume constraint in direction *down* in `HydroReservoir` node ``n`` in operational period ``t`` with a typical unit of ``Mm^3``.\
-  *Down* implies in this case that the reservoir volume is smaller than planned.
+- ``\texttt{rsv\_penalty\_up}[n, t, p]``: Variable for penalizing violation of the volume constraint in direction *up* in `HydroReservoir` node ``n`` in operational period ``t`` for the stored resource ``p`` with a typical unit of ``Mm^3``.\
+  *Up* implies in this case that the reservoir volume is smaller than planned.
+- ``\texttt{rsv\_penalty\_down}[n, t, p]``: Variable for penalizing violation of the volume constraint in direction *down* in `HydroReservoir` node ``n`` in operational period ``t`` for the stored resource ``p`` with a typical unit of ``Mm^3``.\
+  *Down* implies in this case that the reservoir volume is larger than planned.
 
 ### [Constraints](@id nodes-det_hydro_power-reservoir-math-con)
 
@@ -83,7 +83,7 @@ In addition, all constraints are valid ``\forall t \in T`` (that is in all opera
 #### [Standard constraints](@id nodes-det_hydro_power-reservoir-math-con-stand)
 
 [`HydroReservoir`](@ref) nodes utilize in general the standard constraints described in *[Constraint functions for `Storage` nodes](@extref EnergyModelsBase nodes-storage-math-con)*.
-The majority of these constraints are hence ommitted in the following description.
+The majority of these constraints are hence omitted in the following description.
 Specifically, the *[level constraints](@extref EnergyModelsBase nodes-storage-math-con-level)* are created using the same functions.
 
 The function `constraints_opex_var` requires a new method as we have to include the penalty variables for violating the constraints if required:
@@ -93,13 +93,13 @@ The function `constraints_opex_var` requires a new method as we have to include 
   \texttt{opex\_var}&[n, t_{inv}] = \\
     \sum_{t \in t_{inv}} \Big( & opex\_var(level(n), t) \times \texttt{stor\_level}[n, t] + \\ &
     opex\_var(charge(n), t) \times \texttt{stor\_charge\_use}[n, t] + \\ &
-    opex\_var(discharge(n), t) \times \texttt{stor\_discharge\_use}[n, t] \\ &
-    penalty(c_{up}, t) \times \texttt{rsv\_vol\_penalty\_up}[n, t]+ \\ &
-    penalty(c_{down}, t) \times \texttt{rsv\_vol\_penalty\_down}[n, t] \Big) \times scale\_op\_sp(t_{inv}, t)
+    opex\_var(discharge(n), t) \times \texttt{stor\_discharge\_use}[n, t] + \\ &
+    penalty(c_{up}, t) \times \texttt{rsv\_penalty\_up}[n, t, p]+ \\ &
+    penalty(c_{down}, t) \times \texttt{rsv\_penalty\_down}[n, t, p] \Big) \times scale\_op\_sp(t_{inv}, t)
 \end{aligned}
 ```
 
-where ``penalty()`` returns the penalty value for violation of constraints with penalty variables in the upward and downward direction, denoted by ``c_{up}`` and  ``c_{down}``.
+where ``penalty()`` returns the penalty value for violation of constraints with penalty variables in the upward and downward direction, denoted by ``c_{up}`` and ``c_{down}``.
 
 !!! tip "The function `scale_op_sp`"
     The function [``scale\_op\_sp(t_{inv}, t)``](@extref EnergyModelsBase.scale_op_sp) calculates the scaling factor between operational and strategic periods.
@@ -114,17 +114,17 @@ The energy balance in `constraints_level_aux` is altered to include the inflow t
 \end{aligned}
 ```
 
-The new method adds furthermore *[additional constraints](@ref nodes-det_hydro_power-phil-con)*, if the corresponding types are provided in the `ExtensionData` field.
+The function `constraints_ext_data` adds furthermore *[additional constraints](@ref nodes-det_hydro_power-phil-con)*, if the corresponding types are provided in the `ExtensionData` field.
 Soft constraints, *i.e.*, constraints with a penalty, are used if the constraints have non-infinite penalty values.
-The mathematical formulation of the constraints are (the first equation corresponds to hard constraints, the second equation to soft constraints):
+The mathematical formulation of the constraints is (the first equation corresponds to hard constraints, the second equation to soft constraints):
 
-1. Minumum constraints for the reservoir level:
+1. Minimum constraints for the reservoir level:
 
    ```math
    \begin{aligned}
       \texttt{stor\_level}[n, t] \geq & \\ &
         \texttt{stor\_level\_inst}[n, t] \times value(c, t) \qquad & \forall c \in C^{min} \\
-      \texttt{stor\_level}[n, t] + & \texttt{rsv\_vol\_penalty\_up}[n, t] \geq \\ &
+      \texttt{stor\_level}[n, t] + & \texttt{rsv\_penalty\_up}[n, t, p] \geq \\ &
         \texttt{stor\_level\_inst}[n, t] * value(c, t) \qquad & \forall c \in C^{min}
    \end{aligned}
    ```
@@ -135,7 +135,7 @@ The mathematical formulation of the constraints are (the first equation correspo
    \begin{aligned}
     \texttt{stor\_level}[n, t] \leq & \\ &
       \texttt{stor\_level\_inst}[n, t] \times value(c, t) \qquad & \forall c \in C^{max} \\
-    \texttt{stor\_level}[n, t] - & \texttt{rsv\_vol\_penalty\_down}[n, t] \leq \\ &
+    \texttt{stor\_level}[n, t] - & \texttt{rsv\_penalty\_down}[n, t, p] \leq \\ &
       \texttt{stor\_level\_inst}[n, t] \times value(c, t) \qquad & \forall c \in C^{max}
    \end{aligned}
    ```
@@ -146,13 +146,13 @@ The mathematical formulation of the constraints are (the first equation correspo
    \begin{aligned}
     \texttt{stor\_level}[n, t] = & \\ &
       \texttt{stor\_level\_inst}[n, t] \times value(c, t) \quad & \forall c \in C^{sch} \\
-    \texttt{stor\_level}[n, t] + & \texttt{rsv\_vol\_penalty\_up}[n, t] - \texttt{rsv\_vol\_penalty\_down}[n, t] = \\ &
+    \texttt{stor\_level}[n, t] + & \texttt{rsv\_penalty\_up}[n, t, p] - \texttt{rsv\_penalty\_down}[n, t, p] = \\ &
       \texttt{stor\_level\_inst}[n, t] \times value(c, t) \quad & \forall c \in C^{sch} \\
    \end{aligned}
    ```
 
 where ``value(c,t)`` returns the relative limit of scheduling constraint `c`.
-The sets ``C^{min}``,``C^{max}`` and ``C^{sch}`` contain additional minimum, maximum, and scheduling constraints, repectively.
+The sets ``C^{min}``,``C^{max}`` and ``C^{sch}`` contain additional minimum, maximum, and scheduling constraints, respectively.
 
 #### [Additional constraints](@id nodes-det_hydro_power-reservoir-math-con-add)
 

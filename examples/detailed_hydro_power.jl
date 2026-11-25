@@ -19,20 +19,20 @@ const EMB = EnergyModelsBase
 """
     generate_detailed_hydropower()
 
-Generate the data for an example consisting of cascaded hydropower system as illustrated in
+Generate the data for an example consisting of a cascaded hydropower system as illustrated in
 the figure in the documentation
-(https://energymodelsx.github.io/EnergyModelsRenewableProducers.jl/stable/nodes/det_hydropower/description.html#nodes-det_hydro_power-phil/).
+(https://energymodelsx.github.io/EnergyModelsRenewableProducers.jl/stable/nodes/det_hydropower/description/#nodes-det_hydro_power-phil).
 The `RefSource` is connected to the upper `HydroReservoir` to ensure the reservoir always
 has at least one input.
 The upper and lower `HydroReservoir` are connected through a `HydroGenerator`, a
 `HydroPump`, and a `HydroGate`.
 The lower `HydroReservoir` and the `RefSink` representing the ocean are connected through a
 `HydroGenerator`.
-It is in this example possible to both sell and buy from an electricity market
+It is in this example possible to both sell and buy from an electricity market.
 
-This examples shows the approach of designing a cascaded hydropower system with the different
-nodes. The `HydroGate` is not used as the inflow is not large enough. to justify its application.
-The `HydroPump` is used within the time periods in which electricity is cheap
+This example shows the approach of designing a cascaded hydropower system with the different
+nodes. The `HydroGate` is not used as the inflow is not large enough to justify its application.
+The `HydroPump` is used within the time periods in which electricity is cheap.
 """
 function generate_detailed_hydropower()
     @info "Generate case data - Detailed hydropower example"
@@ -63,7 +63,7 @@ function generate_detailed_hydropower()
     )
 
     # Create a source for the first reservoir
-    # It is crucial that the source node to the first reservoire does not have a capacity.
+    # It is crucial that the source node to the first reservoir does not have a capacity.
     # The Water resource must be an output.
     # It is our aim in later versions to remove this necessity.
     source = RefSource(
@@ -168,7 +168,7 @@ function generate_detailed_hydropower()
         Dict(Water => 1.0)
     )
 
-    # Create an busbar (availability node) to collect electricity production and consumption
+    # Create a busbar (availability node) to collect electricity production and consumption
     # It is crucial that it does not contain the water resource!
     av = GenAvailability(1, [Power])
 
@@ -229,7 +229,7 @@ m = EMB.run_model(case, model, optimizer)
 """
     process_det_hydro_results(m, case)
 
-Function for processing the results to be represented in the a table afterwards.
+Function for processing the results to be represented in a table afterwards.
 """
 function process_det_hydro_results(m, case)
     # Extract the nodes and the first strategic period from the data

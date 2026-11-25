@@ -67,7 +67,7 @@ function generate_nondisres_example_data()
         Dict(Power => 1),   # Energy demand and corresponding ratio
     )
 
-    # Create the additonal non-dispatchable power source
+    # Create the additional non-dispatchable power source
     wind = NonDisRES(
         "wind",             # Node ID
         FixedProfile(4),    # Capacity in MW
@@ -79,7 +79,7 @@ function generate_nondisres_example_data()
 
     nodes = [source, wind, sink]
 
-    # Connect the two nodes with each other
+    # Connect the nodes with each other
     links = [
         Direct("source-demand", nodes[1], nodes[3], Linear()),
         Direct("wind-demand", nodes[2], nodes[3], Linear())

@@ -35,14 +35,14 @@ EMRP.opex_var_pump
 ## [`HydroReservoir`](@id lib-int-met_field-hydroreservoir)
 
 ```@docs
-EMRP.max_normalized_power
-EMRP.max_normalized_flow
 EMRP.vol_inflow
 ```
 
 ## [`HydroUnit`](@id lib-int-met_field-hydrounit)
 
 ```@docs
+EMRP.max_normalized_power
+EMRP.max_normalized_flow
 EMRP.pq_curve
 EMRP.water_resource
 EMRP.electricity_resource
@@ -67,7 +67,7 @@ EMRP.value
 EMRP.penalty
 ```
 
-## [`PqPoints`](@id lib-int-met_fieldpqpoints)
+## [`PqPoints`](@id lib-int-met_field-pqpoints)
 
 ```@docs
 EMRP.discharge_segments

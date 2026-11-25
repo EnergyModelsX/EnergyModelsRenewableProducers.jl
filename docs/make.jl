@@ -22,6 +22,7 @@ cp("NEWS.md", news; force=true)
 links = InterLinks(
     "TimeStruct" => "https://sintefore.github.io/TimeStruct.jl/stable/",
     "EnergyModelsBase" => "https://energymodelsx.github.io/EnergyModelsBase.jl/stable/",
+    "EnergyModelsRecedingHorizon" => "https://energymodelsx.github.io/EnergyModelsRecedingHorizon.jl/stable/",
 )
 
 makedocs(

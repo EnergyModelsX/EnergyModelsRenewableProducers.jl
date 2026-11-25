@@ -1,6 +1,6 @@
 # [Battery nodes](@id nodes-battery)
 
-As outlined in the section on *[simple hydro storage](@ref nodes-hydro_power)*, the reference storage node[`RefStorage`](@extref EnergyModelsBase.RefStorage) has some built in limitations.
+As outlined in the section on *[simple hydro storage](@ref nodes-hydro_power)*, the reference storage node [`RefStorage`](@extref EnergyModelsBase.RefStorage) has some built-in limitations.
 In the case of battery storage, the main limitations are related to not limiting the discharge use, not being able to include charge and discharge efficiencies, and not allowing for degradation of the storage capacity.
 
 Hence, it is necessary to include specific battery nodes.
@@ -27,7 +27,7 @@ Hence, it can be either a `FixedProfile` or a `StrategicProfile`, but cannot inc
 !!! danger "Varying storage capacities with Batteries"
     If you use batteries with varying capacities, it is important to implement one battery node for each investment period.
     The key reason is that the use is not calculated based on changing capacities.
-    Similarly, if you plan to use batteries in investment models, it is necessary to specify one battery node for each investment periods with limited investments in an investment period.
+    Similarly, if you plan to use batteries in investment models, it is necessary to specify one battery node for each investment period with limited investments in an investment period.
 
 ### [Philosophy of `ReserveBattery`](@id nodes-battery-phil-reserve)
 
@@ -36,13 +36,13 @@ The reserve capacity must be specified as a sink with a demand for a given reser
 The [`ReserveBattery`](@ref) is subsequently coupled to the link to satisfy the potential demand.
 
 Reserve resources and demands are not included in the energy balances.
-Instead, they can be used to specify a minimum amount of dispatchable power to both increase either the electricity generation capacity or the electricity demand.
+Instead, they can be used to specify a minimum amount of dispatchable power to increase either the electricity generation capacity or the electricity demand.
 
 ## [Introduced types and their fields](@id nodes-battery-fields)
 
 The [`AbstractBattery`](@ref) abstract type is used to simplify the design of the constraints.
 It has in its current stage two concrete subtypes, [`Battery`](@ref) and [`ReserveBattery`](@ref).
-Both types utilize the same main functionality with respect to efficiencies and battery lifes.
+Both types utilize the same main functionality with respect to efficiencies and battery lives.
 [`ReserveBattery`](@ref) is included as a first nodal type to be able to provide a reserve capacity for the energy system.
 This allows the user to specify a minimum of required reserve capacity at each individual operational period.
 
@@ -58,7 +58,7 @@ The standard fields are given as:
 - **`charge::EMB.UnionCapacity`**:\
   The charge storage parameters must include a capacity.
   The charge capacity is the capacity **before** taking into account the charging efficiency from the viewpoint of the storage level.
-  This is also shown in the section on the *[level constraints](@ref nodes-battery-math-con-add-level)*
+  This is also shown in the section on the *[level constraints](@ref nodes-battery-math-con-add-level)*.
   More information can be found on *[storage parameters](@extref EnergyModelsBase lib-pub-nodes-stor_par)*.
 - **`level::EMB.UnionCapacity`**:\
   The level storage parameters must include a capacity.
@@ -66,16 +66,16 @@ The standard fields are given as:
 - **`discharge::EMB.UnionCapacity`**:\
   The discharge storage parameters must include a capacity.
   The discharge capacity is the capacity **after** taking into account the discharging efficiency from the viewpoint of the storage level.
-  This is also shown in the section on the *[level constraints](@ref nodes-battery-math-con-add-level)*
+  This is also shown in the section on the *[level constraints](@ref nodes-battery-math-con-add-level)*.
   More information can be found on *[storage parameters](@extref EnergyModelsBase lib-pub-nodes-stor_par)*.
   !!! note "Permitted values for storage parameters in `charge`, `level`, and `discharge`"
-      If the node should contain investments through the application of [`EnergyModelsInvestments`](https:// energymodelsx.github.io/EnergyModelsInvestments.jl/stable/), it is important to note that you can only use `FixedProfile` or `StrategicProfile` for the capacity, but not `RepresentativeProfile` or `OperationalProfile`.
+      If the node should contain investments through the application of [`EnergyModelsInvestments`](https://energymodelsx.github.io/EnergyModelsInvestments.jl/stable/), it is important to note that you can only use `FixedProfile` or `StrategicProfile` for the capacity, but not `RepresentativeProfile` or `OperationalProfile`.
       Similarly, you can only use `FixedProfile` or `StrategicProfile` for the fixed OPEX, but not `RepresentativeProfile` or `OperationalProfile`.
       The variable operating expenses can be provided as `OperationalProfile` as well.
       In addition, all capacity and fixed OPEX values have to be non-negative.
-- **`stor_res::ResourceEmit`**:\
+- **`stor_res::ResourceCarrier`**:\
   The `stor_res` is the stored [`Resource`](@extref EnergyModelsBase.Resource).
-  In the case of a battery, you must specifiy your *electricity* resource.
+  In the case of a battery, you must specify your *electricity* resource.
 - **`input::Dict{<:Resource, <:Real}`** and **`output::Dict{<:Resource, <:Real}`**:\
   Both fields describe the `input` and `output` [`Resource`](@extref EnergyModelsBase.Resource)s with their corresponding conversion factors as dictionaries.
   The values correspond to charge and discharge efficiencies from the `AbstractBattery` nodes.\
@@ -115,7 +115,7 @@ with square brackets, while functions are represented as
 
 ``func\_example(index_1, index_2)``
 
-with parantheses.
+with parentheses.
 
 ### [Variables](@id nodes-battery-math-var)
 
@@ -139,24 +139,24 @@ The variables include:
 
 #### [Additional variables](@id nodes-battery-math-add)
 
-[`AbstractBattery`](@ref) nodes by default calculate the charging of a battery in the individual periods, even if the battery life is modelled as [`InfLife`](@ref)
-Hence, the following additional variables are included through providing a new methods to [`EnergyModelsBase.variables_node()`](@ref):
+[`AbstractBattery`](@ref) nodes by default calculate the charging of a battery in the individual periods, even if the battery life is modelled as [`InfLife`](@ref).
+Hence, the following additional variables are included through providing new methods to [`EnergyModelsBase.variables_node()`](@ref):
 
 - ``\texttt{bat\_prev\_use}[n, t]``: Previous charging of battery ``n`` at the beginning of operational period ``t`` with a typical unit of MWh.\
   The previous use corresponds to how much the battery is charged up to the current operational period.
   It is utilized for calculating the degradation of the battery.
-- ``\texttt{bat\_prev\_use\_sp}[n, t_{inv}]``: Previous charging of battery ``n`` at the beginning of investmet period ``t_{inv}`` with a typical unit of MWh.\
+- ``\texttt{bat\_prev\_use\_sp}[n, t_{inv}]``: Previous charging of battery ``n`` at the beginning of investment period ``t_{inv}`` with a typical unit of MWh.\
   The previous use corresponds to how much the battery is charged up to the current investment period.
   It is utilized for calculating the degradation of the battery.
 - ``\texttt{bat\_use\_sp}[n, t_{inv}]``: Charging of battery ``n`` in investment period ``t_{inv}`` with a typical unit of MWh.\
   The use allows to see how many charging cycles are conducted within an investment period.
   It is utilized for calculating the degradation of the battery.
-- ``\texttt{bat\_use\_rp}[n, t_{rp}]``: Charging of battery ``n`` in representantive period ``t_{rp}`` with a typical unit of MWh.\
+- ``\texttt{bat\_use\_rp}[n, t_{rp}]``: Charging of battery ``n`` in representative period ``t_{rp}`` with a typical unit of MWh.\
   The use allows to see how many charging cycles are conducted within a representative period.
   It is utilized for calculating the degradation of the battery.\
   It is only created if the time structure includes representative periods.
 - ``\texttt{bat\_stack\_replace\_b}[n, t_{inv}]``: Binary variable representing replacement of the battery stack.\
-  The battery stack replacement is occuring at the beginning of an investment period and results in setting the previous use to 0.
+  The battery stack replacement is occurring at the beginning of an investment period and results in setting the previous use to 0.
   Consequently, the initial capacity is available again.\
   It is only created for battery nodes with [`CycleLife`](@ref).
 
@@ -177,7 +177,7 @@ In addition, all constraints are valid ``\forall t \in T`` (that is in all opera
 
 #### [Standard constraints](@id nodes-battery-math-con-stand)
 
-Battery storages nodes utilize in general the standard constraints described on *[Constraint functions](@extref EnergyModelsBase man-con)* for `RefStorage` nodes.
+Battery storage nodes utilize in general the standard constraints described on *[Constraint functions](@extref EnergyModelsBase man-con)* for `RefStorage` nodes.
 
 These standard constraints are:
 
@@ -204,7 +204,7 @@ These standard constraints are:
   ```
 
   The stored resource constraints are depending on the chosen storage behavior.
-  it is given by
+  It is given by
 
   ```math
   \texttt{flow\_in}[n, t, stor\_res(n)] = \texttt{stor\_charge\_use}[n, t]
@@ -212,7 +212,7 @@ These standard constraints are:
 
 - `constraints_level`:
   The level constraints are in general following the default approach with minor modifications.
-  They are explained in detail below in *[Level constraints](@ref nodes-battery-math-con-add-level)*
+  They are explained in detail below in *[Level constraints](@ref nodes-battery-math-con-add-level)*.
 
 - `constraints_opex_var`:
 
@@ -230,10 +230,10 @@ These standard constraints are:
       It also takes into account potential operational scenarios and their probability as well as representative periods.
 
 - `constraints_data`:\
-  This function is only called for specified data of the CO₂ storage node, see above.
+  This function is only called for specified data of the battery node, see above.
 
 !!! info "Implementation of OPEX"
-    The fixed and variable OPEX constribubtion for the charge, the level, and the discharge capacities are only included if the corresponding *[storage parameters](@extref EnergyModelsBase lib-pub-nodes-stor_par)* have a field `opex_fixed` and `opex_var`, respectively.
+    The fixed and variable OPEX contribution for the charge, the level, and the discharge capacities are only included if the corresponding *[storage parameters](@extref EnergyModelsBase lib-pub-nodes-stor_par)* have a field `opex_fixed` and `opex_var`, respectively.
     Otherwise, they are omitted.
 
 Batteries require a new method for `constraints_capacity`.
@@ -246,7 +246,7 @@ While the charge and discharge capacities are unaffected by the storage level de
 \end{aligned}
 ```
 
-is is impacting the storage level capacity.
+it is impacting the storage level capacity.
 If the node utilizes [`InfLife`](@ref), the function reverts to the default behavior given by
 
 ```math
@@ -262,7 +262,7 @@ However, if the node utilizes [`CycleLife`](@ref), we have to include battery de
 \end{aligned}
 ```
 
-The degradation corresponds to a linear degradation between a fresh battery with 0 cycles and a worn out battery at the maximum nubmer of cycles.
+The degradation corresponds to a linear degradation between a fresh battery with 0 cycles and a worn out battery at the maximum number of cycles.
 It is implemented through the function [`capacity_reduction`](@ref EnergyModelsRenewableProducers.capacity_reduction).
 
 The outlet flow of a [`Battery`](@ref) node is similar to a [`RefStorage`](@extref EnergyModelsBase.RefStorage) node.
@@ -281,11 +281,11 @@ The provided reserve for the specified reserve resources ``P^{up} = reserve\_up(
 ```math
 \begin{aligned}
 \texttt{bat\_res\_up}[n, t] & = \sum_{p \in P^{up}} \texttt{flow\_out}[n, t, p] \\
-\texttt{bat\_res\_down}[n, t] & \sum_{p \in P^{down}} \texttt{flow\_out}[n, t, p] \\
+\texttt{bat\_res\_down}[n, t] & = \sum_{p \in P^{down}} \texttt{flow\_out}[n, t, p] \\
 \end{aligned}
 ```
 
-The fixed operating expenditures, calculated through the function `constraints_opex_fixed`, requires a new method to include the costs for the battery stack replacement.
+The fixed operating expenditures, calculated through the function `constraints_opex_fixed`, require a new method to include the costs for the battery stack replacement.
 It first creates an auxiliary variable ``stack\_replace`` which is given as
 
 ```math
@@ -308,12 +308,12 @@ This auxiliary variable is subsequently utilized in the calculation of the
   opex\_fixed(level(n), t_{inv}) \times \texttt{stor\_level\_inst}[n, first(t_{inv})] + \\ &
   opex\_fixed(charge(n), t_{inv}) \times \texttt{stor\_charge\_inst}[n, first(t_{inv})] + \\ &
   opex\_fixed(discharge(n), t_{inv}) \times \texttt{stor\_discharge\_inst}[n, first(t_{inv})] + \\ &
-  stack\_cost(n) \times stack\_replace[t_{inv}] / duration\_strat(t_{inv})
+  stack\_cost(n, t_{inv}) \times stack\_replace[t_{inv}] / duration\_strat(t_{inv})
 \end{aligned}
 ```
 
 !!! tip "Why do we divide by `duration_strat(t_inv)`"
-    Stack replace occurs always at the beginning of an investment period ``t_{inv}`` and only once in an investment period.
+    Stack replacement occurs always at the beginning of an investment period ``t_{inv}`` and only once in an investment period.
     The variable ``\texttt{opex\_fixed}[n, t_{inv}]`` is multiplied in the objective function with ``duration\_strat(t_{inv})``.
     As a consequence, if the duration of the investment period is larger than 1, we would invest multiple times into a new stack.
     Consequently, we have to divide the costs by the duration of the investment period.
@@ -343,8 +343,8 @@ and enforce in the case of [`CycleLife`](@ref) the upper bound on the number of 
 
 ```math
 \begin{aligned}
-cycles(n) \times & \texttt{stor\_level\_inst}[n, t] \geq \\ &
-  \texttt{bat\_prev\_use\_sp}[n, t_{inv}] + \texttt{bat\_use\_sp}[n, t_{inv}] \times duration\_strat(t_{inv, prev}) \\
+cycles(n) \times & \texttt{stor\_level\_inst}[n, last(t_{inv})] \geq \\ &
+  \texttt{bat\_prev\_use\_sp}[n, t_{inv}] + \texttt{bat\_use\_sp}[n, t_{inv}] \times duration\_strat(t_{inv}) \\
 \end{aligned}
 ```
 
@@ -370,17 +370,17 @@ This function has two distinctive methods:
    ```math
    \begin{aligned}
    \texttt{disjunct}[t_{inv}] = & \texttt{bat\_prev\_use\_sp}[n, t_{inv, prev}] + \\ &
-     \texttt{bat\_use\_sp}[n, t_{inv}] \times duration\_strat(t_{inv, prev}) \\
+     \texttt{bat\_use\_sp}[n, t_{inv, prev}] \times duration\_strat(t_{inv, prev}) \\
    \end{aligned}
    ```
 
-   we have to include a bilinear term:
+   In the case of [`CycleLife`](@ref), we have to include a bilinear term:
 
    ```math
    \begin{aligned}
    \texttt{disjunct}[t_{inv}] = & ( \texttt{bat\_prev\_use\_sp}[n, t_{inv, prev}] + \\ &
-     \texttt{bat\_use\_sp}[n, t_{inv}] \times duration\_strat(t_{inv, prev}) ) \times \\ &
-     \texttt{bat\_stack\_replace\_n}[n, t_{inv}] \\
+     \texttt{bat\_use\_sp}[n, t_{inv, prev}] \times duration\_strat(t_{inv, prev}) ) \times \\ &
+     (1 - \texttt{bat\_stack\_replace\_b}[n, t_{inv}]) \\
    \end{aligned}
    ```
 
@@ -394,7 +394,7 @@ If the `TimeStructure` includes representative periods, then the use in each rep
 ```math
 \begin{aligned}
 \texttt{bat\_use\_rp}[n, t_{rp}] = \sum_{t \in t_{rp}} & \texttt{stor\_charge\_use}[n, t] \times \\ &
-  inputs(n, p_{stor}) \times scale\_op\_sp(t_{rp}, t) \\
+  inputs(n, p_{stor}) \times scale\_op\_sp(t_{inv}, t) \\
 \end{aligned}
 ```
 
@@ -441,7 +441,7 @@ The individual value of the auxiliary variable ``prev\_use`` can be differentiat
 
    with ``t_{prev}`` denoting the previous operational period.
 
-Note, that the auxiliary variable is not directly implemented.
+Note that the auxiliary variable is not directly implemented.
 Instead, the JuMP macro `@expression` is utilized.
 
 ##### [Reserve constraints](@id nodes-battery-math-con-add-reserve)
@@ -481,8 +481,8 @@ The second constraint is replaced by
 if the node uses [`InfLife`](@ref), and hence, does not include battery degradation.
 
 !!! note "Required time for providing the reserve"
-    As can be seens from above constraints, it is necessary to provide the reserve capacity for at least a duration of 1 of an operational period.
-    If you use hourly resolution, it corresponds to an hour, even if the duration of the representative periods is longer (specified through a value differeing from 1 in the time structure).
+    As can be seen from above constraints, it is necessary to provide the reserve capacity for at least a duration of 1 of an operational period.
+    If you use hourly resolution, it corresponds to an hour, even if the duration of the representative periods is longer (specified through a value differing from 1 in the time structure).
     This concept is explained in the section *[utilize `TimeStruct`](@extref EnergyModelsBase how_to-utilize_TS)*.
 
 ##### [Level constraints](@id nodes-battery-math-con-add-level)
@@ -546,7 +546,7 @@ In the case of battery nodes, we can distinguish the following cases:
    \end{aligned}
    ```
 
-2. The first operational period in subsequent representative periods in any investment period (given by ``typeof(t_{prev}) = nothing``) if the the storage behavior is given as [`CyclicStrategic`](@extref EnergyModelsBase.CyclicStrategic):\
+2. The first operational period in subsequent representative periods in any investment period (given by ``typeof(t_{prev}) = nothing``) if the storage behavior is given as [`CyclicStrategic`](@extref EnergyModelsBase.CyclicStrategic):\
 
    ```math
    \begin{aligned}

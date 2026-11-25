@@ -4,7 +4,7 @@ Non-dispatchable renewable energy sources generate electricity from intermittent
 Examples for intermittent energy sources are solar irradiation, the wind, or the flow within rivers.
 Although these energy sources have a constant nominal capacity, their production depends on intermittent energy sources.
 Although `EnergyModelsX` allows for capacities varying on the operational level, it is then not possible to include investments for a technology.
-As a consequence, the design of the [`RefSource`](@extref EnergyModelsBase.RefSource) is not satisfactory, when considering potential investments in capacities.=.
+As a consequence, the design of the [`RefSource`](@extref EnergyModelsBase.RefSource) is not satisfactory, when considering potential investments in capacities.
 
 Hence, it is necessary to implement a source node representing intermittent renewable energy generation.
 
@@ -13,7 +13,7 @@ Hence, it is necessary to implement a source node representing intermittent rene
     This supertype is used for introducing the variable ``\texttt{curtailment}[n, t]`` and for updating the capacity constraints.
     Hence, if you plan to create a new non-dispatchable renewable energy source, you can create it as subtype of `AbstractNonDisRES`, resulting in the variable being available.
 
-    The function `constraints_capacity` is alsoe declared *via* this abstract supertype.
+    The function `constraints_capacity` is also declared *via* this abstract supertype.
 
 ## [Introduced type and its field](@id nodes-nondisres-fields)
 
@@ -41,7 +41,7 @@ The standard fields are given as:
   In addition, all values have to be non-negative.
 - **`output::Dict{<:Resource, <:Real}`**:\
   The field `output` includes [`Resource`](@extref EnergyModelsBase.Resource)s with their corresponding conversion factors as dictionaries.
-  In the case of a non-dispatchable renewable energy source, `output` should always include your *electricity* resource.In practice, you should use a value of 1.\
+  In the case of a non-dispatchable renewable energy source, `output` should always include your *electricity* resource. In practice, you should use a value of 1.\
   All values have to be non-negative.
 - **`data::Vector{ExtensionData}`**:\
   An entry for providing additional data to the model.
@@ -51,7 +51,7 @@ The standard fields are given as:
 
 ### [Additional fields](@id nodes-nondisres-fields-new)
 
-[`NonDisRES`](@ref) nodes add a single additional field  compared to a [`RefSource`](@extref EnergyModelsBase.RefSource):
+[`NonDisRES`](@ref) nodes add a single additional field compared to a [`RefSource`](@extref EnergyModelsBase.RefSource):
 
 - **`profile::TimeProfile`**:\
   The profile is used as a multiplier to the installed capacity to represent the maximum actual capacity in each operational period.
@@ -71,7 +71,7 @@ with square brackets, while functions are represented as
 
 ``func\_example(index_1, index_2)``
 
-with parantheses.
+with parentheses.
 
 ### [Variables](@id nodes-nondisres-math-var)
 
@@ -90,11 +90,11 @@ The variables include:
 !!! note
     Non-dispatchable renewable energy source nodes are not compatible with `CaptureData`.
     Hence, you can only provide [`EmissionsProcess`](@extref EnergyModelsBase.EmissionsProcess) to the node.
-    It is our aim to include the potential for construction emissions in a latter stage
+    It is our aim to include the potential for construction emissions in a later stage.
 
 #### [Additional variables](@id nodes-nondisres-math-add)
 
-[`NonDisRES`](@ref) nodes should keep track on the curtailment of the electricity, that is the unused capacity in each operational time period.
+[`NonDisRES`](@ref) nodes should keep track of the curtailment of the electricity, that is the unused capacity in each operational time period.
 Hence, a single additional variable is declared through dispatching on the method [`EnergyModelsBase.variables_node()`](@ref):
 
 - ``\texttt{curtailment}[n, t]``: Curtailed energy of source ``n`` in operational period ``t`` with a typical unit of MW.\
@@ -104,7 +104,7 @@ Hence, a single additional variable is declared through dispatching on the metho
 
 ### [Constraints](@id nodes-nondisres-math-con)
 
-The following sections omit the direct inclusion of the vector of non dispatchable renewable energy nodes.
+The following sections omit the direct inclusion of the vector of non-dispatchable renewable energy nodes.
 Instead, it is implicitly assumed that the constraints are valid ``\forall n ∈ N^{\text{NonDisRES}\_source}`` for all [`NonDisRES`](@ref) types if not stated differently.
 In addition, all constraints are valid ``\forall t \in T`` (that is in all operational periods) or ``\forall t_{inv} \in T^{Inv}`` (that is in all strategic periods).
 

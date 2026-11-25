@@ -34,7 +34,7 @@ HydroGate
 
 ### [Providing a battery lifetime](@id lib-pub-add-bat_life)
 
-The battery nodes can have either an infinity lifetime or a finite lifetime in which the capacity is reduced due to charging the battery.
+The battery nodes can have either an infinite lifetime or a finite lifetime in which the capacity is reduced due to charging the battery.
 In this case, the lifetime is given by the number of cycles.
 
 ```@docs

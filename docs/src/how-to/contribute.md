@@ -4,7 +4,7 @@ Contributing to `EnergyModelsRenewableProducers` can be achieved in several diff
 
 ## [File a bug report](@id how_to-con-bug_rep)
 
-Another approach to contributing to `EnergyModelsRenewableProducers` is through filing a bug report as an [_issue_](https://github.com/EnergyModelsX/EnergyModelsRenewableProducers.jl/issues/new) when unexpected behaviour is occuring.
+Another approach to contributing to `EnergyModelsRenewableProducers` is through filing a bug report as an *[issue](https://github.com/EnergyModelsX/EnergyModelsRenewableProducers.jl/issues/new)* when unexpected behaviour is occurring.
 
 When filing a bug report, please follow the following guidelines:
 
@@ -14,7 +14,7 @@ When filing a bug report, please follow the following guidelines:
       If you are certain that all links are set correctly, it is most likely a bug in `EnergyModelsRenewableProducers` and should be reported.
     - If the problem occurs in model construction, it is most likely a bug in either `EnergyModelsBase` or `EnergyModelsRenewableProducers` and should be reported in the respective package.
       The error message of Julia should provide you with the failing function and whether the failing function is located in `EnergyModelsBase` or `EnergyModelsRenewableProducers`.
-      It can occur, that the last shown failing function is within `JuMP` or `MathOptInterface`.
+      It can occur that the last shown failing function is within `JuMP` or `MathOptInterface`.
       In this case, it is best to trace the error to the last called `EnergyModelsBase` or `EnergyModelsRenewableProducers` function.
     - If the problem is only appearing for specific solvers, it is most likely not a bug in `EnergyModelsRenewableProducers`, but instead a problem of the solver wrapper for `MathOptInterface`.
       In this case, please contact the developers of the corresponding solver wrapper.
