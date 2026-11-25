@@ -9,11 +9,11 @@ additional check on the data.
 
 ## Checks
 - The field `cap` is required to be non-negative (similar to the `Source` check).
-- The value of the field `opex_fixed` is required to be non-negative and
-  accessible through a `StrategicPeriod` as outlined in the function
+- The value of the field `opex_fixed` is required to be non-negative and accessible through
+  a `StrategicPeriod` as outlined in the function
   [`EMB.check_fixed_opex`](@extref EnergyModelsBase.check_fixed_opex).
-- The values of the dictionary `output` are required to be non-negative
-  (similar to the `Source` check).
+- The values of the dictionary `output` are required to be non-negative (similar to the
+  `Source` check).
 - The field `profile` is required to be in the range ``[0, 1]`` for all time steps
   ``t ∈ \\mathcal{T}``.
 """
@@ -39,14 +39,14 @@ It reuses the standard checks of a `Storage` node through calling the function
 additional check on the data.
 
 ## Checks
-- The `TimeProfile` of the field `capacity` in the type in the field `charge` is required
-  to be non-negative if the chosen composite type has the field `capacity`.
-- The `TimeProfile` of the field `capacity` in the type in the field `level` is required
-  to be non-negative.
+- The `TimeProfile` of the field `capacity` in the type in the field `charge` is required to
+  be non-negative if the chosen composite type has the field `capacity`.
+- The `TimeProfile` of the field `capacity` in the type in the field `level` is required to
+  be non-negative.
 - The `TimeProfile` of the field `capacity` in the type in the field `discharge` is required
   to be non-negative if the chosen composite type has the field `capacity`.
-- The `TimeProfile` of the field `opex_fixed` is required to be non-negative and
-  accessible through a `StrategicPeriod` as outlined in the function
+- The `TimeProfile` of the field `opex_fixed` is required to be non-negative and accessible
+  through a `StrategicPeriod` as outlined in the function
   [`EMB.check_fixed_opex`](@extref EnergyModelsBase.check_fixed_opex) for the chosen
   composite type.
 - The field `output` can only include a single `Resource`.
@@ -109,14 +109,13 @@ end
 This method checks that the [`HydroReservoir`](@ref) node is valid.
 
 ## Checks
-- The `TimeProfile` of the `capacity` of the `HydroReservoir` field `vol` is required
-  to be non-negative.
-- The `TimeProfile` of the field `opex_fixed` is required to be non-negative and
-  accessible through a `StrategicPeriod` as outlined in the function
-  [`EMB.check_fixed_opex`](@extref EnergyModelsBase.check_fixed_opex) for the
-  field `vol`, if included.
-- The `TimeProfile` of the `vol_inflow` of the `HydroReservoir` is required to be
+- The `TimeProfile` of the `capacity` of the `HydroReservoir` field `vol` is required to be
   non-negative.
+- The `TimeProfile` of the field `opex_fixed` is required to be non-negative and accessible
+  through a `StrategicPeriod` as outlined in the function
+  [`EMB.check_fixed_opex`](@extref EnergyModelsBase.check_fixed_opex) for the field `vol`,
+  if included.
+- The `TimeProfile` of the `vol_inflow` of the `HydroReservoir` is required to be non-negative.
 """
 function EMB.check_node(n::HydroReservoir, 𝒯, modeltype::EnergyModel, check_timeprofiles::Bool)
     𝒯ᴵⁿᵛ = strategic_periods(𝒯)
@@ -235,8 +234,8 @@ end
 Performs various checks on [`ScheduleConstraint`](@ref) data for all nodes.
 
 ## Checks
-- The field `resource` is required to be either the water or the electricity resource if
-  the node is a [`HydroUnit`](@ref).
+- The field `resource` is required to be either the water or the electricity resource if the
+  node is a [`HydroUnit`](@ref).
 - The value of constraints are required to be in the range ``[0, 1]`` for all time steps
   ``t ∈ \\mathcal{T}``.
 - The penalty of constraints are required to be non-negative for all time steps
@@ -276,14 +275,14 @@ It reuses the standard checks of a `Storage` node through calling the function
 additional check on the data.
 
 ## Checks
-- The `TimeProfile` of the field `capacity` in the type in the field `charge` is required
-  to be non-negative.
-- The `TimeProfile` of the field `capacity` in the type in the field `level` is required
-  to be non-negative.
+- The `TimeProfile` of the field `capacity` in the type in the field `charge` is required to
+  be non-negative.
+- The `TimeProfile` of the field `capacity` in the type in the field `level` is required to
+  be non-negative.
 - The `TimeProfile` of the field `capacity` in the type in the field `discharge` is required
   to be non-negative.
-- The `TimeProfile` of the field `opex_fixed` is required to be non-negative and
-  accessible through a `StrategicPeriod` as outlined in the function
+- The `TimeProfile` of the field `opex_fixed` is required to be non-negative and accessible
+  through a `StrategicPeriod` as outlined in the function
   [`EMB.check_fixed_opex`](@extref EnergyModelsBase.check_fixed_opex) for the chosen
   composite type.
 - The value of the field `input` is required to be less than or equal to 1.
@@ -314,14 +313,14 @@ It reuses the standard checks of a `Storage` node through calling the function
 additional check on the data.
 
 ## Checks
-- The `TimeProfile` of the field `capacity` in the type in the field `charge` is required
-  to be non-negative.
-- The `TimeProfile` of the field `capacity` in the type in the field `level` is required
-  to be non-negative.
+- The `TimeProfile` of the field `capacity` in the type in the field `charge` is required to
+  be non-negative.
+- The `TimeProfile` of the field `capacity` in the type in the field `level` is required to
+  be non-negative.
 - The `TimeProfile` of the field `capacity` in the type in the field `discharge` is required
   to be non-negative.
-- The `TimeProfile` of the field `opex_fixed` is required to be non-negative and
-  accessible through a `StrategicPeriod` as outlined in the function
+- The `TimeProfile` of the field `opex_fixed` is required to be non-negative and accessible
+  through a `StrategicPeriod` as outlined in the function
   [`EMB.check_fixed_opex`](@extref EnergyModelsBase.check_fixed_opex) for the chosen
   composite type.
 - The value of the field `input` is required to be less than or equal to 1.

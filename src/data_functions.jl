@@ -3,9 +3,9 @@
     EMB.constraints_ext_data(m, n::HydroNode, 𝒯, 𝒫, modeltype::EnergyModel, data::ScheduleConstraint{MaxSchedule})
     EMB.constraints_ext_data(m, n::HydroNode, 𝒯, 𝒫, modeltype::EnergyModel, data::ScheduleConstraint{EqualSchedule})
 
-Constraint functions for creating constraints regarding production schedule for the individual
-units within a waterway as declared through [`HydroNode`](@ref). The constraints can either
-be hard (if the penalty is set to `Inf`) or soft (for any other value).
+Constraint functions for creating constraints regarding production schedule for the
+individual units within a waterway as declared through [`HydroNode`](@ref). The constraints
+can either be hard (if the penalty is set to `Inf`) or soft (for any other value).
 
 The chosen scheduling variables are identified using the function [`get_var_schedule`](@ref)
 while the capacity to which the profile should apply is identified through the function

@@ -8,14 +8,13 @@ non-dispatchable renewable producer, as wind, solar etc.
 pumped hydro storage.
 - `HydroStor` is a subtype of `HydroStorage <: Storage` and represents a regulated hydro \
 storage, that is a standard hydro powerplant without pumps.
-- `HydroReservoir` is a subtype of `Storage` and represents a hydro storage for \
-cascaded hydro power systems.
+- `HydroReservoir` is a subtype of `Storage` and represents a hydro storage for cascaded \
+hydro power systems.
 - `HydroGenerator` is a subtype of `HydroUnit <: NetworkNode` and represents a hydro \
 generator for cascaded hydro power systems.
 - `HydroPump` is a subtype of `HydroUnit <: NetworkNode` and represents a hydro pump for \
 cascaded hydro power systems.
-- `HydroGate` is a subtype of `NetworkNode` and represents a gate for cascaded hydro power \
-systems.
+- `HydroGate` is a subtype of `NetworkNode` and represents a gate for cascaded hydro power systems.
 - `Battery` is a subtype of `AbstractBattery <: Storage` and represents a battery storage \
 with optional degradation.
 - `ReserveBattery` is a subtype of `AbstractBattery <: Storage` and represents a battery \

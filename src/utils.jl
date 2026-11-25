@@ -169,8 +169,8 @@ end
 """
     linear_reformulation(m, 𝒯, var_binary, var_continuous, lb::TimeProfile, ub::TimeProfile)
 
-Linear reformulation of the element-wise multiplication of the binary variable `var_binary[𝒯]`
-and the continuous variable `var_continuous[𝒯] ∈ [lb, ub]`.
+Linear reformulation of the element-wise multiplication of the binary variable
+`var_binary[𝒯]` and the continuous variable `var_continuous[𝒯] ∈ [lb, ub]`.
 
 It returns the product `var_aux[𝒯]` with
 
@@ -263,8 +263,7 @@ storage level capacity and the number of cycles before the stack must be replace
     modeltype::AbstractInvestmentModel
 
 When the modeltype is an `AbstractInvestmentModel`, it returns the multiplication of the
-maximum installed storage level capacity and the number of cycles before the stack must be
-replaced.
+maximum installed storage level capacity and the number of cycles before the stack must be replaced.
 
 !!! note
     If the [`AbstractBattery`](@ref) node does not have investments in its `level`, it
