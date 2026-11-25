@@ -17,7 +17,7 @@
   * `constraints_capacity_pq` called in `constraints_capacity` for capacity variable related constraints.
   * `constraints_flow_out_pq` called in `constraints_flow_out` for flow related constraints.
   * `build_pq_constaints` kept as legacy function for PQ curves without methods.
-* Sped up model creation with `ScheduleConstraint`s:
+* Sped up model creation with `ScheduleConstraint`s.
 
 ### Documentation
 
