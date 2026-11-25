@@ -13,7 +13,11 @@
 
 ### Minor updates
 
-* Faster model creation with `ScheduleConstraint`s: the penalty variables evaluate the schedule constraints of a node once, and the constraints index the sparse penalty variables per operational period instead of slicing them.
+* Improved structure for `build_pq_constaints`:
+  * `constraints_capacity_pq` called in `constraints_capacity` for capacity variable related constraints.
+  * `constraints_flow_out_pq` called in `constraints_flow_out` for flow related constraints.
+  * `build_pq_constaints` kept as legacy function for PQ curves without methods.
+* Sped up model creation with `ScheduleConstraint`s:
 
 ### Documentation
 
