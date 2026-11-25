@@ -116,14 +116,8 @@ where ``P_{norm}^{max}`` is the maximum normalized power capacity identified thr
 If the capacity refers to power, the `PqPoints` `power_levels` ranges between 0 and 1 and ``P_{norm}^{max}`` will also be 1.
 If the capacity refers to flow, the `discharge_levels` ranges between 0 and 1, while `power_levels` may take other values and ``P_{norm}^{max}`` represents the last element of the `power_levels` vector.
 
-The new method furthermore calls the function [`build_pq_constaints`](@ref EnergyModelsRenewableProducers.build_pq_constaints) for creating the constraints of the PQ-curve.
-The flow out of water is constrained to total discharge given by the sum of the ``\texttt{discharge\_segment[n,t,q]}`` variables, where Q is the number of segments in the PQ-curve (*i.e.*, Q+1 PQ-points):
-
-```math
-\texttt{flow\_out}[n, t, water\_resource(n)] = \sum_{q=1}^{Q}\texttt{discharge\_segment[n,t,q]}
-```
-
-In addition to being constrained by the installed capacity, the variables ``\texttt{cap\_use}`` are constrained by the discharge of water multiplied with the conversion rate given by ``\texttt{E[q]}`` which is the slope of each segment in the PQ-curve:
+The new method furthermore calls the function [`constraints_capacity_pq`](@ref EnergyModelsRenewableProducers.constraints_capacity_pq) for creating the constraints of the PQ-curve.
+In addition to being constrained by the installed capacity, the variables ``\texttt{cap\_use}`` are constrained by the discharge of water multiplied with the conversion rate given by ``\texttt{E[q]}`` which is the slope of each segment in the PQ-curve, where Q is the number of segments in the PQ-curve (*i.e.*, Q+1 PQ-points):
 
 ```math
 \texttt{cap\_use}[n, t] = \sum_{q=1}^{Q}(\texttt{discharge\_segment}[n,t,q] \times \texttt{E[q]})
@@ -174,6 +168,13 @@ Furthermore, we provide new methods for the flow constraints for `HydroGenerator
 
   ```math
   \texttt{flow\_out}[n, t, electricity\_resource(n)] = \texttt{cap\_use}[n, t]
+  ```
+
+  The method furthermore calls the function [`constraints_flow_out_pq`](@ref EnergyModelsRenewableProducers.constraints_flow_out_pq).
+  It constrains the flow out of water to the total discharge given by the sum of the ``\texttt{discharge\_segment[n,t,q]}`` variables:
+
+  ```math
+  \texttt{flow\_out}[n, t, water\_resource(n)] = \sum_{q=1}^{Q}\texttt{discharge\_segment[n,t,q]}
   ```
 
 Furthermore, the function `constraints_ext_data` adds *[discharge and power capacity constraints](@ref nodes-det_hydro_power-phil-con)* if additional constraints are provided in the `ExtensionData` field.

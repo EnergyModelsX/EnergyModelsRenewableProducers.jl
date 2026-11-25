@@ -102,7 +102,7 @@ In addition, all constraints are valid ``\forall t \in T`` (that is in all opera
 [`HydroPump`](@ref) nodes utilize in general the standard constraints described in *[Constraint functions for `NetworkNode`](@extref EnergyModelsBase nodes-network_node-math-con)*.
 The majority of these constraints are hence omitted in the following description.
 
-The new methods for the functions `constraints_capacity` (including the constraints of the PQ-curve created through the function [`build_pq_constaints`](@ref EnergyModelsRenewableProducers.build_pq_constaints)) and `constraints_opex_var` are explained in the *[section for `HydroGenerator`](@ref nodes-det_hydro_power-generator-math-con-stand)*.
+The new methods for the functions `constraints_capacity` (including the constraints of the PQ-curve created through the function [`constraints_capacity_pq`](@ref EnergyModelsRenewableProducers.constraints_capacity_pq)) and `constraints_opex_var` are explained in the *[section for `HydroGenerator`](@ref nodes-det_hydro_power-generator-math-con-stand)*.
 
 !!! note "Energy equivalent"
     If a single energy equivalent is used, two points (zero and max) are created to describe a single discharge segment with the slope of the energy equivalent and the capacity of node `n`.
@@ -124,6 +124,8 @@ The mathematical description is the same as for the `HydroGenerator` nodes, exce
   ```math
   \texttt{flow\_out}[n, t, water\_resource(n)] = \texttt{flow\_in}[n, t, water\_resource(n)]
   ```
+
+  The method furthermore calls the function [`constraints_flow_out_pq`](@ref EnergyModelsRenewableProducers.constraints_flow_out_pq) for constraining the flow of water out of the node to the sum of the ``\texttt{discharge\_segment[n,t,q]}`` variables, as explained in the *[section for `HydroGenerator`](@ref nodes-det_hydro_power-generator-math-con-stand)*.
 
 Furthermore, the function `constraints_ext_data` includes additional pumping capacity constraints.
 The constraints are optional and only added to the problem if given as input in the `ExtensionData` field of the nodes.
