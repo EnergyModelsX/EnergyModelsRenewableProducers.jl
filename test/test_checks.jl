@@ -467,8 +467,10 @@ end
     # Test that a wrong input and output dictionaries are caught
     @test_throws AssertionError check_battery(; input=Dict(Power => 1.9))
     @test_throws AssertionError check_battery(; input=Dict(Power => -0.9))
+    @test_throws AssertionError check_battery(; input=Dict(Power => 0.0))
     @test_throws AssertionError check_battery(; output=Dict(Power => 1.9))
     @test_throws AssertionError check_battery(; output=Dict(Power => -0.9))
+    @test_throws AssertionError check_battery(; output=Dict(Power => 0.0))
 
     # Test that a wrong battery life is caught
     @test_throws AssertionError check_battery(; cycles=-10)
@@ -498,6 +500,8 @@ end
     # Add the reserve resources
     res_down = ResourceCarrier("Reserve Down", 0.0)
     res_up = ResourceCarrier("Reserve Up", 0.0)
+    res_down2 = ResourceCarrier("Reserve Down 2", 0.0)
+    res_up2 = ResourceCarrier("Reserve Up 2", 0.0)
 
     # Function for setting up the system for testing a `ReserveBattery` node
     function check_resbattery(;
@@ -512,9 +516,11 @@ end
         cycles = 900,
         degradation = 0.2,
         stack_cost = FixedProfile(100),
+        reserve_up = [res_up],
+        reserve_down = [res_down],
     )
 
-        products = [Power, CO2, res_up, res_down]
+        products = [Power, CO2, res_up, res_down, res_up2, res_down2]
         # Creation of the source and sink module as well as the arrays used for nodes and links
         source = RefSource(
             "power_source",
@@ -536,8 +542,8 @@ end
                 degradation,
                 stack_cost
             ),
-            [res_up],
-            [res_down],
+            reserve_up,
+            reserve_down,
         )
         sink = RefSink(
             "power_demand",
@@ -568,6 +574,10 @@ end
         return create_model(case, modeltype), case, modeltype
     end
 
+    # Test that the default case passes the checks, although the reserve resources are
+    # included in `outputs` with a value of 0
+    @test isa(check_resbattery()[1], JuMP.Model)
+
     # Test that a wrong capacity is caught by the checks
     @test_throws AssertionError check_resbattery(; charge_cap=FixedProfile(-25))
     @test_throws AssertionError check_resbattery(; level_cap=FixedProfile(-25))
@@ -584,8 +594,10 @@ end
     # Test that a wrong input and output dictionaries are caught
     @test_throws AssertionError check_resbattery(; input=Dict(Power => 1.9))
     @test_throws AssertionError check_resbattery(; input=Dict(Power => -0.9))
+    @test_throws AssertionError check_resbattery(; input=Dict(Power => 0.0))
     @test_throws AssertionError check_resbattery(; output=Dict(Power => 1.9))
     @test_throws AssertionError check_resbattery(; output=Dict(Power => -0.9))
+    @test_throws AssertionError check_resbattery(; output=Dict(Power => 0.0))
 
     # Test that a wrong battery life is caught
     @test_throws AssertionError check_resbattery(; cycles=-10)
@@ -595,10 +607,28 @@ end
     @test_throws AssertionError check_resbattery(; stack_cost=OperationalProfile([10]))
 
     # Test that inclusion of reserves in the fields input or output is caught
-    @test_throws AssertionError check_resbattery(; input=Dict(Power => 1.9, res_up => 1))
-    @test_throws AssertionError check_resbattery(; output=Dict(Power => 1.9, res_up => 1))
-    @test_throws AssertionError check_resbattery(; input=Dict(Power => 1.9, res_down => 1))
-    @test_throws AssertionError check_resbattery(; output=Dict(Power => 1.9, res_down => 1))
+    @test_throws AssertionError check_resbattery(; input=Dict(Power => 0.9, res_up => 1))
+    @test_throws AssertionError check_resbattery(; output=Dict(Power => 0.9, res_up => 1))
+    @test_throws AssertionError check_resbattery(; input=Dict(Power => 0.9, res_down => 1))
+    @test_throws AssertionError check_resbattery(; output=Dict(Power => 0.9, res_down => 1))
+
+    # Test that a single reserve resource in input or output is caught with several reserves
+    @test_throws AssertionError check_resbattery(;
+        input=Dict(Power => 0.9, res_up => 1),
+        reserve_up=[res_up, res_up2],
+    )
+    @test_throws AssertionError check_resbattery(;
+        output=Dict(Power => 0.9, res_up => 1),
+        reserve_up=[res_up, res_up2],
+    )
+    @test_throws AssertionError check_resbattery(;
+        input=Dict(Power => 0.9, res_down => 1),
+        reserve_down=[res_down, res_down2],
+    )
+    @test_throws AssertionError check_resbattery(;
+        output=Dict(Power => 0.9, res_down => 1),
+        reserve_down=[res_down, res_down2],
+    )
 end
 
 # Set the global again to false

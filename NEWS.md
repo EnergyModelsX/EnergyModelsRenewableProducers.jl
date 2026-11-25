@@ -2,6 +2,11 @@
 
 ## Unversioned
 
+### Check improvements
+
+* `ReserveBattery` checks reject every reserve resource in `input` or `output`, also with several reserve resources, and the `stack_cost` message of `CycleLife` names the field correctly.
+* `Battery` and `ReserveBattery` checks require positive values in `input` and `output`.
+
 ### Documentation
 
 * Fixed docstrings:

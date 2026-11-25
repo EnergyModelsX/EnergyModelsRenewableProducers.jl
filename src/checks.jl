@@ -285,20 +285,22 @@ additional check on the data.
   through a `StrategicPeriod` as outlined in the function
   [`EMB.check_fixed_opex`](@extref EnergyModelsBase.check_fixed_opex) for the chosen
   composite type.
-- The value of the field `input` is required to be less than or equal to 1.
-- The value of the field `output` is required to be less than or equal to 1.
+- The values of the field `input` must be in the range ``(0, 1]``.
+- The values of the field `output` must be in the range ``(0, 1]``.
 - The [`AbstractBatteryLife`](@ref) must follow the provided values as outlined in the
   function [`check_battery_life`](@ref).
 """
 function EMB.check_node(n::AbstractBattery, 𝒯, modeltype::EnergyModel, check_timeprofiles::Bool)
     EMB.check_node_default(n, 𝒯, modeltype, check_timeprofiles)
     has_input(n) && @assert_or_log(
-        all(inputs(n, p) ≤ 1 for p ∈ inputs(n)),
-        "The values for the Dictionary `input` must be less than or equal to 1."
+        all(0 < inputs(n, p) ≤ 1 for p ∈ inputs(n)),
+        "The values for the Dictionary `input` must be positive and less than or equal " *
+        "to 1."
     )
     has_output(n) && @assert_or_log(
-        all(outputs(n, p) ≤ 1 for p ∈ outputs(n)),
-        "The values for the Dictionary `output` must be less than or equal to 1."
+        all(0 < outputs(n, p) ≤ 1 for p ∈ outputs(n)),
+        "The values for the Dictionary `output` must be positive and less than or equal " *
+        "to 1."
     )
     check_battery_life(n, battery_life(n), 𝒯, modeltype, check_timeprofiles)
 end
@@ -323,8 +325,8 @@ additional check on the data.
   through a `StrategicPeriod` as outlined in the function
   [`EMB.check_fixed_opex`](@extref EnergyModelsBase.check_fixed_opex) for the chosen
   composite type.
-- The value of the field `input` is required to be less than or equal to 1.
-- The value of the field `output` is required to be less than or equal to 1.
+- The values of the field `input` must be in the range ``(0, 1]``.
+- The values of the field `output` must be in the range ``(0, 1]``.
 - The [`AbstractBatteryLife`](@ref) must follow the provided values as outlined in the
   function [`check_battery_life`](@ref).
 - The resources in the array `reserve_up` cannot be part of the resources in the
@@ -335,34 +337,33 @@ additional check on the data.
 function EMB.check_node(n::ReserveBattery, 𝒯, modeltype::EnergyModel, check_timeprofiles::Bool)
     EMB.check_node_default(n, 𝒯, modeltype, check_timeprofiles)
     has_input(n) && @assert_or_log(
-        all(inputs(n, p) ≤ 1 for p ∈ inputs(n)),
-        "The values for the Dictionary `input` must be less than or equal to 1."
+        all(0 < inputs(n, p) ≤ 1 for p ∈ inputs(n)),
+        "The values for the Dictionary `input` must be positive and less than or equal " *
+        "to 1."
     )
+    # The reserve resources are included in `outputs(n)` with a value of 0
     has_output(n) && @assert_or_log(
-        all(outputs(n, p) ≤ 1 for p ∈ outputs(n)),
-        "The values for the Dictionary `output` must be less than or equal to 1."
+        all(0 < outputs(n, p) ≤ 1 for p ∈ keys(n.output)),
+        "The values for the Dictionary `output` must be positive and less than or equal " *
+        "to 1."
     )
     check_battery_life(n, battery_life(n), 𝒯, modeltype, check_timeprofiles)
-    if !isempty(reserve_up(n))
-        @assert_or_log(
-            any([!haskey(n.input, p) for p ∈ reserve_up(n)]),
-            "The `reserve_up` resources cannot be in the `input` dictionary."
-        )
-        @assert_or_log(
-            any([!haskey(n.output, p) for p ∈ reserve_up(n)]),
-            "The `reserve_up` resources cannot be in the `output` dictionary."
-        )
-    end
-    if !isempty(reserve_down(n))
-        @assert_or_log(
-            any([!haskey(n.input, p) for p ∈ reserve_down(n)]),
-            "The `reserve_down` resources cannot be in the `input` dictionary."
-        )
-        @assert_or_log(
-            any([!haskey(n.output, p) for p ∈ reserve_down(n)]),
-            "The `reserve_down` resources cannot be in the `output` dictionary."
-        )
-    end
+    @assert_or_log(
+        all(!haskey(n.input, p) for p ∈ reserve_up(n)),
+        "The `reserve_up` resources cannot be in the `input` dictionary."
+    )
+    @assert_or_log(
+        all(!haskey(n.output, p) for p ∈ reserve_up(n)),
+        "The `reserve_up` resources cannot be in the `output` dictionary."
+    )
+    @assert_or_log(
+        all(!haskey(n.input, p) for p ∈ reserve_down(n)),
+        "The `reserve_down` resources cannot be in the `input` dictionary."
+    )
+    @assert_or_log(
+        all(!haskey(n.output, p) for p ∈ reserve_down(n)),
+        "The `reserve_down` resources cannot be in the `output` dictionary."
+    )
 end
 
 """
@@ -414,7 +415,7 @@ function check_battery_life(
     sc_prof = stack_cost(bat_life)
     if (isa(sc_prof, StrategicProfile) || isa(sc_prof, StrategicStochasticProfile)) &&
         check_timeprofiles
-        EMB.check_profile(`stack_cost`, sc_prof, 𝒯; bool=false)
+        EMB.check_profile(:stack_cost, sc_prof, 𝒯; bool=false)
     end
 
     # Check for potential indexing problems
