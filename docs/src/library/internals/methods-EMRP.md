@@ -11,6 +11,7 @@ Pages = ["methods-EMRP.md"]
 ```@docs
 EMRP.constraints_capacity_pq
 EMRP.constraints_flow_out_pq
+EMRP.build_pq_constaints
 EMRP.constraints_usage
 EMRP.constraints_usage_iterate
 EMRP.constraints_usage_sp

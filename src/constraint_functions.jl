@@ -571,11 +571,25 @@ function EMB.constraints_capacity(m, n::HydroUnit, 𝒯::TimeStructure, modeltyp
 end
 
 """
+    constraints_capacity_pq(m, n::HydroUnit, pq::AbstractPqCurve, 𝒯::TimeStructure, modeltype::EnergyModel)
     constraints_capacity_pq(m, n::HydroUnit, pq::PqPoints, 𝒯::TimeStructure, modeltype::EnergyModel)
 
 Function for creating the constraints on the variables `cap_use` and `discharge_segment` as
-declared in the PqPoints `pq` of a [`HydroUnit`](@ref) node.
+declared in the PQ curve `pq` of a [`HydroUnit`](@ref) node.
+
+The method for an `AbstractPqCurve` calls the legacy function [`build_pq_constaints`](@ref)
+for backwards compatibility and logs a warning once.
 """
+function constraints_capacity_pq(m, n::HydroUnit, pq::AbstractPqCurve, 𝒯::TimeStructure, modeltype::EnergyModel)
+    @warn(
+        "The function `build_pq_constaints` was replaced by the functions " *
+        "`constraints_capacity_pq` and `constraints_flow_out_pq`. It is only called for " *
+        "backwards compatibility. Add methods to the new functions for your PQ curve " *
+        "instead.",
+        maxlog = 1
+    )
+    build_pq_constaints(m, n, pq, 𝒯)
+end
 function constraints_capacity_pq(m, n::HydroUnit, pq::PqPoints, 𝒯::TimeStructure, modeltype::EnergyModel)
 
     Q = discharge_segments(pq)
@@ -595,6 +609,21 @@ function constraints_capacity_pq(m, n::HydroUnit, pq::PqPoints, 𝒯::TimeStruct
             sum(m[:discharge_segment][n, t, q]* η[q] for q ∈ Q)
     )
 end
+
+"""
+    build_pq_constaints(m, n::HydroUnit, pq::AbstractPqCurve, 𝒯::TimeStructure)
+
+Legacy function for creating the constraints of the PQ curve `pq` of a [`HydroUnit`](@ref)
+node. [`constraints_capacity_pq`](@ref) calls it for PQ curves that are not `PqPoints` and
+have no own method of [`constraints_capacity_pq`](@ref). A method must create the
+constraints on the variables `flow_out`, `cap_use`, and `discharge_segment`, as
+[`constraints_flow_out_pq`](@ref) creates no constraints for these curves.
+
+!!! warning "Legacy function"
+    Its call logs a warning once. Do not add methods for new PQ curves. Add methods to
+    [`constraints_capacity_pq`](@ref) and [`constraints_flow_out_pq`](@ref) instead.
+"""
+function build_pq_constaints end
 
 """
     EMB.constraints_flow_in(m, n::HydroGenerator, 𝒯::TimeStructure, modeltype::EnergyModel)
@@ -660,11 +689,18 @@ function EMB.constraints_flow_out(m, n::HydroPump, 𝒯::TimeStructure, modeltyp
 end
 
 """
+    constraints_flow_out_pq(m, n::HydroUnit, pq::AbstractPqCurve, 𝒯::TimeStructure, modeltype::EnergyModel)
     constraints_flow_out_pq(m, n::HydroUnit, pq::PqPoints, 𝒯::TimeStructure, modeltype::EnergyModel)
 
 Function for creating the constraints on the variable `flow_out` given the
-`discharge_segment` as declared in the PqPoints `pq` of a [`HydroUnit`](@ref) node.
+`discharge_segment` as declared in the PQ curve `pq` of a [`HydroUnit`](@ref) node.
+
+The method for an `AbstractPqCurve` creates no constraints, as the legacy function
+[`build_pq_constaints`](@ref) includes them.
 """
+function constraints_flow_out_pq(m, n::HydroUnit, pq::AbstractPqCurve, 𝒯::TimeStructure, modeltype::EnergyModel)
+    nothing
+end
 function constraints_flow_out_pq(m, n::HydroUnit, pq::PqPoints, 𝒯::TimeStructure, modeltype::EnergyModel)
 
     # Add the constraint for the sum of the discharge segments
