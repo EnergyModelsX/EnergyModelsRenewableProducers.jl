@@ -63,7 +63,7 @@ function generate_hydro_example_data()
         Dict(Power => 1),   # Output from the Node, in this case, Power
     )
 
-    # Create a regulated hydro power plant without storage capacity
+    # Create a regulated hydro power plant without pumps
     hydro = HydroStor{CyclicStrategic}(
         "hydropower",       # Node ID
         StorCapOpexFixed(FixedProfile(90), FixedProfile(3)),
@@ -92,7 +92,7 @@ function generate_hydro_example_data()
         Dict(Power => 1),   # Energy demand and corresponding ratio
     )
 
-    # Create the array of ndoes
+    # Create the array of nodes
     nodes = [av, wind, hydro, sink]
 
     # Connect all nodes with the availability node for the overall energy balance

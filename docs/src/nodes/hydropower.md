@@ -3,7 +3,7 @@
 The reference storage node, [`RefStorage`](@extref EnergyModelsBase.RefStorage) is quite flexible with respect to the individual storage behaviours, that is cyclic (both representative and strategic) or accumulating as it is included as parametric type using the individual *[storage behaviours](@extref EnergyModelsBase lib-pub-nodes-stor_behav)*.
 In addition, it allows for modelling charge and storage level as different *[storage parameters](@extref EnergyModelsBase lib-pub-nodes-stor_par)*.
 It is, however, not possible at the moment to provide a discharge capacity required in hydropower modelling.
-Furthermore, it is not possible to include an inflow to the storage node, except through artifically creating a source node representing the water flowing into the node.
+Furthermore, it is not possible to include an inflow to the storage node, except through artificially creating a source node representing the water flowing into the node.
 
 Hence, it is necessary to include a specific hydropower storage node.
 
@@ -16,7 +16,7 @@ The two nodes are designed to work with the cyclic *[storage behaviors](@extref 
 [`HydroStor`](@ref) and [`PumpedHydroStor`](@ref) should mainly be used for aggregated hydropower descriptions.
 
 !!! warning "Input, output, and stored resource"
-    Although hydro reservoir store water, we have to assume in the current implementation that electricity is stored.
+    Although hydro reservoirs store water, we have to assume in the current implementation that electricity is stored.
     The key reason for this is that we do not support in the modelling approach a conversion from the variable ``\texttt{flow\_in}`` of a resource to a different stored resource.
 
 For detailed hydropower modeling, see *[Detailed hydropower](@ref nodes-det_hydro_power)*.
@@ -26,12 +26,13 @@ For detailed hydropower modeling, see *[Detailed hydropower](@ref nodes-det_hydr
 The standard fields are given as:
 
 - **`id`**:\
-  The field `id` is only used for providing a name to the node. This is similar to the approach utilized in `EnergyModelsBase`.
+  The field `id` is only used for providing a name to the node.
+  This is similar to the approach utilized in `EnergyModelsBase`.
 - **`charge::EMB.UnionCapacity`**:\
   The charge storage parameters must include a capacity.
   More information can be found on *[storage parameters](@extref EnergyModelsBase lib-pub-nodes-stor_par)*.
-  !!! info "Meaning in boths nodes"
-      The `charge` field is only included for [`PumpedHydroStor`](@ref) nodes while [`HydroStor`](@ref) do **not** allow for flow into the node.
+  !!! info "Meaning in both nodes"
+      The `charge` field is only included for [`PumpedHydroStor`](@ref) nodes while [`HydroStor`](@ref) nodes do **not** allow for flow into the node.
 - **`level::EMB.UnionCapacity`**:\
   The level storage parameters must include a capacity.
   More information can be found on *[storage parameters](@extref EnergyModelsBase lib-pub-nodes-stor_par)*.
@@ -39,14 +40,14 @@ The standard fields are given as:
   The discharge storage parameters must include a capacity.
   More information can be found on *[storage parameters](@extref EnergyModelsBase lib-pub-nodes-stor_par)*.
   !!! note "Permitted values for storage parameters in `charge`, `level`, and `discharge`"
-      If the node should contain investments through the application of [`EnergyModelsInvestments`](https:// energymodelsx.github.io/EnergyModelsInvestments.jl/stable/), it is important to note that you can only use `FixedProfile` or `StrategicProfile` for the capacity, but not `RepresentativeProfile` or `OperationalProfile`.
+      If the node should contain investments through the application of [`EnergyModelsInvestments`](https://energymodelsx.github.io/EnergyModelsInvestments.jl/stable/), it is important to note that you can only use `FixedProfile` or `StrategicProfile` for the capacity, but not `RepresentativeProfile` or `OperationalProfile`.
       Similarly, you can only use `FixedProfile` or `StrategicProfile` for the fixed OPEX, but not `RepresentativeProfile` or `OperationalProfile`.
       The variable operating expenses can be provided as `OperationalProfile` as well.
       In addition, all capacity and fixed OPEX values have to be non-negative.
-- **`stor_res::ResourceEmit`**:\
+- **`stor_res::ResourceCarrier`**:\
   The `stor_res` is the stored [`Resource`](@extref EnergyModelsBase.Resource).
-  The current implementation of `HydroStorage` nodes do not consider the conversion of potential energy of the stored water to electricity.
-  Hence, you must specifiy your *electricity* resource.
+  The current implementation of `HydroStorage` nodes does not consider the conversion of potential energy of the stored water to electricity.
+  Hence, you must specify your *electricity* resource.
 - **`input::Dict{<:Resource, <:Real}`** and **`output::Dict{<:Resource, <:Real}`**:\
   Both fields describe the `input` and `output` [`Resource`](@extref EnergyModelsBase.Resource)s with their corresponding conversion factors as dictionaries.
   The values correspond to charge and discharge efficiencies from the `HydroStorage` nodes.\
@@ -58,8 +59,8 @@ The standard fields are given as:
 ### [Additional fields](@id nodes-hydro_power-fields-new)
 
 [`HydroStorage`](@ref) nodes add additional fields compared to [`RefStorage`](@extref EnergyModelsBase.RefStorage) nodes.
-These fields are located below the field `discharge`, and hence, correspond to the 4ᵗʰ to 6ᵗʰ fields of the node.
-As a consequence, `stor_res` is now the 7ᵗʰ field compared to being the 4ᵗʰ in a [`RefStorage`](@extref EnergyModelsBase.RefStorage) node.
+These fields are located below the field `discharge`, and hence, correspond to the 4ᵗʰ to 6ᵗʰ fields of the node (5ᵗʰ to 7ᵗʰ for [`PumpedHydroStor`](@ref)).
+As a consequence, `stor_res` is now the 7ᵗʰ field (8ᵗʰ for [`PumpedHydroStor`](@ref)) compared to being the 4ᵗʰ in a [`RefStorage`](@extref EnergyModelsBase.RefStorage) node.
 
 The individual fields are related to specifics of hydropower.
 These fields are given as:
@@ -80,7 +81,7 @@ These fields are given as:
 - **`level_min::TimeProfile`**:\
   The minimum level provides a lower bound on the usage of the storage node in each operational period.
   This lower bound can be enforced by regulators to maintain a minimum amount of available stored electricity.
-  The current implementation does not allow for a violation of the constraint, although this can be implemented in a latter stage.
+  The current implementation does not allow for a violation of the constraint, although this can be implemented in a later stage.
   It can be provided as `OperationalProfile`.\
   The inflow has to be able in combination with the initial level to provide the required minimum level in the first operational period of each strategic period.
   In addition, all values have to be in the range ``[0, 1]``.
@@ -96,7 +97,7 @@ with square brackets, while functions are represented as
 
 ``func\_example(index_1, index_2)``
 
-with parantheses.
+with parentheses.
 
 ### [Variables](@id nodes-hydro_power-math-var)
 
@@ -118,7 +119,7 @@ The variables include:
 - [``\texttt{stor\_level\_Δ\_op}``](@extref EnergyModelsBase man-opt_var-cap)
 - [``\texttt{stor\_level\_Δ\_rp}``](@extref EnergyModelsBase man-opt_var-cap) if the `TimeStruct` includes `RepresentativePeriods`
 
-The variables ``\texttt{flow\_in}`` and ``\texttt{stor\_charge\_use}`` are fixed to a value of 0 in the function `constraints_flow_in` for [`HydroStor`](@ref) nodes as these nodes correspond to regulated hydropower plants and not pumped hydropower plants..
+The variables ``\texttt{flow\_in}`` and ``\texttt{stor\_charge\_use}`` are fixed to a value of 0 in the function `constraints_flow_in` for [`HydroStor`](@ref) nodes as these nodes correspond to regulated hydropower plants and not pumped hydropower plants.
 
 #### [Additional variables](@id nodes-hydro_power-math-add)
 
@@ -126,7 +127,7 @@ The variables ``\texttt{flow\_in}`` and ``\texttt{stor\_charge\_use}`` are fixed
 Hence, a single additional variable is declared through dispatching on the method [`EnergyModelsBase.variables_node()`](@ref):
 
 - ``\texttt{hydro\_spill}[n, t]``: Spilled *electricity* in hydropower node ``n`` in operational period ``t`` with a typical unit of MW.\
-  The spillage in each operational period is a rate specifying how much *electricity* is spilled, that is not routed the the grid, but instead directed from the turbines to avoid overfilling the reservoir.
+  The spillage in each operational period is a rate specifying how much *electricity* is spilled, that is not routed to the grid, but instead directed from the turbines to avoid overfilling the reservoir.
   It hence allows for an overflow from a reservoir if the inflow to a reservoir exceeds its capacity and the outflow through power generation.
 
 ### [Constraints](@id nodes-hydro_power-math-con)
@@ -137,7 +138,7 @@ In addition, all constraints are valid ``\forall t \in T`` (that is in all opera
 
 #### [Standard constraints](@id nodes-hydro_power-math-con-stand)
 
-Hydropower storages nodes utilize in general the standard constraints described on *[Constraint functions](@extref EnergyModelsBase man-con)* for `RefStorage` nodes.
+Hydropower storage nodes utilize in general the standard constraints described on *[Constraint functions](@extref EnergyModelsBase man-con)* for `RefStorage` nodes.
 
 !!! warning "stor_charge_xxx"
     The constraints for ``\texttt{stor\_charge\_use}`` are only implemented for [`PumpedHydroStor`](@ref) nodes.
@@ -204,23 +205,14 @@ These standard constraints are:
       It also takes into account potential operational scenarios and their probability as well as representative periods.
 
 - `constraints_data`:\
-  This function is only called for specified data of the CO₂ storage node, see above.
+  This function is only called for specified data of the hydropower storage node, see above.
 
 !!! info "Implementation of OPEX"
-    The fixed and variable OPEX constribubtion for the level and the charge capacities are only included if the corresponding *[storage parameters](@extref EnergyModelsBase lib-pub-nodes-stor_par)* have a field `opex_fixed` and `opex_var`, respectively.
+    The fixed and variable OPEX contribution for the level and the charge capacities are only included if the corresponding *[storage parameters](@extref EnergyModelsBase lib-pub-nodes-stor_par)* have a field `opex_fixed` and `opex_var`, respectively.
     Otherwise, they are omitted.
 
 The function `constraints_flow_in` is extended with a new method for hydropower nodes to differentiate whether the node is a pumped hydropower node or not.
-The standard constraints given by
-
-```math
-\begin{aligned}
-\texttt{stor\_level\_inst}[n, t] & \geq \texttt{stor\_level}[n, t] \\
-\texttt{stor\_charge\_inst}[n, t] & \geq \texttt{stor\_charge\_use}[n, t] \\
-\end{aligned}
-```
-
-are extended with a constraint for [`PumpedHydroStor`](@ref) nodes given by
+The standard constraints are replaced with a constraint for [`PumpedHydroStor`](@ref) nodes given by
 
 ```math
 \texttt{flow\_in}[n, t, p] \times inputs(n, p)  =
@@ -228,8 +220,7 @@ are extended with a constraint for [`PumpedHydroStor`](@ref) nodes given by
 ```
 
 while the variables ``\texttt{flow\_in}`` and ``\texttt{stor\_charge\_use}`` are fixed to a value of 0 for [`HydroStor`](@ref) nodes.
-
-These constraints allow either to include an efficiency for filling the reservoir ([`PumpedHydroStor`](@ref)) or avoiding unconstrained variables ([`HydroStor`](@ref)).
+These new methods allow either to include an efficiency for filling the reservoir ([`PumpedHydroStor`](@ref)) or avoiding unconstrained variables ([`HydroStor`](@ref)).
 
 #### [Additional constraints](@id nodes-hydro_power-math-con-add)
 
@@ -239,10 +230,10 @@ The outlet flow constraints are given as
 
 ```math
 \texttt{flow\_out}[n, t, p] =
-\texttt{stor\_charge\_use}[n, t] \times outputs(n, p) \qquad \forall p \in outputs(n)
+\texttt{stor\_discharge\_use}[n, t] \times outputs(n, p) \qquad \forall p \in outputs(n)
 ```
 
-As a consequence, similar to the inlet flow constraint, we can specify an efficiency between 0 and 1 to account for loses in the turbine.
+As a consequence, similar to the inlet flow constraint, we can specify an efficiency between 0 and 1 to account for losses in the turbine.
 
 In addition a constraint on the maximum discharge given by
 
@@ -262,7 +253,7 @@ The level constraints are called through the function `constraints_level` which 
 The hydro power nodes utilize the majority of the concepts from `EnergyModelsBase` but require adjustments for both constraining the variable ``\texttt{stor\_level\_Δ\_op}`` and specifying how the storage node has to behave in the first operational period of a strategic period.
 This is achieved through dispatching on the functions `constraints_level_aux`.
 
-The constraints introduced in `constraints_level_aux`  can be divided in three groups:
+The constraints introduced in `constraints_level_aux` can be divided in three groups:
 
 1. the energy balance,
 
@@ -309,7 +300,7 @@ The general level constraint is calculated in the function `constraints_level_it
 in which the value ``prev\_level`` is depending on the type of the previous operational (``t_{prev}``) and strategic level (``t_{inv,prev}``) (as well as the previous representative period (``t_{rp,prev}``)).
 It is calculated through the function `previous_level`.
 
-In the case of hydropower node, we can distinguish the following cases:
+In the case of hydropower nodes, we can distinguish the following cases:
 
 1. The first operational period in the first representative period in any strategic period (given by ``typeof(t_{prev}) = typeof(t_{rp, prev})`` and ``typeof(t_{inv,prev}) = NothingPeriod``).
    In this situation, we can distinguish three cases, the time structure does not include representative periods:
@@ -334,7 +325,7 @@ In the case of hydropower node, we can distinguish the following cases:
    \end{aligned}
    ```
 
-2. The first operational period in subsequent representative periods in any strategic period (given by ``typeof(t_{prev}) = nothing``) if the the storage behavior is given as [`CyclicStrategic`](@extref EnergyModelsBase.CyclicStrategic):\
+2. The first operational period in subsequent representative periods in any strategic period (given by ``typeof(t_{prev}) = nothing``) if the storage behavior is given as [`CyclicStrategic`](@extref EnergyModelsBase.CyclicStrategic):\
 
    ```math
    \begin{aligned}

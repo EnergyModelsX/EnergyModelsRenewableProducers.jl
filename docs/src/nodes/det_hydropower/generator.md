@@ -4,11 +4,11 @@
 
 The [`HydroGenerator`](@ref) node represents a hydropower unit used to generate electricity in a hydropower system.
 In its simplest form, the [`HydroGenerator`](@ref) can convert potential energy stored in the reservoirs to electricity by discharging water between reservoirs at different head levels under the assumption that the reservoirs have constant head level.
-The conversion to electric energy can be described by an power-discharge relationship referred to as the PQ-curve.
+The conversion to electric energy can be described by a power-discharge relationship referred to as the PQ-curve.
 
 ### [Standard fields](@id nodes-det_hydro_power-generator-fields-stand)
 
-[`HydroGenerator`](@ref) nodes build on the [`HydroUnit`](@ref EnergyModelsRenewableProducers.HydroUnit) and the  [`RefNetworkNode` ](@extref EnergyModelsBase.RefNetworkNode) nodes, but add additional fields.
+[`HydroGenerator`](@ref) nodes build on the [`HydroUnit`](@ref EnergyModelsRenewableProducers.HydroUnit) and the [`RefNetworkNode`](@extref EnergyModelsBase.RefNetworkNode) nodes, but add additional fields.
 The standard fields are:
 
 - **`id`**:\
@@ -39,7 +39,7 @@ The standard fields are:
 
 - **`pq_curve::AbstractPqCurve`**:\
   Describes the *[relationship between generated power (electricity) and discharge of water](@ref nodes-det_hydro_power-phil-pq)*.
-  The input can be provided by using the subtype [`PqPoints`](@ref) or as a single energy equivalent.
+  The input can be provided by using the subtype [`PqPoints`](@ref), either with PQ-points or with a single energy equivalent.
 
   !!! warning "pq_curve"
       The input provided to the `pq_curve` field has to be relative to the installed capacity, so that either the maximum discharge or the maximum power value given by the [`PqPoints`](@ref) equals 1.
@@ -51,7 +51,7 @@ The standard fields are:
   The electricity resource generated from the node.
 
 !!! note "Input/output fields"
-    [`HydroGenerator`](@ref) nodes include the fields `water_resource` and `electricity_resource` field instead of the `input` and `output` fields of [`RefNetworkNode`](@extref EnergyModelsBase.RefNetworkNode).
+    [`HydroGenerator`](@ref) nodes include the fields `water_resource` and `electricity_resource` instead of the `input` and `output` fields of [`RefNetworkNode`](@extref EnergyModelsBase.RefNetworkNode).
     The conversion of the water resource is set to 1 since the amount of water in the system is constant.
     The conversion to electricity is described by the input provided in the `pq_curve::AbstractPqCurve` field.
 
@@ -75,23 +75,23 @@ The [`HydroGenerator`](@ref) utilizes the standard variables from the [NetworkNo
 #### [Additional variables](@id nodes-det_hydro_power-generator-math-add)
 
 In addition to the standard variables, the variables presented below are defined for [`HydroUnit`](@ref EnergyModelsRenewableProducers.HydroUnit).
-These variabels are hence created for [`HydroGenerator`](@ref) nodes.
+These variables are hence created for [`HydroGenerator`](@ref) nodes.
 
-- ``\texttt{discharge\_segments}[n, t, q]``: One discharge variable is defined for each segment `q` of the PQ-curve defined by the field `pq_curve` of node ``n`` in operational period ``t`` with unit volume per time unit.\
+- ``\texttt{discharge\_segment}[n, t, q]``: One discharge variable is defined for each segment `q` of the PQ-curve defined by the field `pq_curve` of node ``n`` in operational period ``t`` with unit volume per time unit.\
   If [`PqPoints`](@ref) are provided, the number of discharge segments will be ``Q``, where ``Q+1`` is the length of the vectors in the fields of [`PqPoints`](@ref).
   There is only one discharge segment if an energy equivalent is used.
-  The variables ``\texttt{discharge\_segments}`` define the utilisation of each discharge segment and sum up to the total discharge.
+  The variables ``\texttt{discharge\_segment}`` define the utilisation of each discharge segment and sum up to the total discharge.
 
-  !!! warning "discharge_segments"
-      Sequential allocation is not enforced by binary variables, but allocation will occure sequentially if the problem if set up correctly.
-      Penalties for spilling water, a non-concave PQ-curve or an otherwise non-convex problem are examples thay may result in a non-sequential allocation.
+  !!! warning "discharge_segment"
+      Sequential allocation is not enforced by binary variables, but allocation will occur sequentially if the problem is set up correctly.
+      Penalties for spilling water, a non-concave PQ-curve or an otherwise non-convex problem are examples that may result in a non-sequential allocation.
 
 The following variables are created if required by the *[additional constraints](@ref nodes-det_hydro_power-phil-con)*:
 
-- ``\texttt{gen\_penalty\_up}[n, t, p]``: Variable for penalizing violation of the maximum constraint of the resource `p` in direction *up* in `HydroGenerator` node ``n`` in operational period ``t`` with unit volume per time unit.\
-  *Up* implies in this case that the electricity generation is larger than planned.
+- ``\texttt{gen\_penalty\_up}[n, t, p]``: Variable for penalizing violation of the minimum constraint of the resource `p` in direction *up* in `HydroGenerator` node ``n`` in operational period ``t`` with unit volume per time unit.\
+  *Up* implies in this case that the electricity generation is smaller than planned.
 - ``\texttt{gen\_penalty\_down}[n, t, p]``: Variable for penalizing violation of the maximum constraint of the resource `p` in direction *down* in `HydroGenerator` node ``n`` in operational period ``t`` with unit volume per time unit.\
-  *Down* implies in this case that the electricity generation is smaller than planned.
+  *Down* implies in this case that the electricity generation is larger than planned.
 
 ### [Constraints](@id nodes-det_hydro_power-generator-math-con)
 
@@ -102,9 +102,9 @@ In addition, all constraints are valid ``\forall t \in T`` (that is in all opera
 #### [Standard constraints](@id nodes-det_hydro_power-generator-math-con-stand)
 
 [`HydroGenerator`](@ref) nodes utilize in general the standard constraints described in *[Constraint functions for `NetworkNode`](@extref EnergyModelsBase nodes-network_node-math-con)*.
-The majority of these constraints are hence ommitted in the following description.
+The majority of these constraints are hence omitted in the following description.
 
-The function `constraints_capacity` rquires a new method to account for the included [PQ-curve](@ref nodes-det_hydro_power-phil-pq):
+The function `constraints_capacity` requires a new method to account for the included [PQ-curve](@ref nodes-det_hydro_power-phil-pq):
 
 ```math
 \begin{aligned}
@@ -115,6 +115,32 @@ The function `constraints_capacity` rquires a new method to account for the incl
 where ``P_{norm}^{max}`` is the maximum normalized power capacity identified through the function [`max_normalized_power`](@ref EnergyModelsRenewableProducers.max_normalized_power).
 If the capacity refers to power, the `PqPoints` `power_levels` ranges between 0 and 1 and ``P_{norm}^{max}`` will also be 1.
 If the capacity refers to flow, the `discharge_levels` ranges between 0 and 1, while `power_levels` may take other values and ``P_{norm}^{max}`` represents the last element of the `power_levels` vector.
+
+The new method furthermore calls the function [`build_pq_constaints`](@ref EnergyModelsRenewableProducers.build_pq_constaints) for creating the constraints of the PQ-curve.
+The flow out of water is constrained to total discharge given by the sum of the ``\texttt{discharge\_segment[n,t,q]}`` variables, where Q is the number of segments in the PQ-curve (*i.e.*, Q+1 PQ-points):
+
+```math
+\texttt{flow\_out}[n, t, water\_resource(n)] = \sum_{q=1}^{Q}\texttt{discharge\_segment[n,t,q]}
+```
+
+In addition to being constrained by the installed capacity, the variables ``\texttt{cap\_use}`` are constrained by the discharge of water multiplied with the conversion rate given by ``\texttt{E[q]}`` which is the slope of each segment in the PQ-curve:
+
+```math
+\texttt{cap\_use}[n, t] = \sum_{q=1}^{Q}(\texttt{discharge\_segment}[n,t,q] \times \texttt{E[q]})
+```
+
+The discharge segments are constrained by the `discharge_levels` of the [`PqPoints`](@ref):
+
+```math
+\begin{aligned}
+    \texttt{discharge\_segment}[n, t, q] \leq & \texttt{cap\_inst}[n, t] \times (discharge\_levels[q+1] \\ &
+    - discharge\_levels[q]) \qquad \forall q \in [1,Q] \\
+\end{aligned}
+```
+
+!!! note "Energy equivalent"
+    If a single energy equivalent is used, two points (zero and max) are created to describe a single discharge segment with the slope of the energy equivalent and the capacity of node `n`.
+    In this case, the installed capacity of the node, provided in the `cap` field, has to refer to the power capacity.
 
 The function `constraints_opex_var` requires a new method as we have to include the penalty variables for violating the constraints if required:
 
@@ -127,7 +153,7 @@ The function `constraints_opex_var` requires a new method as we have to include 
 \end{aligned}
 ```
 
-where ``penalty()`` returns the penalty value for violation in the upward and downward direction of constraints with penalty variables, denoted by ``c_{up}`` and  ``c_{up}`` respectively.
+where ``penalty()`` returns the penalty value for violation in the upward and downward direction of constraints with penalty variables, denoted by ``c_{up}`` and ``c_{down}`` respectively.
 The set ``P^{res}`` contains the water and power resources of node `n`.
 
 !!! tip "The function `scale_op_sp`"
@@ -144,38 +170,13 @@ Furthermore, we provide new methods for the flow constraints for `HydroGenerator
   ```
 
 - `constraints_flow_out`:\
-  The flow out of water is constrained to total discharge given by the sum of the ``\texttt{discharge\_segments[n,t,q]}`` variables, where Q is the number of segments in the PQ-curve (*i.e.*, Q+1 PQ-points):
-
-  ```math
-  \texttt{flow\_out}[n, t, water\_resource(n)] = \sum_{q=1}^{Q}\texttt{discharge\_segments[n,t,q]}
-  ```
-
   The flow of electricity out of the node is given by the ``\texttt{cap\_use}[n, t]`` variables:
 
   ```math
   \texttt{flow\_out}[n, t, electricity\_resource(n)] = \texttt{cap\_use}[n, t]
   ```
 
-  In addition to being constrained by the installed capacity, the variables ``\texttt{cap\_use}``  are constrained by the discharge of water multiplied with the conversion rate given by ``\texttt{E[q]}`` which is the slope of each segment in the PQ-curve:
-
-  ```math
-  \texttt{cap\_use}[n, t] = \sum_{q=1}^{Q}(\texttt{discharge\_segments}[n,t,q] \times \texttt{E[q]})
-  ```
-
-  The discharge segments are constrained by the `discharge_levels` of the [`PqPoints`](@ref):
-
-  ```math
-  \begin{aligned}
-      \texttt{discharge\_segment}[n, t, q] \leq & \texttt{cap\_inst}[n, t] \times (discharge\_levels[q+1] \\ &
-      - discharge\_levels[q]) \qquad \forall q \in [1,Q] \\
-  \end{aligned}
-  ```
-
-!!! note "Energy equivalent"
-    If a single energy equivalent is used, two points (zero and max) are created to describe a single discharge segment with the slope of the energy equivalent and the capacity of node `n`.
-    In this case, the installed capacity of the node, provided in the `pq_curve::AbstractPqCurve` field, has to refer to the power capacity.
-
-Furthermore, the method for `constraints_flow_out` adds *[discharge and power capacity constraints](@ref nodes-det_hydro_power-phil-con)* if additional constraints are provided in the `ExtensionData` field.
+Furthermore, the function `constraints_ext_data` adds *[discharge and power capacity constraints](@ref nodes-det_hydro_power-phil-con)* if additional constraints are provided in the `ExtensionData` field.
 Soft constraints, *i.e.*, constraints with a penalty, are used if the constraints have non-infinite penalty values.
 For `HydroGenerator` nodes, the constraints can be defined for both the `electricity_resource` and `water_resource`.
 
@@ -221,10 +222,10 @@ The expression is subsequently used in the calculations for providing the constr
    \begin{aligned}
      \texttt{flow\_out}[n, t, p] = & \\ &
        \texttt{cap\_inst\_var}[n, p, t] \times value(c, t) \qquad & \forall c \in C^{sch} \\
-     \texttt{flow\_out}[n, t, p] + & \texttt{gen\_penalty\_up}[n, t, p] - \texttt{gen\_penalty\_down}[n, t] = \\ &
+     \texttt{flow\_out}[n, t, p] + & \texttt{gen\_penalty\_up}[n, t, p] - \texttt{gen\_penalty\_down}[n, t, p] = \\ &
        \texttt{cap\_inst\_var}[n, p, t] \times value(c, t) \qquad & \forall c \in C^{sch} \\
    \end{aligned}
    ```
 
 where ``value(c, t)`` returns the relative limit of scheduling constraint `c`.
-The sets ``C^{min}``,``C^{max}``, and ``C^{sch}`` contain additional minimum, maximum and scheduling constraints, repectively.
+The sets ``C^{min}``,``C^{max}``, and ``C^{sch}`` contain additional minimum, maximum and scheduling constraints, respectively.

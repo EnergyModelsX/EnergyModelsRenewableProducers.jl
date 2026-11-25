@@ -1,7 +1,7 @@
 # [Update your model to the latest versions](@id update-models)
 
 `EnergyModelsRenewableProducers` is still in a pre-release version.
-Hence, there are frequently breaking changes occuring, although we plan to keep backwards compatibility.
+Hence, there are frequently breaking changes occurring, although we plan to keep backwards compatibility.
 This document is designed to provide users with information regarding how they have to adjust their models to keep compatibility to the latest changes.
 We will as well implement information regarding the adjustment of extension packages, although this is more difficult due to the vast majority of potential changes.
 
@@ -16,7 +16,7 @@ Version 0.7 of `EnergyModelsBase` introduced both *storage behaviours* resulting
 
 ### [`HydroStor`](@ref)
 
-`HydroStor` was significantly reworked due to the changes in `EnergyModelsBase`
+`HydroStor` was significantly reworked due to the changes in `EnergyModelsBase`.
 The total rework is provided below.
 
 ```julia
@@ -55,7 +55,7 @@ HydroStor{CyclicStrategic}(
 
 ### [`PumpedHydroStor`](@ref)
 
-`PumpedHydroStor` was significantly reworked due to the changers in `EnergyModelsBase`
+`PumpedHydroStor` was significantly reworked due to the changes in `EnergyModelsBase`.
 The total rework is provided below.
 
 ```julia
@@ -121,7 +121,7 @@ RegHydroStor(
 )
 
 # This translates to the following new version if has_pump == true
-PumpedHydroStor(
+PumpedHydroStor{CyclicStrategic}(
     id,
     StorCapOpexVar(rate_cap, FixedProfile(0)),
     StorCapOpexFixed(stor_cap, opex_fixed),
@@ -135,7 +135,7 @@ PumpedHydroStor(
     ExtensionData,
 )
 # and the following version if has_pump == false
-HydroStor(
+HydroStor{CyclicStrategic}(
     id,
     StorCapOpexFixed(stor_cap, opex_fixed),
     StorCapOpexVar(rate_cap, opex_var),

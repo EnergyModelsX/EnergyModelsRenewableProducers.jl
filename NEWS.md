@@ -7,6 +7,9 @@
 * Fixed docstrings:
   * Stale information was updated.
   * Grammar and typos were fixed.
+* Fixed documentation:
+  * Stale information was updated to reflect the current state of the package.
+  * Typos and grammatical errors were fixed.
 
 ## Version 0.7.2 (2026-11-05)
 

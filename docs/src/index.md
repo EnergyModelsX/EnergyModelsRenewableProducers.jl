@@ -10,11 +10,11 @@ These nodes are
 4. a `Storage` node ([`HydroReservoir`](@ref)),
 5. a `NetworkNode` node ([`HydroGenerator`](@ref)),
 6. a `NetworkNode` node ([`HydroPump`](@ref)),
-7. a `NetworkNode` node ([`HydroGate`](@ref)).
+7. a `NetworkNode` node ([`HydroGate`](@ref)),
 8. a `Storage` node ([`Battery`](@ref)), and
 9. a `Storage` node ([`ReserveBattery`](@ref)).
 
-The new introduced node types are also documented in the *[public library](@ref lib-pub)* as well as the corresponding nodal page.
+The newly introduced node types are also documented in the *[public library](@ref lib-pub)* as well as the corresponding nodal page.
 
 ## Developed nodes
 
@@ -25,12 +25,14 @@ These all use intermittent energy sources in the production of energy, so the ma
 
 ### Simple hydropower
 
-The [`PumpedHydroStor`](@ref) and [`HydroStor`](@ref) nodes implement a regulated hydropower storage plant, either with or without pumps for filling the reservoir with excess energy. These nodes can be used to model a single hydropower plant and reservoir, or to model an aggregated description of a hydropower system. The nodes do not include conversion from water to energy, and therby requires an energy-based descriton of the hydropower system.
-The hydropower storage plant can also be extended as they are declared as subtypes of [`HydroStorage`](@ref).
+The [`PumpedHydroStor`](@ref) and [`HydroStor`](@ref) nodes implement a regulated hydropower storage plant, either with or without pumps for filling the reservoir with excess energy.
+These nodes can be used to model a single hydropower plant and reservoir, or to model an aggregated description of a hydropower system.
+The nodes do not include conversion from water to energy, and thereby require an energy-based description of the hydropower system.
+The hydropower storage plants can also be extended as they are declared as subtypes of [`HydroStorage`](@ref).
 
 ### Detailed hydropower
 
-Cascaded hydropower systems can be modelled usind the [`HydroReservoir`](@ref), [`HydroGate`](@ref), [`HydroGenerator`](@ref), and [`HydroPump`](@ref) nodes.
+Cascaded hydropower systems can be modelled using the [`HydroReservoir`](@ref), [`HydroGate`](@ref), [`HydroGenerator`](@ref), and [`HydroPump`](@ref) nodes.
 These nodes can be used in combination to model a detailed hydropower system.
 Unlike [`HydroStorage`](@ref) nodes, these nodes allow for modelling of water as a resource that can be stored in reservoirs and moved between reservoirs to generate/consume electricity.
 The [`HydroReservoir`](@ref) node is a storage node used for storing water, while [`HydroGenerator`](@ref), [`HydroPump`](@ref) and [`HydroGate`](@ref) nodes move water around in the system.
@@ -38,7 +40,7 @@ The [`HydroReservoir`](@ref) node is a storage node used for storing water, whil
 
 ### Batteries
 
-Batteries can be modelled through both [`Battery`](@ref) and [`ReserveBattery`](@ref)
+Batteries can be modelled through both [`Battery`](@ref) and [`ReserveBattery`](@ref).
 [`Battery`](@ref) nodes allow for charge and discharge efficiencies as well as storage capacity degradation, if desired.
 [`ReserveBattery`](@ref) nodes include in addition a first implementation of the concept of capacity reserves within `EnergyModelsX`.
 A demand for reserve capacity can be implemented through a corresponding sink with penalties.

@@ -19,11 +19,11 @@ const EMB = EnergyModelsBase
 """
     generate_battery_example_data()
 
-Generate the data for an example consisting of a simple electricity network with a electricity
+Generate the data for an example consisting of a simple electricity network with an electricity
 source with varying prices, a reserve battery, an electricity demand, and the demand for a
 down reserve.
 It illustrates the behavior of the reserve battery and how it can both store energy and
-provide reserve capacity
+provide reserve capacity.
 """
 function generate_battery_example_data()
     @info "Generate case data - Simple `ReserveBattery` example"
@@ -48,8 +48,8 @@ function generate_battery_example_data()
     op_per_strat = 8760.0
 
     # Creation of the time structure and global data
-    # - There are in total 3 strategic periods.
-    # - Each strategic periods has a duration of 2 years.
+    # - There are in total 4 strategic periods.
+    # - Each strategic period has a duration of 2 years.
     T = TwoLevel(4, 2, operational_periods; op_per_strat)
     model = OperationalModel(
         Dict(CO2 => FixedProfile(10)),  # Emission cap for CO2 in t/a
@@ -77,12 +77,12 @@ function generate_battery_example_data()
         Dict(power => 0.9),     # Input resource with charge efficiency
         Dict(power => 0.9),     # Output resource with discharge efficiency
         CycleLife(
-            900,                # Cycles before the battery reach the end of its lifetime
+            900,                # Cycles before the battery reaches the end of its lifetime
             0.2,                # Capacity reduction at the end of the lifetime
             FixedProfile(2e5),  # Battery stack replacement cost in EUR/MWh
         ),
-        ResourceCarrier[],      # Upwards reserve resource
-        [reserve_down],         # Downwards reserve resource, not included
+        ResourceCarrier[],      # Upwards reserve resource, not included
+        [reserve_down],         # Downwards reserve resource
     )
     sink = RefSink(
         "electricity demand",   # Node id
@@ -100,7 +100,7 @@ function generate_battery_example_data()
     )
     nodes = [source, battery, sink, reserve_up_sink]
 
-    # Connect the two nodes with each other
+    # Connect the nodes with each other
     # The source node can either directly deliver electricity to the demand or via the
     # battery
     links = [
@@ -123,7 +123,7 @@ m = EMB.run_model(case, model, optimizer)
 """
     process_battery_results(m, case)
 
-Function for processing the results to be represented in the a table afterwards.
+Function for processing the results to be represented in a table afterwards.
 """
 function process_battery_results(m, case)
     # Extract the nodes and the first strategic period from the data
@@ -211,7 +211,7 @@ table_op, table_sp = process_battery_results(m, case)
     " - The electricity source is used fully in all periods.\n" *
     " - The battery charges in periods with lower electricity demand and prices (1, 5, 6, and 10) \n" *
     "   and discharges in periods with higher demands and prices (2, 4, 7, and 9).\n" *
-    " - The efficiencies are visible as the charge does not directly relate to a similar increas \n" *
+    " - The efficiencies are visible as the charge does not directly relate to a similar increase \n" *
     "   in the level and the duration of the period.\n" *
     " - The maximum storage level is not used as the battery provides a reserve of 10 MW.\n"
 )
@@ -229,7 +229,7 @@ pretty_table(table_op[16:20])
 
 
 @info(
-    "Individual results from the battery system in strategic priods:\n" *
+    "Individual results from the battery system in strategic periods:\n" *
     " - The previous usage is 0 in periods with a fresh battery stack (1 and 3).\n" *
     " - The previous usage is twice the use values in the other periods as the duration \n" *
     "   of a strategic period is 2.\n" *
