@@ -11,6 +11,10 @@
 * `HydroStorage` checks index `level_init` with the first operational period of each strategic period, so `OperationalProfile`s are accepted.
 * `ScheduleConstraint`s are only accepted for `HydroReservoir`, `HydroGate`, `HydroGenerator`, and `HydroPump` nodes.
 
+### Minor updates
+
+* Faster model creation with `ScheduleConstraint`s: the penalty variables evaluate the schedule constraints of a node once, and the constraints index the sparse penalty variables per operational period instead of slicing them.
+
 ### Documentation
 
 * Fixed docstrings:

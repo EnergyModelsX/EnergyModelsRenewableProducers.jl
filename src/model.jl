@@ -89,18 +89,16 @@ constraint. Without these penalty variables, too strict discharge restrictions m
 infeasible model.
 """
 function EMB.variables_node(m, 𝒩::Vector{HydroGate}, 𝒯, modeltype::EnergyModel)
+    # Declaration of the required subsets
+    𝒞 = Dict(n => constraint_data(n) for n ∈ 𝒩)
+    𝒩ˢᶜ = filter(n -> !isempty(𝒞[n]), 𝒩)
+
     # Create the variables
-    @variable(m, gate_penalty_up[
-        n ∈ 𝒩,
-        t ∈ 𝒯,
-        inputs(n);
-        any([has_penalty_up(c, t) for c ∈ constraint_data(n)])
+    @variable(m, gate_penalty_up[n ∈ 𝒩ˢᶜ, t ∈ 𝒯, inputs(n);
+        any(c -> has_penalty_up(c, t), 𝒞[n])
     ] ≥ 0)
-    @variable(m, gate_penalty_down[
-        n ∈ 𝒩,
-        t ∈ 𝒯,
-        inputs(n);
-        any([has_penalty_down(c, t) for c ∈ constraint_data(n)])
+    @variable(m, gate_penalty_down[n ∈ 𝒩ˢᶜ, t ∈ 𝒯, inputs(n);
+        any(c -> has_penalty_down(c, t), 𝒞[n])
     ] ≥ 0)
 end
 
@@ -120,18 +118,16 @@ soft constraint. Without these penalty variables, too strict volume restrictions
 an infeasible model.
 """
 function EMB.variables_node(m, 𝒩::Vector{<:HydroReservoir}, 𝒯, modeltype::EnergyModel)
+    # Declaration of the required subsets
+    𝒞 = Dict(n => constraint_data(n) for n ∈ 𝒩)
+    𝒩ˢᶜ = filter(n -> !isempty(𝒞[n]), 𝒩)
+
     # Create the variables
-    @variable(m, rsv_penalty_up[
-        n ∈ 𝒩,
-        t ∈ 𝒯,
-        [storage_resource(n)];
-        any([has_penalty_up(c, t) for c ∈ constraint_data(n)])
+    @variable(m, rsv_penalty_up[n ∈ 𝒩ˢᶜ, t ∈ 𝒯, [storage_resource(n)];
+        any(c -> has_penalty_up(c, t), 𝒞[n])
     ] ≥ 0)
-    @variable(m, rsv_penalty_down[
-        n ∈ 𝒩,
-        t ∈ 𝒯,
-        [storage_resource(n)];
-        any([has_penalty_down(c, t) for c ∈ constraint_data(n)])
+    @variable(m, rsv_penalty_down[n ∈ 𝒩ˢᶜ, t ∈ 𝒯, [storage_resource(n)];
+        any(c -> has_penalty_down(c, t), 𝒞[n])
     ] ≥ 0)
 end
 
@@ -155,27 +151,22 @@ constraint to a soft constraint. Without these penalty variables, too strict
 generation/pumping constraints may cause an infeasible model.
 """
 function EMB.variables_node(m, 𝒩::Vector{<:HydroUnit}, 𝒯, modeltype::EnergyModel)
-    # Create the variable for the discharge segment
-    @variable(m, discharge_segment[
-        n ∈ 𝒩,
-        𝒯,
-        discharge_segments(pq_curve(n))
-    ] ≥ 0)
+    # Declaration of the required subsets
+    𝒞 = Dict(n => constraint_data(n) for n ∈ 𝒩)
+    𝒩ˢᶜ = filter(n -> !isempty(𝒞[n]), 𝒩)
+    𝒫ᴴᵁ = [water_resource(n), electricity_resource(n)]
 
     # Add discharge/production constraint penalty variables
-    @variable(m, gen_penalty_up[
-        n ∈ 𝒩,
-        t ∈ 𝒯,
-        p ∈ [water_resource(n), electricity_resource(n)];
-        any([has_penalty_up(c, t, p) for c ∈ constraint_data(n)])
+    @variable(m, gen_penalty_up[n ∈ 𝒩ˢᶜ, t ∈ 𝒯, p ∈ 𝒫ᴴᵁ;
+        any(c -> has_penalty_up(c, t, p), 𝒞[n])
     ] ≥ 0)
 
-    @variable(m, gen_penalty_down[
-        n ∈ 𝒩,
-        t ∈ 𝒯,
-        p ∈ [water_resource(n), electricity_resource(n)];
-        any([has_penalty_down(c, t, p) for c ∈ constraint_data(n)])
+    @variable(m, gen_penalty_down[n ∈ 𝒩ˢᶜ, t ∈ 𝒯, p ∈ 𝒫ᴴᵁ;
+        any(c -> has_penalty_down(c, t, p), 𝒞[n])
     ] ≥ 0)
+
+    # Create the variable for the discharge segment
+    @variable(m, discharge_segment[n ∈ 𝒩, 𝒯, discharge_segments(pq_curve(n))] ≥ 0)
 end
 
 """
